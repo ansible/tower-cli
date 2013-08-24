@@ -57,12 +57,34 @@ class Connection(object):
 
     def get(self, endpoint):
         url = "%s%s" % (self.server, endpoint)
+        data = None
         try:
             response = urllib2.urlopen(url)
             data = response.read()
         except Exception, e:
-            raise BaseException(str(e))
-        return json.loads(data)
+            raise BaseException(str(e) + ", url: %s" % (url))
+        result = json.loads(data)
+        return result
+
+    def post(self, endpoint, data):
+        url = "%s%s" % (self.server, endpoint)
+        data = None
+        request = urllib2.Request(
+            url, 
+            json.dumps(data),
+            {'Content-type': 'application/json'}
+        )
+        data = None
+        try:
+            response = urllib2.urlopen(request)
+            data = response.read()
+        except Exception, e:
+            raise BaseException(str(e) + ", url: %s, data: %s" % (url, data))
+        try:
+            result = json.loads(data)
+            return result
+        except:
+            return data
 
 def get_config_parser():
     parser = ConfigParser.ConfigParser()

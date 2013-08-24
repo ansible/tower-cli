@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO: add a plugin loader sometime
 from commands.VersionCommand import VersionCommand
+from commands.JobLaunchCommand import JobLaunchCommand
+
 import sys
 
 __version__ = "1.3.0"
@@ -25,6 +28,7 @@ class AwxCli:
        """ constructs the top level control system for the AWX CLI """
 
        self.commands = [
+           JobLaunchCommand(self),
            # awx-cli version
            VersionCommand(self),
        ]
