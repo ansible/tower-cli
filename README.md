@@ -34,7 +34,22 @@ From a git checkout:
 Usage
 =====
 
+All commands take a username, password, and server parameter.  These values
+can also be set in a ~/.awx_cli.cfg file as follows, which is recommended for
+batch usage.
+
+    [general]
+    username=admin
+    password=password
+    server=http://127.0.0.1
+
+CLI invocation looks like this:
+
+    # list subcommands
     awx-cli --help
+    
+    # run a command
+    awx-cli version --username admin --password password --server http://172.16.177.238
 
 License
 =======
