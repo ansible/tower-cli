@@ -35,11 +35,11 @@ class VersionCommand(BaseCommand.BaseCommand):
  
         data = handle.get('/api/v1/config/')
 
-        cli_version = awx_cli.__version__
-        server_version = data['version']
-
-        print "cli_version: %s" % cli_version
-        print "server_version: %s" % server_version
+        output = dict(
+           cli_version = awx_cli.__version__,
+           server_version = data['version']
+        )
+        print common.dump(output)
 
         return 0
 

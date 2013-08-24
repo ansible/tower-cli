@@ -36,7 +36,8 @@ Usage
 
 All commands take a username, password, and server parameter.  These values
 can also be set in a ~/.awx_cli.cfg file as follows, which is recommended for
-batch usage.
+batch usage.  If the ~/.awx_cli.cfg is not found, the config file will also
+be looked for in /etc/awx/awx_cli.cfg.
 
     [general]
     username=admin
@@ -48,8 +49,11 @@ CLI invocation looks like this:
     # list subcommands
     awx-cli --help
     
-    # run a command
+    # run a command (no config file)
     awx-cli version --username admin --password password --server http://172.16.177.238
+  
+    # run a command (config file)
+    awx-cli version
 
 License
 =======

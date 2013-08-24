@@ -16,10 +16,11 @@
 
 import exceptions
 import optparse
-import datetime
+import os
 import getpass
 import json
 import urllib2
+import ConfigParser
 
 class BaseException(exceptions.Exception):
     def __init__(self, msg):
@@ -56,29 +57,73 @@ class Connection(object):
 
     def get(self, endpoint):
         url = "%s%s" % (self.server, endpoint)
-        print "accessing: %s" % url
-        response = urllib2.urlopen(url)
-        data = response.read()
+        try:
+            response = urllib2.urlopen(url)
+            data = response.read()
+        except Exception, e:
+            raise BaseException(str(e))
         return json.loads(data)
 
+def get_config_parser():
+    parser = ConfigParser.ConfigParser()
+    path1 = os.path.expanduser(os.environ.get('AWX_CLI_CONFIG', "~/.awx_cli.cfg"))
+    path2 = "/etc/awx/awx_cli.cfg"
+
+    if os.path.exists(path1):
+        parser.read(path1)
+    elif os.path.exists(path2):
+        parser.read(path2)
+    else:
+        return None
+    return parser
+
+def get_config_value(p, section, key, default):
+    try:
+        return p.get(section, key)
+    except:
+        return default
+
+def get_config_default(p, key, defaults, section='general'):
+    return get_config_value(p, section, key, defaults[key])
+
 def connect(options):
+    
+    config_file = get_config_parser()
+
     if type(options) != dict:
         options = dict(
             username = options.username,
             password = options.password,
             server   = options.server
         )
-    username = options.get("username", None)
-    password = options.get("password", None)
-    server   = options.get("server", "https://127.0.0.1")
 
+    defaults = dict(
+        username = "admin",
+        password = "password",
+        server   = "http://127.0.0.1"
+    )
+
+
+    if config_file:
+        defaults['username'] = get_config_default(
+            config_file, 'username', defaults
+        )
+        defaults['password'] = get_config_default(
+            config_file, 'password', defaults
+        )
+        defaults['server'] = get_config_default(
+            config_file, 'server', defaults
+        )
+
+    username = options.get("username", defaults["username"])
+    password = options.get("password", defaults["password"])
+    server   = options.get("server",   defaults["server"])
     if username is None:
-        raise Exception("--username is required")
+        username = defaults['username']
     if password is None:
-        raise BaseException("--password is required")
+        password = defaults['password']
     if server is None:
-        server = "https://127.0.0.1"
-    print "connecting to: %s" % server
+        server = defaults['server']
 
     # Setup urllib2 for basic password authentication.
     password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -88,8 +133,11 @@ def connect(options):
     urllib2.install_opener(opener)
 
     conn = Connection(server)
-    print conn.get('/api/v1/')
+    try:
+        conn.get('/api/v1/')
+    except Exception, e:
+        raise BaseException(str(e))
     return conn
 
-
-
+def dump(data):
+    return json.dumps(data, indent=4, sort_keys=True)
