@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import exceptions
 import optparse
 import os
@@ -68,7 +69,6 @@ class Connection(object):
 
     def post(self, endpoint, data):
         url = "%s%s" % (self.server, endpoint)
-        data = None
         request = urllib2.Request(
             url, 
             json.dumps(data),
@@ -79,7 +79,7 @@ class Connection(object):
             response = urllib2.urlopen(request)
             data = response.read()
         except Exception, e:
-            raise BaseException(str(e) + ", url: %s, data: %s" % (url, data))
+            raise BaseException("%s, url: %s, data: %s, response: %s" % (str(e), url, data, e.read()))
         try:
             result = json.loads(data)
             return result

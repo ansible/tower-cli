@@ -68,7 +68,7 @@ class JobLaunchCommand(BaseCommand.BaseCommand):
         print "URL=%s" % jt_jobs_url
 
         job_id = job_result['id']
-        job_start_url = "/jobs/%d/start/" % job_id
+        job_start_url = "/api/v1/jobs/%d/start/" % job_id
         job_start_info = handle.get(job_start_url)
         start_data = {}
         for password in job_start_info.get('passwords_needed_to_start', []):
