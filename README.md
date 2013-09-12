@@ -10,7 +10,9 @@ AWX is a GUI and REST interface for Ansible that supercharges it by adding RBAC,
 centralized logging, autoscaling/provisioning callbacks, graphical inventory
 editing, and more.
 
-See http://ansibleworks.com/ansibleworks-awx for more details.  AWX is free to use for up to 10 nodes, and you can purchase a license for more at http://store.ansibleworks.com.
+See http://ansibleworks.com/ansibleworks-awx for more details.  
+
+AWX is free to use for up to 10 nodes, and you can purchase a license for more at http://store.ansibleworks.com.
 
 Capabilities
 ============
@@ -54,6 +56,12 @@ CLI invocation looks like this:
   
     # run a command (config file)
     awx-cli version
+
+Here is an example of launching a job template to run an ansible playbook. The system will prompt for any parameters
+set to 'ASK' in AWX, so be sure all of this information is filled in if you are using this
+from a system like Jenkins or cron.  All we need to specify is the template ID.
+
+    awx-cli joblaunch --template 5
 
 License
 =======
