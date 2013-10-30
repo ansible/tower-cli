@@ -20,7 +20,7 @@ import sys
 from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
-from lib.awx_cli import __version__, __author__
+from awx_cli import __version__, __author__
 from distutils.core import setup
 
 setup(name='ansible',
