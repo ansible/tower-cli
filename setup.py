@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('lib'))
 from awx_cli import __version__, __author__
 from distutils.core import setup
 
-setup(name='ansible',
+setup(name='awx_cli',
       version=__version__,
       description='Command line interface to AnsibleWorks AWX',
       author=__author__,
