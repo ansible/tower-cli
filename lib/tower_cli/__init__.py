@@ -19,17 +19,17 @@ from commands.JobLaunchCommand import JobLaunchCommand
 
 import sys
 
-__version__ = "1.3.0"
+__version__ = "1.4.5"
 __author__ = "Michael DeHaan"
 
-class AwxCli:
+class TowerCli:
 
     def __init__(self):
-        """ constructs the top level control system for the AWX CLI """
+        """ constructs the top level control system for the Tower CLI """
 
         self.commands = [
             JobLaunchCommand(self),
-            # awx-cli version
+            # tower-cli version
             VersionCommand(self),
         ]
 

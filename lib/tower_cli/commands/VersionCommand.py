@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import BaseCommand
-import awx_cli
-import awx_cli.common as common
+import tower_cli
+import tower_cli.common as common
 
 class VersionCommand(BaseCommand.BaseCommand):
 
-    """ shows AWX version information """
+    """ shows Tower version information """
 
     def __init__(self, toplevel):
         super(VersionCommand, self).__init__(toplevel)
@@ -36,7 +36,7 @@ class VersionCommand(BaseCommand.BaseCommand):
         data = handle.get('/api/v1/config/')
 
         output = dict(
-           cli_version = awx_cli.__version__,
+           cli_version = tower_cli.__version__,
            server_version = data['version']
         )
         print common.dump(output)

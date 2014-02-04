@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import awx_cli
-import awx_cli.common as common
+import tower_cli
+import tower_cli.common as common
 import sys
 
 try:
-    sys.exit(awx_cli.AwxCli().activate(sys.argv))
+    sys.exit(tower_cli.TowerCli().activate(sys.argv))
 except common.BaseException, e:
     print e
     # print >> sys.stderr, e.msg

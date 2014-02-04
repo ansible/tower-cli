@@ -15,14 +15,14 @@
 # limitations under the License.
 
 import BaseCommand
-import awx_cli
-import awx_cli.common as common
+import tower_cli
+import tower_cli.common as common
 import datetime
 import getpass
 
 class JobLaunchCommand(BaseCommand.BaseCommand):
 
-    """ shows AWX version information """
+    """ shows Tower version information """
 
     def __init__(self, toplevel):
         super(JobLaunchCommand, self).__init__(toplevel)

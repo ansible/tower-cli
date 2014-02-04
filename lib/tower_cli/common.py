@@ -88,8 +88,8 @@ class Connection(object):
 
 def get_config_parser():
     parser = ConfigParser.ConfigParser()
-    path1 = os.path.expanduser(os.environ.get('AWX_CLI_CONFIG', "~/.awx_cli.cfg"))
-    path2 = "/etc/awx/awx_cli.cfg"
+    path1 = os.path.expanduser(os.environ.get('AWX_CLI_CONFIG', "~/.tower_cli.cfg"))
+    path2 = "/etc/awx/tower_cli.cfg"
 
     if os.path.exists(path1):
         parser.read(path1)

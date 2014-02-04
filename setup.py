@@ -20,24 +20,24 @@ import sys
 from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
-from awx_cli import __version__, __author__
+from tower_cli import __version__, __author__
 from distutils.core import setup
 
-setup(name='awx_cli',
+setup(name='tower_cli',
       version=__version__,
-      description='Command line interface to AnsibleWorks AWX',
+      description='Command line interface to Ansible Tower',
       author=__author__,
-      author_email='michael@ansibleworks.com',
-      url='http://ansibleworks.com/',
+      author_email='michael@ansible.com',
+      url='http://ansible.com/',
       license='Apache2',
       install_requires=[],
-      package_dir={ 'awx_cli': 'lib/awx_cli' },
+      package_dir={ 'tower_cli': 'lib/tower_cli' },
       packages=[
-         'awx_cli',
-         'awx_cli.commands',
+         'tower_cli',
+         'tower_cli.commands',
       ],
       scripts=[
-         'bin/awx-cli',
+         'bin/tower-cli',
       ],
       data_files=[]
 )
