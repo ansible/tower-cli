@@ -54,3 +54,8 @@ debian/
 
 # tox
 .tox
+
+# jenkins
+cover-html
+coverage.xml
+results.xml
