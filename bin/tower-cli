@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-
-# Copyright 2013, AnsibleWorks Inc.
-# Michael DeHaan <michael@ansibleworks.com>
+# Copyright 2013-2014, Ansible, Inc.
+# Luke Sneeringer <lsneeringer@ansible.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +14,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tower_cli
-import tower_cli.common as common
+import importlib
+import os
 import sys
 
-try:
-    sys.exit(tower_cli.TowerCli().activate(sys.argv))
-except common.BaseException, e:
-    print e
-    # print >> sys.stderr, e.msg
-    sys.exit(1)
+import click
 
+
+whereami = os.path.realpath(os.path.dirname(__file__) + '/../')
+
+
+class TowerCLI(click.MultiCommand):
+    """Tower CLI is a command-line interface tool for interacting with
+    [Ansible Tower][1]. It allows basic CRUD operations and job control
+    from the Unix shell.
+
+      [1]: http://www.ansible.com/tower/
+    """
+    def list_commands(self, ctx):
+        """Return a list of commands present in the commands folder, but
+        not subcommands.
+        """
+        answer = set()
+        locations = ('commands', 'resources')
+        for loc in locations:
+            path = '%s/lib/tower_cli/%s/' % (whereami, loc)
+            for filename in os.listdir(path):
+                if filename.endswith('.py') and not filename.startswith('_'):
+                    answer.add(filename[:-3])
+        return sorted(answer)
+
+    def get_command(self, ctx, name):
+        """Given a command identified by its name, import the appropriate
+        module and return the decorated command.
+
+        Resources are automatically commands, but if both a resource and
+        a command are defined, the command takes precedence.
+        """
+        # First, attempt to get a basic command from `tower_cli.commands`.
+        try:
+            module = importlib.import_module('tower_cli.commands.%s' % name)
+            return getattr(module, name)
+        except ImportError:
+            pass
+
+        # No command was found; try to get a resource.
+        try:
+            module = importlib.import_module('tower_cli.resources.%s' % name)
+            resource = module.Resource()
+            return resource.as_command()
+        except ImportError:
+            pass
+
+        # Okay, we weren't able to find a command.        
+        click.secho('No such command: %s.' % name, fg='red', bold=True)
+        sys.exit(2)
+
+
+if __name__ == '__main__':
+    cli = TowerCLI()
+    cli()

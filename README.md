@@ -1,77 +1,152 @@
-tower-cli
-=======
+## Welcome to tower-cli
 
-This is a command line tool for Ansible Tower.  
+**tower-cli** is a command line tool for Ansible Tower. It allows Tower
+commands to be easily run from the Unix command-line.
 
-About Tower
-=========
 
-Tower is a GUI and REST interface for Ansible that supercharges it by adding RBAC,
-centralized logging, autoscaling/provisioning callbacks, graphical inventory
-editing, and more.
+### About Tower
 
-See http://ansible.com/tower for more details.  
+[Ansible Tower][1] is a GUI and REST interface for Ansible that supercharges
+it by adding RBAC, centralized logging, autoscaling/provisioning callbacks,
+graphical inventory editing, and more.
 
-Tower is free to use for up to 10 nodes, and you can purchase a license for more at http://ansible.com/ansible-pricing.
+Tower is free to use for up to 30 days or 10 nodes. Beyond this, [a license
+is required][2].
 
-Capabilities
-============
+  [1]: http://ansible.com/tower
+  [2]: http://ansible.com/ansible-pricing
 
-You can use this command line tool to send commands to the Tower API.
 
-For instance, you might use this tool with Jenkins, cron, or in-house software to trigger remote execution of Ansible playbook runs.
+### Capabilities
 
-This tool is designed to be pluggable and will be expanded over time.
+This command line tool sends commands to the Tower API. It is capable of
+retrieving, creating, modifying, and deleting most objects within Tower.
 
-Installation
-============
+A few potential uses include:
 
-Packages will be coming soon.
+  * System-based job launches (for instance, from Jenkins, cron, etc.)
+  * Use in callbacks from Ansible playbooks
+  * Custom syncronization of inventory
 
-From a git checkout:
-  
-    make install
-    tower-cli --help
 
-Usage
-=====
+### Installation
 
-All commands take a username, password, and server parameter.  These values
-can also be set in a ~/.tower_cli.cfg file as follows, which is recommended for
-batch usage.  If the ~/.tower_cli.cfg is not found, the config file will also
-be looked for in /etc/awx/tower_cli.cfg.
+Tower CLI is available as a package on [PyPI][3].
 
-    [general]
-    username=admin
-    password=password
-    server=http://127.0.0.1
+  [3]: https://pypi.python.org/pypi/ansible-tower-cli
 
-CLI invocation looks like this:
+The preferred way to install is through pip:
 
-    # list subcommands
-    tower-cli --help
-    
-    # run a command (no config file)
-    tower-cli version --username admin --password password --server http://172.16.177.238
-  
-    # run a command (config file)
-    tower-cli version
+```bash
+$ pip install ansible-tower-cli
+```
 
-Here is an example of launching a job template to run an ansible playbook. The system will prompt for any parameters
-set to 'ASK' in Tower, so be sure all of this information is filled in if you are using this
-from a system like Jenkins or cron.  All we need to specify is the template ID.
 
-    tower-cli joblaunch --template 5
+### Configuration
 
-License
-=======
+Configuration can be set in several places, and either through a command
+sent to `tower-cli` or through direct editing of the configuration file.
 
-While Tower is commercial software, tower-cli is an open source project and we want
-to encourage contributions to it.  Specfically, this CLI project is licensed under the
-Apache2 license.  You may do what you like with it, but we definitely welcome
-pull requests!
+#### Set configuration with tower-cli config.
+
+The preferred way to set configuration is with the `tower-cli config` command.
+The syntax is:
+
+```bash
+$ tower-cli config key value
+```
+
+By issuing `tower-cli config` with no arguments, you can see a full list
+of configuration options and where they are set.
+
+You will generally need to set at least three configuration options:
+`host`, `username`, and `password`; these correspond to the location of
+your Ansible Tower instance and your credentials to authenticate to Tower.
+
+
+#### Write to the config files directly.
+
+A configuration file is a simple file with keys and values, separated by
+`:` or `=`:
+
+```yaml
+host: tower.example.com
+username: admin
+password: p4ssw0rd
+```
+
+
+#### Order of Precedence
+
+The order of precedence for configuration is as follows, from least to
+greatest:
+
+  * internal defaults
+  * `/etc/awx/tower_cli.cfg` (written using `tower-cli config --global`)
+  * `~/.tower_cli.cfg` (written using `tower-cli config`)
+  * run-time paramaters
+
+
+### Usage
+
+CLI invocation generally follows this format:
+
+```bash
+$ tower-cli {resource} {action} ...
+```
+
+The "resource" is a type of object within Tower (a noun), such as `user`,
+`organization`, `job_template`, etc.; resource names are always singular in
+Tower CLI (so: it's `tower-cli user`, never `tower-cli users`).
+
+The "action" is the thing you want to do (a verb). Most Tower CLI resources
+have the following actions: `get`, `list`, `create`, `modify`, and `delete`,
+and have options corresponding to fields on the object in Tower.
+
+Some examples:
+
+```bash
+# List all users.
+$ tower-cli user list
+
+# List all non-superusers
+$ tower-cli user list --is-superuser=false
+
+# Get the user with the ID of 42.
+$ tower-cli user get 42
+
+# Get the user with the given username.
+$ tower-cli user get --username=guido
+
+# Create a new user.
+$ tower-cli user create --username=guido --first-name=Guido \
+                        --last-name="Van Rossum" --email=guido@python.org
+
+# Modify an existing user.
+# This would modify the first name of the user with the ID of "42" to "Guido".
+$ tower-cli user modify 42 --first-name=Guido
+
+# Modify an existing user, lookup by username.
+# This would use "username" as the lookup, and modify the first name.
+# Which fields are used as lookups vary by resource, but are generally
+# the resource's name.
+$ tower-cli user modify --username=guido --first-name=Guido
+
+# Delete a user.
+$ tower-cli user delete 42
+
+# Launch a job.
+$ tower-cli job launch --job-template=144
+
+# Monitor a job.
+$ tower-cli job monitor 95
+```
+
+### License
+
+While Tower is commercial software, _tower-cli_ is an open source project,
+and we encorage contributions.  Specfically, this CLI project is licensed
+under the Apache license.
 
 Michael DeHaan
 (C) 2014, Ansible, Inc.
-
-

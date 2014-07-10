@@ -13,19 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+# Import OrderedDict from the standard library if possible, and from
+# the ordereddict library (required on Python 2.6) otherwise.
+try:
+    from collections import OrderedDict
+except ImportError:  # Python < 2.7
+    from ordereddict import OrderedDict
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
-    """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+# Import simplejson if we have it (Python 2.6), and use json from the
+# standard library otherwise.
+#
+# Note: Python 2.6 does have a JSON library, but it lacks `object_pairs_hook`
+# as a keyword argument to `json.loads`, so we still need simplejson on
+# Python 2.6.
+import sys
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json

@@ -1,29 +1,38 @@
-# build products...
+# Python
 *.py[co]
+__pycache__
 build
-AUTHORS.TXT
-# Emacs backup files...
+
+# Emacs
 *~
 .\#*
-# RPM stuff...
+
+# RPM
 MANIFEST
 dist
 rpm-build
-# Eclipse/PyDev stuff...
+
+# Eclipse/PyDev
 .project
 .pydevproject
-# PyCharm stuff...
+
+# PyCharm
 .idea
-#IntelliJ IDEA stuff..
+
+#IntelliJ IDEA
 *.iml
-# Mac OS X stuff...
+
+# Mac OS X
 .DS_Store
-# manpage build stuff...
+
+# manpage build
 docs/man/man3/*
-# Sublime stuff
+
+# Sublime Text
 *.sublime-project
 *.sublime-workspace
-# docsite stuff...
+
+# docsite
 docsite/latest/rst/modules
 docsite/latest/*.html
 docsite/latest/_static/*.gif
@@ -31,8 +40,17 @@ docsite/latest/_static/*.png
 docsite/latest/_static/websupport.js
 docsite/latest/searchindex.js
 docsite/latest/htmlout
-# deb building stuff...
+
+# deb building
 debian/
+
 # Vim swap files
 *.swp
 *.swo
+
+# coverage
+.coverage-html/
+.coverage
+
+# tox
+.tox

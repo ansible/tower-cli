@@ -13,19 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+from six.moves import StringIO
+
+from tower_cli.utils.exceptions import TowerCLIError
+
+from tests.compat import unittest, mock
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
+class ExceptionTests(unittest.TestCase):
+    """A set of tests to ensure that our exception classes all work in
+    the way that we expect.
     """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    def test_show(self):
+        """Establish that the show method will properly route to an
+        alternate file.
+        """
+        sio = StringIO()
+        ex = TowerCLIError('Fe fi fo fum; I smell the blood of an Englishman.')
+        ex.show(file=sio)
+        sio.seek(0)
+        self.assertIn('Fe fi fo fum;', sio.read())

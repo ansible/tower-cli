@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+from tower_cli import models
+from tower_cli.utils import types
 
 
-__version__ = open('VERSION', 'r').read().strip()
+class Resource(models.Resource):
+    cli_help = 'Manage hosts belonging to a group within an inventory.'
+    endpoint = '/hosts/'
 
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
-    """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    name = models.Field(unique=True)
+    description = models.Field(required=False, display=False)
+    inventory = models.Field(type=types.Related('inventory'))
+    enabled = models.Field(type=bool)
+    variables = models.Field(type=types.File('r'), required=False,
+                             display=False)

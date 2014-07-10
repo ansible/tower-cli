@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+from tower_cli.utils.data_structures import OrderedDict
+
+from tests.compat import unittest
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
+class OrderedDictTests(unittest.TestCase):
+    """A set of tests to ensure that the OrderedDict subclass that
+    tower-cli provides works as expected.
     """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    def test_dunder_repr(self):
+        """Establish that the OrderedDict __repr__ method works in the
+        way we expect.
+        """
+        d = OrderedDict()
+        d['foo'] = 'spam'
+        d['bar'] = 'eggs'
+        self.assertEqual(repr(d), "{'foo': 'spam', 'bar': 'eggs'}")

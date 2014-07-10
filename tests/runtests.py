@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
 
+import os
+import sys
 
-__version__ = open('VERSION', 'r').read().strip()
+# Ensure that the tests directory is part of our Python path.
+APP_ROOT = os.path.realpath(os.path.dirname(__file__) + '/../')
+sys.path.append(APP_ROOT)
 
+from tests.compat import unittest
 
-def get_resource(name):
-    """Return an instance of the requested Resource class.
+# Find tests.
+def load_tests(loader, standard_tests, throwaway):
+    return loader.discover('tests')
 
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
-    """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+# Run the tests.
+if __name__ == '__main__':
+    unittest.main()

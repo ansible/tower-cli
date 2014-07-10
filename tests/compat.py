@@ -13,19 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+# Import mock from the unittest module in the stdlib if it's there
+# (Python 3.3+), otherwise import the pip package, which is required
+# in Python 2.
 
+# Import unittest2 if we have it (required on Python 2.6),
+# otherwise just use the stdlib unittest.
+try:
+    import unittest2 as unittest
+except ImportError:  # Python >= 2.7
+    import unittest
 
-__version__ = open('VERSION', 'r').read().strip()
+try:
+    from unittest import mock
+except ImportError:  # Python < 3.3
+    import mock
 
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
-    """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+# Import the correct class used for when a file is opened.
+try:
+    from io import TextIOWrapper
+except ImportError:  # Python < 3
+    TextIOWrapper = file

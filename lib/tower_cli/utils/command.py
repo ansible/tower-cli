@@ -13,19 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+import click
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
+class Command(click.Command):
+    """A Command subclass that adds support for the concept that invocation
+    without arguments assumes `--help`.
     """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    # For some reason, click only supports this in `click.MultiCommand`.
+    # Should that change, it would be possible to just use the `click.Command`
+    # class instead of this one.
+    parse_args = click.MultiCommand.parse_args
+
+    def __init__(self, name=None, no_args_is_help=True, **kwargs):
+        self.no_args_is_help = no_args_is_help
+        super(Command, self).__init__(name=name, **kwargs)

@@ -13,19 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+import tower_cli
+
+from tests.compat import unittest
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
+class GetResourceTests(unittest.TestCase):
+    """Establish that the `tower_cli.get_resource` method works in the
+    way that it should.
     """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    def test_get_resource(self):
+        for res in ('credential', 'group', 'host', 'inventory', 'job_template',
+                    'job', 'organization', 'project', 'team', 'user'):
+            resource = tower_cli.get_resource(res)

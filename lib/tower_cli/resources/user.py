@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+from tower_cli import models
 
 
-__version__ = open('VERSION', 'r').read().strip()
+class Resource(models.Resource):
+    cli_help = 'Manage users within Ansible Tower.'
+    endpoint = '/users/'
+    unique_criterion = 'username'
 
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
-    """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    username = models.Field(unique=True)
+    password = models.Field(required=False, display=False)
+    email = models.Field(unique=True)
+    first_name = models.Field(required=False)
+    last_name = models.Field(required=False)
+    is_superuser = models.Field(required=False, type=bool)

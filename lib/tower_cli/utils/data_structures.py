@@ -13,19 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
-import importlib
+from tower_cli.utils import compat
 
 
-__version__ = open('VERSION', 'r').read().strip()
-
-
-def get_resource(name):
-    """Return an instance of the requested Resource class.
-
-    Since all of the resource classes are named `Resource`, this provides
-    a slightly cleaner interface for using these classes via. importing rather
-    than through the CLI.
+class OrderedDict(compat.OrderedDict):
+    """OrderedDict subclass that nonetheless uses the basic dictionary
+    __repr__ method.
     """
-    module = importlib.import_module('tower_cli.resources.%s' % name)
-    return module.Resource()
+    def __repr__(self):
+        """Print a repr that resembles dict's repr, but preserves
+        key order.
+        """
+        return '{' + ', '.join(['%r: %r' % (k, v)
+                                for k, v in self.items()]) + '}'

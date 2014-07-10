@@ -1,0 +1,19 @@
+[run]
+source = lib/tower_cli/
+omit =
+    lib/tower_cli/utils/compat.py
+branch = True
+
+
+[html]
+directory = .coverage-html/
+
+
+[report]
+exclude_lines =
+    # Enable the standard pragma.
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+
