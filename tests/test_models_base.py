@@ -391,6 +391,29 @@ class ResourceTests(unittest.TestCase):
             self.assertEqual(result['count'], 2)
             self.assertEqual(result['results'][0]['id'], 1)
 
+    def test_list_all_pages(self):
+        """Establish that the Resource class' `list` method correctly
+        accepts the --all-pages flag and checks follow-up pages.
+        """
+        with client.test_mode as t:
+            # Register the first, second, and third page.
+            t.register_json('/foo/', {'count': 3, 'results': [
+                {'id': 1, 'name': 'foo', 'description': 'bar'},                
+            ], 'next': '/foo/?page=2', 'previous': None})
+            t.register_json('/foo/?page=2', {'count': 3, 'results': [
+                {'id': 2, 'name': 'spam', 'description': 'eggs'},                
+            ], 'next': '/foo/?page=3', 'previous': None})
+            t.register_json('/foo/?page=3', {'count': 3, 'results': [
+                {'id': 3, 'name': 'bacon', 'description': 'cheese'},
+            ], 'next': None, 'previous': None})
+
+            # Get the list
+            result = self.res.list(all_pages=True)
+
+            # Assert that there are three results, and three requests.
+            self.assertEqual(len(t.requests), 3)
+            self.assertEqual(len(result['results']), 3)
+
     def test_get_unexpected_zero_results(self):
         """Establish that if a read method gets 0 results when it should have
         gotten one or more, that it raises NotFound.

@@ -578,9 +578,14 @@ class Resource(BaseResource):
         return response['results'][0]
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
-    @click.option('--page', default=1, type=int, help='The page to show.',
-                            show_default=True)
-    def list(self, **kwargs):
+    @click.option('all_pages', '-a', '--all-pages',
+                  is_flag=True, default=False, show_default=True,
+                  help='If set, collate all pages of content from the API '
+                       'when returning results.')
+    @click.option('--page', default=1, type=int, show_default=True,
+                            help='The page to show. Ignored if --all-pages '
+                                 'is sent.')
+    def list(self, all_pages=False, **kwargs):
         """Return a list of objects.
 
         If one or more filters are provided through keyword arguments,
@@ -588,6 +593,11 @@ class Resource(BaseResource):
 
         If no filters are provided, return all results.
         """
+        # If the `all_pages` flag is set, then ignore any page that might
+        # also be sent.
+        if all_pages:
+            kwargs.pop('page', None)
+
         # Get the response.
         debug.log('Getting records.', header='details')
         response = self.read(**kwargs)
@@ -599,6 +609,14 @@ class Resource(BaseResource):
                 continue
             match = re.search(r'page=(?P<num>[\d]+)', response[key])
             response[key] = int(match.groupdict()['num'])
+
+        # If we were asked for all pages, keep retrieving pages until we
+        # have them all.
+        if all_pages and response['next']:
+            cursor = copy(response)
+            while cursor['next']:
+                cursor = self.list(**dict(kwargs, page=cursor['next']))
+                response['results'] += cursor['results']
 
         # Done; return the response
         return response
