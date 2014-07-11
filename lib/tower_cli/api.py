@@ -21,8 +21,6 @@ import json
 from requests.sessions import Session
 from requests.models import Response
 
-from fauxquests.adapter import FauxAdapter
-
 from tower_cli.conf import settings
 from tower_cli.utils import data_structures, exceptions as exc
 
@@ -139,6 +137,9 @@ class Client(Session):
         """Replace the HTTP adapters with a fauxquests.FauxAdapter, which
         will make the client into a faux client.
         """
+        # Import this here, because we don't want to require fauxquests
+        # in order for the app to work.
+        from fauxquests.adapter import FauxAdapter
         with settings.runtime_values(host='20.12.4.21', username='meagan',
                                      password='This is the best wine.',
                                      verbose=False, format='json'):

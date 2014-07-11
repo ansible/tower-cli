@@ -18,8 +18,8 @@ import importlib
 import os
 
 
-__version__ = open('VERSION', 'r').read().strip()
 whereami = os.path.realpath(os.path.dirname(__file__))
+__version__ = open('%s/VERSION' % whereami, 'r').read().strip()
 
 
 def get_resource(name):
