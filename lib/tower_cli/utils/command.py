@@ -19,12 +19,25 @@ import click
 class Command(click.Command):
     """A Command subclass that adds support for the concept that invocation
     without arguments assumes `--help`.
-    """
-    # For some reason, click only supports this in `click.MultiCommand`.
-    # Should that change, it would be possible to just use the `click.Command`
-    # class instead of this one.
-    parse_args = click.MultiCommand.parse_args
 
+    This code is adapted by taking code from click.MultiCommand and placing
+    it here, to get just the --help functionality and nothing else.
+    """
     def __init__(self, name=None, no_args_is_help=True, **kwargs):
         self.no_args_is_help = no_args_is_help
         super(Command, self).__init__(name=name, **kwargs)
+
+    def parse_args(self, ctx, args):
+        """Parse arguments sent to this command.
+
+        The code for this method is taken from MultiCommand:
+        https://github.com/mitsuhiko/click/blob/master/click/core.py
+
+        It is Copyright (c) 2014 by Armin Ronacher.
+        See the license:
+        https://github.com/mitsuhiko/click/blob/master/LICENSE
+        """
+        if not args and self.no_args_is_help and not ctx.resilient_parsing:
+            click.echo(ctx.get_help())
+            ctx.exit()
+        return super(Command, self).parse_args(ctx, args)
