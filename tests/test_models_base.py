@@ -414,6 +414,26 @@ class ResourceTests(unittest.TestCase):
             self.assertEqual(len(t.requests), 3)
             self.assertEqual(len(result['results']), 3)
 
+    def test_list_custom_kwargs(self):
+        """Establish that if we pass custom keyword arguments to list, that
+        they are included in the final request.
+        """
+        with client.test_mode as t:
+            t.register_json('/foo/?bar=baz', {'count': 0, 'results': [],
+                                              'next': None, 'previous': None})
+            result = self.res.list(query=[('bar', 'baz')])
+            self.assertTrue(t.requests[0].url.endswith('bar=baz'))
+
+    def test_list_duplicate_kwarg(self):
+        """Establish that if we attempt to query on the same field twice,
+        that we get an error.
+        """
+        with client.test_mode as t:
+            with self.assertRaises(exc.BadRequest):
+                result = self.res.list(name='Batman',
+                                       query=[('name', 'Robin')])
+            self.assertEqual(len(t.requests), 0)
+
     def test_get_unexpected_zero_results(self):
         """Establish that if a read method gets 0 results when it should have
         gotten one or more, that it raises NotFound.

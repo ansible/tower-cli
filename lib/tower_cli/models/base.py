@@ -24,6 +24,8 @@ from copy import copy
 
 import six
 
+from requests.compat import quote
+
 import click
 from click.decorators import _make_command
 
@@ -375,6 +377,10 @@ class Resource(BaseResource):
         if pk:
             url += '%d/' % pk
 
+        # Pop the query parameter off of the keyword arguments; it will
+        # require special handling (below).
+        queries = kwargs.pop('query', [])
+
         # Remove default values (anything where the value is None).
         # click is unfortunately bad at the way it sends through unspecified
         # defaults.
@@ -383,6 +389,12 @@ class Resource(BaseResource):
                 kwargs.pop(key)
             if hasattr(value, 'read'):
                 kwargs[key] = value.read()
+
+        # If queries were provided, process them.
+        for query in queries:
+            if query[0] in kwargs:
+                raise exc.BadRequest('Attempted to set %s twice.' % query[0])
+            kwargs[query[0]] = query[1]
 
         # If debugging is on, print the URL and data being sent.
         debug.log('GET %s' % url, fg='blue', bold=True)
@@ -585,6 +597,12 @@ class Resource(BaseResource):
     @click.option('--page', default=1, type=int, show_default=True,
                             help='The page to show. Ignored if --all-pages '
                                  'is sent.')
+    @click.option('-Q', '--query', required=False, nargs=2, multiple=True,
+                  help='A key and value to be passed as an HTTP query string '
+                       'key and value to the Tower API. Will be run through '
+                       'HTTP escaping. This argument may be sent multiple '
+                       'times.\nExample: `--query foo bar` would be passed '
+                       'to Tower as ?foo=bar')
     def list(self, all_pages=False, **kwargs):
         """Return a list of objects.
 

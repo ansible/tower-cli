@@ -112,10 +112,10 @@ class Client(Session):
         # If so, write an appropriate error message.
         if r.status_code >= 400:
             raise exc.BadRequest(
-                'The Tower server claims it was sent a bad request. '
-                'Please file a bug report in the Tower CLI project.\n\n'
-                '%s %s\nData: %s\n\nResponse:%s' %
-                (method, url, kwargs.get('data', {}), r.content.decode('utf8'))
+                'The Tower server claims it was sent a bad request.\n\n'
+                '%s %s\nParams: %s\nData: %s\n\nResponse: %s' %
+                (method, url, kwargs.get('params', None),
+                 kwargs.get('data', None), r.content.decode('utf8'))
             )
 
         # Django REST Framework intelligently prints API keys in the
