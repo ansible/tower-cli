@@ -20,8 +20,7 @@ import sys
 
 import click
 
-
-whereami = os.path.realpath(os.path.dirname(__file__) + '/../')
+import tower_cli
 
 
 class TowerCLI(click.MultiCommand):
@@ -38,7 +37,7 @@ class TowerCLI(click.MultiCommand):
         answer = set()
         locations = ('commands', 'resources')
         for loc in locations:
-            path = '%s/lib/tower_cli/%s/' % (whereami, loc)
+            path = '%s/%s/' % (tower_cli.whereami, loc)
             for filename in os.listdir(path):
                 if filename.endswith('.py') and not filename.startswith('_'):
                     answer.add(filename[:-3])

@@ -15,9 +15,11 @@
 
 from __future__ import absolute_import, unicode_literals
 import importlib
+import os
 
 
 __version__ = open('VERSION', 'r').read().strip()
+whereami = os.path.realpath(os.path.dirname(__file__))
 
 
 def get_resource(name):
