@@ -118,3 +118,10 @@ class JobFailure(TowerCLIError):
     the Tower CLI.
     """
     exit_code = 99
+
+
+class ConnectionError(TowerCLIError):
+    """An exception class to bubble requests errors more nicely,
+    and communicate connection issues to the user.
+    """
+    exit_code = 120

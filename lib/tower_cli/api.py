@@ -18,11 +18,12 @@ import copy
 import functools
 import json
 
+from requests.exceptions import ConnectionError
 from requests.sessions import Session
 from requests.models import Response
 
 from tower_cli.conf import settings
-from tower_cli.utils import data_structures, exceptions as exc
+from tower_cli.utils import data_structures, debug, exceptions as exc
 
 
 class Client(Session):
@@ -71,7 +72,18 @@ class Client(Session):
             kwargs['data'] = json.dumps(kwargs.get('data', {}))
 
         # Call the superclass method.
-        r = super(Client, self).request(method, url, *args, **kwargs)
+        try:
+            r = super(Client, self).request(method, url, *args, **kwargs)
+        except ConnectionError as ex:
+            if settings.verbose:
+                debug.log('Cannot connect to Tower:', fg='yellow', bold=True)
+                debug.log(str(ex), fg='yellow', bold=True, nl=2)
+            raise exc.ConnectionError(
+                'There was a network error of some kind trying to connect '
+                'to Tower.\n\nThe most common  reason for this is a settings '
+                'issue; is your "host" value in `tower-cli config` correct?\n'
+                'Right now it is: "%s".' % settings.host
+            )
 
         # Sanity check: Did the server send back some kind of internal error?
         # If so, bubble this up.

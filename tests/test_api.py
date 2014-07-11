@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import requests
 from requests.sessions import Session
 
 from fauxquests.response import Resp
 
 from tower_cli.api import APIResponse, client
 from tower_cli.conf import settings
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import debug, exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest, mock
@@ -78,6 +79,29 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(headers['Content-Type'], 'application/json')
             self.assertEqual(r.request.body,
                              '{"payload": "this is my payload."}')
+
+    def test_connection_error(self):
+        """Establish that if we get a ConnectionError back from requests,
+        that we deal with it nicely.
+        """
+        with settings.runtime_values(verbose=False):
+            with mock.patch.object(Session, 'request') as req:
+                req.side_effect = requests.exceptions.ConnectionError
+                with self.assertRaises(exc.ConnectionError):
+                    r = client.get('/ping/')
+
+    def test_connection_error_verbose(self):
+        """Establish that if we get a ConnectionError back from requests,
+        that we deal with it nicely, and additionally print the internal error
+        if verbose is True.
+        """
+        with settings.runtime_values(verbose=True):
+            with mock.patch.object(Session, 'request') as req:
+                req.side_effect = requests.exceptions.ConnectionError
+                with mock.patch.object(debug, 'log') as dlog:
+                    with self.assertRaises(exc.ConnectionError):
+                        r = client.get('/ping/')
+                    self.assertEqual(dlog.call_count, 2)
 
     def test_server_error(self):
         """Establish that server errors raise the ServerError
