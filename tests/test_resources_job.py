@@ -188,7 +188,9 @@ class MonitorTests(unittest.TestCase):
             })
             with self.assertRaises(exc.JobFailure):
                 with mock.patch.object(click, 'secho') as secho:
-                    result = self.res.monitor(42)
+                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                        tty.return_value = True
+                        result = self.res.monitor(42)
                 self.assertTrue(secho.call_count >= 1)
 
     def test_failure_non_tty(self):
@@ -231,7 +233,9 @@ class MonitorTests(unittest.TestCase):
             with mock.patch.object(time, 'sleep') as sleep:
                 sleep.side_effect = assign_success
                 with mock.patch.object(click, 'secho') as secho:
-                    result = self.res.monitor(42, min_interval=0.21)
+                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                        tty.return_value = True
+                        result = self.res.monitor(42, min_interval=0.21)
                 self.assertTrue(secho.call_count >= 100)
 
             # We should have gotten two requests total, to the same URL.
@@ -252,8 +256,10 @@ class MonitorTests(unittest.TestCase):
             t.register_json('/jobs/42/', copy(data))
             with mock.patch.object(click, 'secho') as secho:
                 with self.assertRaises(exc.Timeout):
-                    result = self.res.monitor(42, min_interval=0.21,
-                                                  timeout=0.1)
+                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                        tty.return_value = True
+                        result = self.res.monitor(42, min_interval=0.21,
+                                                      timeout=0.1)
                 self.assertTrue(secho.call_count >= 1)
 
     def test_monitoring_not_tty(self):
