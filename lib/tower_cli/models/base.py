@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import functools
 import inspect
 import json
+import math
 import re
 import sys
 from copy import copy
@@ -268,6 +269,9 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 """Convert the payload into an ASCII table suitable for
                 printing on screen and return it.
                 """
+                page = None
+                total_pages = None
+
                 # What are the columns we will show?
                 columns = [field.name for field in self.resource.fields
                                       if field.display]
@@ -283,6 +287,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 # Get our raw rows into a standard format.
                 if 'results' in payload:
                     raw_rows = payload['results']
+                    if payload.get('count', 0) > len(payload['results']):
+                        prev = payload.get('previous', 0) or 0
+                        page = prev + 1
+                        count = payload['count']
+                        if payload.get('next', None):
+                            total_pages = math.ceil(count / len(raw_rows))
+                        else:
+                            total_pages = page
                 else:
                     raw_rows = [payload]
 
@@ -333,11 +345,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     data_rows.append(data_row.rstrip())
 
                 # Result the resulting table.
-                return '\n'.join((
+                response = '\n'.join((
                     divider_row, header_row, divider_row,
                     '\n'.join(data_rows),
                     divider_row,
                 ))
+                if page:
+                    response += '(Page %d of %d.)' % (page, total_pages)
+                return response
 
         return Subcommand(resource=self)
         

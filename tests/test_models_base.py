@@ -351,6 +351,33 @@ class SubcommandTests(unittest.TestCase):
         self.assertIn('1 Durham, NC', output)
         self.assertIn('2       true', output)
 
+    def test_echo_method_human_pagination(self):
+        """Establish that pagination works in human formatting, and it
+        prints the way we expect.
+        """
+        func = self.command._echo_method(lambda: {'results': [
+            {'id': 1, 'name': 'Durham, NC'},
+            {'id': 2, 'name': True},
+        ], 'next': 3, 'count': 10, 'previous': 1})
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(format='human'):
+                func()
+            output = secho.mock_calls[-1][1][0]
+        self.assertIn('(Page 2 of 5.)', output)
+      
+    def test_echo_method_human_pagination_last_page(self):
+        """Establish that pagination works in human formatting, and it
+        prints the way we expect on the final page..
+        """
+        func = self.command._echo_method(lambda: {'results': [
+            {'id': 1, 'name': 'Durham, NC'},
+        ], 'next': None, 'count': 3, 'previous': 1})
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(format='human'):
+                func()
+            output = secho.mock_calls[-1][1][0]
+        self.assertIn('(Page 2 of 2.)', output)
+
 
 class ResourceTests(unittest.TestCase):
     """A set of tests to establish that the Resource class works in the
