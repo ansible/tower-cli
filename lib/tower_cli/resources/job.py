@@ -22,6 +22,7 @@ import sys
 import time
 
 import click
+from click._compat import isatty as is_tty
 
 from sdict import adict
 
@@ -134,7 +135,9 @@ class Resource(models.BaseResource):
             # If the job has failed, we want to raise an Exception for that
             # so we get a non-zero response.
             if job['failed']:
-                click.secho('\r' + ' ' * longest_string + '\n', file=outfile)
+                if is_tty(outfile):
+                    click.secho('\r' + ' ' * longest_string + '\n',
+                                file=outfile)
                 raise exc.JobFailure('Job failed.')
 
             # Sanity check: Have we officially timed out?
@@ -144,13 +147,15 @@ class Resource(models.BaseResource):
             if timeout and timeout_check - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
 
-            # Print the current status.
-            output = '\rCurrent status: %s%s' % (job['status'], '.' * next(dots))
+            # If the outfile is a TTY, print the current status.
+            output = '\rCurrent status: %s%s' % (job['status'],
+                                                 '.' * next(dots))
             if longest_string > len(output):
                 output += ' ' * (longest_string - len(output))
             else:
                 longest_string = len(output)
-            click.secho(output, nl=False, file=outfile)
+            if is_tty(outfile):
+                click.secho(output, nl=False, file=outfile)
 
             # Put the process to sleep briefly.
             time.sleep(0.2)
@@ -180,9 +185,17 @@ class Resource(models.BaseResource):
                 last_poll = time.time()
                 interval = min(interval * 1.5, max_interval)
 
+                # If the outfile is *not* a TTY, print a status update
+                # when and only when we make an actual check to job status.
+                if not is_tty(outfile):
+                    click.echo('Current status: %s' % job['status'],
+                               file=outfile)
+
             # Wipe out the previous output
-            click.secho('\r' + ' ' * longest_string, file=outfile, nl=False)
-            click.secho('\r', file=outfile, nl=False)
+            if is_tty(outfile):
+                click.secho('\r' + ' ' * longest_string,
+                            file=outfile, nl=False)
+                click.secho('\r', file=outfile, nl=False)
 
         # Done; return the result
         return job

@@ -189,6 +189,25 @@ class MonitorTests(unittest.TestCase):
             with self.assertRaises(exc.JobFailure):
                 with mock.patch.object(click, 'secho') as secho:
                     result = self.res.monitor(42)
+                self.assertTrue(secho.call_count >= 1)
+
+    def test_failure_non_tty(self):
+        """Establish that if the job has failed, that we raise the
+        JobFailure exception, and also don't print bad things on non-tty
+        outfiles.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/42/', {
+                'elapsed': 1335024000.0,
+                'failed': True,
+                'status': 'failed',
+            })
+            with self.assertRaises(exc.JobFailure):
+                with mock.patch.object(click, 'echo') as echo:
+                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                        tty.return_value = False
+                        result = self.res.monitor(42)
+                self.assertTrue(echo.call_count >= 1)
 
     def test_monitoring(self):
         """Establish that if the first status call returns a pending job,
@@ -213,6 +232,7 @@ class MonitorTests(unittest.TestCase):
                 sleep.side_effect = assign_success
                 with mock.patch.object(click, 'secho') as secho:
                     result = self.res.monitor(42, min_interval=0.21)
+                self.assertTrue(secho.call_count >= 100)
 
             # We should have gotten two requests total, to the same URL.
             self.assertEqual(len(t.requests), 2)
@@ -234,6 +254,38 @@ class MonitorTests(unittest.TestCase):
                 with self.assertRaises(exc.Timeout):
                     result = self.res.monitor(42, min_interval=0.21,
                                                   timeout=0.1)
+                self.assertTrue(secho.call_count >= 1)
+
+    def test_monitoring_not_tty(self):
+        """Establish that the monitor command prints more useful output
+        for logging if not connected to a tty.
+        """
+        # Set up our data object.
+        data = {'elapsed': 1335024000.0, 'failed': False, 'status': 'pending'}
+
+        # Register the initial request's response.
+        with client.test_mode as t:
+            t.register_json('/jobs/42/', copy(data))
+
+            # Create a way to assign a successful data object to the request.
+            def assign_success(*args):
+                t.clear()
+                t.register_json('/jobs/42/', dict(data, status='successful'))
+
+            # Make the successful state assignment occur when time.sleep()
+            # is called between requests.
+            with mock.patch.object(time, 'sleep') as sleep:
+                sleep.side_effect = assign_success
+                with mock.patch.object(click, 'echo') as echo:
+                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                        tty.return_value = False
+                        result = self.res.monitor(42, min_interval=0.21)
+                self.assertTrue(echo.call_count >= 1)
+
+            # We should have gotten two requests total, to the same URL.
+            self.assertEqual(len(t.requests), 2)
+            self.assertEqual(t.requests[0].url, t.requests[1].url)
+
 
 
 class CancelTests(unittest.TestCase):
