@@ -292,6 +292,12 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         six.text_type(payload['changed']).lower(),
                     )
 
+                # Sanity check: If there is no ID and no results, then this
+                # is unusual output; keep our table formatting, but plow
+                # over the columns-as-keys stuff above.
+                if 'id' not in payload and 'results' not in payload:
+                    columns = [i for i in payload.keys()]
+
                 # Get our raw rows into a standard format.
                 if 'results' in payload:
                     raw_rows = payload['results']
