@@ -161,6 +161,13 @@ class SubcommandTests(unittest.TestCase):
         self.assertEqual(list_command.params[0].name, 'name')
         self.assertEqual(list_command.params[0].opts, ['--name'])
 
+    def test_get_command_error(self):
+        """Establish that if `get_command` is called against a command that
+        does not actually exist on the resource, that we raise UsageError.
+        """
+        with self.assertRaises(exc.UsageError):
+            self.command.get_command(None, 'bogus')
+
     def test_command_with_pk(self):
         """Establish that the `get_command` method appropriately adds a
         primary key argument if the method has a "pk" positional argument.
