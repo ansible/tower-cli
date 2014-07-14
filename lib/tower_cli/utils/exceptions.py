@@ -113,6 +113,13 @@ class ValidationError(TowerCLIError):
     exit_code = 64
 
 
+class Timeout(TowerCLIError):
+    """An exception class for timeouts encountered within Tower CLI,
+    usually for monitoring.
+    """
+    exit_code = 98
+
+
 class JobFailure(TowerCLIError):
     """An exception class for job failures that require error codes within
     the Tower CLI.

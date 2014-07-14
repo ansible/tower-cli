@@ -104,7 +104,11 @@ class Resource(models.BaseResource):
     @click.option('--max-interval',
                   default=30, help='The maximum interval to request an update '
                                    'from Tower.')
-    def monitor(self, pk, min_interval=1, max_interval=30, outfile=sys.stdout):
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided, this command (not the job) will time out '
+                       'after the given number of seconds.')
+    def monitor(self, pk, min_interval=1, max_interval=30,
+                          timeout=None, outfile=sys.stdout):
         """Monitor a running job.
 
         Blocks further input until the job completes (whether successfully or
@@ -113,6 +117,7 @@ class Resource(models.BaseResource):
         dots = itertools.cycle([0, 1, 2, 3])
         longest_string = 0
         interval = min_interval
+        start = time.time()
 
         # Poll the Ansible Tower instance for status, and print the status
         # to the outfile (usually standard out).
@@ -124,12 +129,20 @@ class Resource(models.BaseResource):
         # monitoring.
         job = self.status(pk)
         last_poll = time.time()
+        timeout_check = 0
         while job['status'] != 'successful':
             # If the job has failed, we want to raise an Exception for that
             # so we get a non-zero response.
             if job['failed']:
                 click.secho('\r' + ' ' * longest_string + '\n', file=outfile)
                 raise exc.JobFailure('Job failed.')
+
+            # Sanity check: Have we officially timed out?
+            # The timeout check is incremented below, so this is checking
+            # to see if we were timed out as of the previous iteration.
+            # If we are timed out, abort.
+            if timeout and timeout_check - start > timeout:
+                raise exc.Timeout('Monitoring aborted due to timeout.')
 
             # Print the current status.
             output = '\rCurrent status: %s%s' % (job['status'], '.' * next(dots))
@@ -141,6 +154,17 @@ class Resource(models.BaseResource):
 
             # Put the process to sleep briefly.
             time.sleep(0.2)
+
+            # Sanity check: Have we reached our timeout?
+            # If we're about to time out, then we need to ensure that we
+            # do one last check.
+            #
+            # Note that the actual timeout will be performed at the start
+            # of the **next** iteration, so there's a chance for the job's
+            # completion to be noted first.
+            timeout_check = time.time()
+            if timeout and timeout_check - start > timeout:
+                last_poll -= interval
 
             # If enough time has elapsed, ask the server for a new status.
             #

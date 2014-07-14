@@ -63,7 +63,9 @@ class LaunchTests(unittest.TestCase):
             with mock.patch.object(click, 'edit') as edit:
                 edit.return_value = '# Nothing.\nfoo: bar'
                 result = self.res.launch(1, no_input=False)
-                self.assertTrue(edit.mock_calls[0][1][0].endswith('spam: eggs'))
+                self.assertTrue(
+                    edit.mock_calls[0][1][0].endswith('spam: eggs'),
+                )
             self.assertEqual(
                 json.loads(t.requests[1].body)['extra_vars'],
                 'foo: bar',
@@ -215,6 +217,23 @@ class MonitorTests(unittest.TestCase):
             # We should have gotten two requests total, to the same URL.
             self.assertEqual(len(t.requests), 2)
             self.assertEqual(t.requests[0].url, t.requests[1].url)
+
+    def test_timeout(self):
+        """Establish that the --timeout flag is honored if sent to
+        `tower-cli job monitor`.
+        """
+        # Set up our data object.
+        # This doesn't have to change; it will always be pending
+        # (thus the timeout).
+        data = {'elapsed': 1335024000.0, 'failed': False, 'status': 'pending'}
+
+        # Mock out the passage of time.
+        with client.test_mode as t:
+            t.register_json('/jobs/42/', copy(data))
+            with mock.patch.object(click, 'secho') as secho:
+                with self.assertRaises(exc.Timeout):
+                    result = self.res.monitor(42, min_interval=0.21,
+                                                  timeout=0.1)
 
 
 class CancelTests(unittest.TestCase):
