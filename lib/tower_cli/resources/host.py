@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tower_cli import models
+import click
+
+from tower_cli import models, resources
 from tower_cli.utils import types
 
 
@@ -27,3 +29,17 @@ class Resource(models.Resource):
     enabled = models.Field(type=bool, required=False)
     variables = models.Field(type=types.File('r'), required=False,
                              display=False)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--host', type=types.Related('host'))
+    @click.option('--group', type=types.Related('group'))
+    def associate(self, host, group):
+        """Associate a group with this host."""
+        return self._assoc('groups', host, group)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--host', type=types.Related('host'))
+    @click.option('--group', type=types.Related('group'))
+    def disassociate(self, host, group):
+        """Disassociate a group from this host."""
+        return self._disassoc('groups', host, group)
