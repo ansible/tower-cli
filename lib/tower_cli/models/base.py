@@ -210,7 +210,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 code = six.get_function_code(method)
                 if 'pk' in code.co_varnames:
                     click.argument('pk', nargs=1, required=False,
-                                         type=int)(cmd)
+                                         type=int, metavar='[ID]')(cmd)
 
                 # Done; return the command.
                 return cmd
