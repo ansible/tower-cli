@@ -58,7 +58,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/jobs/', {'id': 42}, method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
                 result = self.res.launch(1, monitor=True)
-                monitor.assert_called_once_with(42)
+                monitor.assert_called_once_with(42, timeout=None)
 
     def test_extra_vars_at_runtime(self):
         """Establish that if we should be asking for extra variables at

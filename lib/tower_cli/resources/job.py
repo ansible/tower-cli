@@ -45,11 +45,15 @@ class Resource(models.BaseResource):
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
                        'launched job rather than exiting with a success.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided with --monitor, this command (not the job)'
+                       ' will time out after the given number of seconds. '
+                       'Does nothing if --monitor is not sent.')
     @click.option('--no-input', is_flag=True, default=False,
                                 help='Suppress any requests for input.')
     @click.option('--extra-vars', type=types.File('r'), required=False)
-    def launch(self, job_template, monitor=False, no_input=True,
-                     extra_vars=None):
+    def launch(self, job_template, monitor=False, timeout=None,
+                     no_input=True, extra_vars=None):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately stats it, and
@@ -101,7 +105,7 @@ class Resource(models.BaseResource):
         # If we were told to monitor the job once it started, then call
         # monitor from here.
         if monitor:
-            return self.monitor(job['id'])
+            return self.monitor(job['id'], timeout=timeout)
 
         # Return the job ID.
         return {
