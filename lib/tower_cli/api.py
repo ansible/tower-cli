@@ -37,6 +37,11 @@ class Client(Session):
 
       [1]: http://docs.python-requests.org/en/latest/
     """
+    def __init__(self):
+        super(Client, self).__init__()
+        for adapter in self.adapters.values():
+            adapter.max_retries = 3
+
     @property
     def prefix(self):
         """Return the appropriate URL prefix to prepend to requests,
