@@ -265,6 +265,19 @@ class SubcommandTests(unittest.TestCase):
         create = Oreo().as_command().get_command(None, 'create')
         self.assertIn('Create an Oreo cookie', create.help)
 
+    def test_docstring_replacement_y(self):
+        """Establish that for resources with names ending in y, that plural
+        replacement is correct.
+        """
+        # Create a resource with an approriate name.
+        class Oreo(models.Resource):
+            resource_name = 'telephony'
+            endpoint = '/telephonies/'
+
+        # Get the Oreo resource's create method.
+        create = Oreo().as_command().get_command(None, 'list')
+        self.assertIn('list of telephonies', create.help)
+
     def test_echo_method(self):
         """Establish that the _echo_method subcommand class works in the
         way we expect.

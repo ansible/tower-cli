@@ -226,6 +226,11 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 if not self.resource_name.lower().startswith(an_prefix):
                     help_text = help_text.replace('an object',
                                                   'a %s' % self.resource_name)
+                if self.resource_name.lower().endswith('y'):
+                    help_text = help_text.replace(
+                        'objects',
+                        '%sies' % self.resource_name[:-1],
+                    )
                 help_text = help_text.replace('object', self.resource_name)
 
                 # Convert some common Python terms to their CLI equivalents.
