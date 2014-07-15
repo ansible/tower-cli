@@ -101,7 +101,7 @@ class ClientTests(unittest.TestCase):
                 with mock.patch.object(debug, 'log') as dlog:
                     with self.assertRaises(exc.ConnectionError):
                         r = client.get('/ping/')
-                    self.assertEqual(dlog.call_count, 2)
+                    self.assertEqual(dlog.call_count, 5)
 
     def test_server_error(self):
         """Establish that server errors raise the ServerError

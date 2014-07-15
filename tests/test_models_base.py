@@ -26,7 +26,7 @@ import click
 from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.conf import settings
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import debug, exceptions as exc
 
 from tests.compat import unittest, mock
 
@@ -503,6 +503,17 @@ class ResourceTests(unittest.TestCase):
             t.register_json('/foo/?name=spam', {'count': 0, 'results': []})
             with self.assertRaises(exc.NotFound):
                 result = self.res.get(name='spam')
+
+    def test_get_no_debug_header(self):
+        """Establish that if get is called with include_debug_header=False,
+        no debug header is issued.
+        """
+        with mock.patch.object(type(self.res), 'read') as read:
+            with mock.patch.object(debug, 'log') as dlog:
+                read.return_value = {'results': [True]}
+                result = self.res.get(42, include_debug_header=False)
+                self.assertEqual(dlog.call_count, 0)
+            self.assertTrue(result)
 
     def test_get_unexpected_multiple_results(self):
         """Establish that if a read method gets more than one result when

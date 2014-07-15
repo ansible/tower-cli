@@ -72,6 +72,16 @@ class Client(Session):
             headers.setdefault('Content-Type', 'application/json')
             kwargs['headers'] = headers
 
+        # If debugging is on, print the URL and data being sent.
+        debug.log('%s %s' % (method, url), fg='blue', bold=True)
+        if method in ('POST', 'PUT', 'PATCH'):
+            debug.log('Data: %s' % kwargs.get('data', {}),
+                      fg='blue', bold=True)
+        if method == 'GET' or kwargs.get('params', None):
+            debug.log('Params: %s' % kwargs.get('params', {}),
+                      fg='blue', bold=True)
+        debug.log('')
+
         # If this is a JSON request, encode the data value.
         if headers.get('Content-Type', '') == 'application/json':
             kwargs['data'] = json.dumps(kwargs.get('data', {}))

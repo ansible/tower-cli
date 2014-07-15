@@ -28,7 +28,8 @@ from sdict import adict
 
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc, types
+from tower_cli.conf import settings
+from tower_cli.utils import debug, exceptions as exc, types
 
 
 class Resource(models.BaseResource):
@@ -87,6 +88,7 @@ class Resource(models.BaseResource):
             data['extra_vars'] = extra_vars
 
         # Create the new job in Ansible Tower.
+        debug.log('Creating the job.', header='details')
         job = client.post('/jobs/', data=data).json()
 
         # There's a non-trivial chance that we are going to need some
@@ -94,12 +96,15 @@ class Resource(models.BaseResource):
         # rely on passwords entered at run-time.
         #
         # If there are any such passwords on this job, ask for them now.
+        debug.log('Asking for information necessary to start the job.',
+                  header='details')
         job_start_info = client.get('/jobs/%d/start/' % job['id']).json()
         start_data = {}
         for password in job_start_info.get('passwords_needed_to_start', []):
             start_data[password] = getpass('Password for %s: ' % password)
 
         # Actually start the job.
+        debug.log('Launching the job.', header='details')
         result = client.post('/jobs/%d/start/' % job['id'], start_data)
 
         # If we were told to monitor the job once it started, then call
@@ -150,7 +155,7 @@ class Resource(models.BaseResource):
             # If the job has failed, we want to raise an Exception for that
             # so we get a non-zero response.
             if job['failed']:
-                if is_tty(outfile):
+                if is_tty(outfile) and not settings.verbose:
                     click.secho('\r' + ' ' * longest_string + '\n',
                                 file=outfile)
                 raise exc.JobFailure('Job failed.')
@@ -169,7 +174,7 @@ class Resource(models.BaseResource):
                 output += ' ' * (longest_string - len(output))
             else:
                 longest_string = len(output)
-            if is_tty(outfile):
+            if is_tty(outfile) and not settings.verbose:
                 click.secho(output, nl=False, file=outfile)
 
             # Put the process to sleep briefly.
@@ -202,12 +207,12 @@ class Resource(models.BaseResource):
 
                 # If the outfile is *not* a TTY, print a status update
                 # when and only when we make an actual check to job status.
-                if not is_tty(outfile):
+                if not is_tty(outfile) or settings.verbose:
                     click.echo('Current status: %s' % job['status'],
                                file=outfile)
 
             # Wipe out the previous output
-            if is_tty(outfile):
+            if is_tty(outfile) and not settings.verbose:
                 click.secho('\r' + ' ' * longest_string,
                             file=outfile, nl=False)
                 click.secho('\r', file=outfile, nl=False)
@@ -221,6 +226,7 @@ class Resource(models.BaseResource):
     def status(self, pk, detail=False):
         """Print the current job status."""
         # Get the job from Ansible Tower.
+        debug.log('Asking for job status.', header='details')
         job = client.get('/jobs/%d/' % pk).json()
 
         # In most cases, we probably only want to know the status of the job

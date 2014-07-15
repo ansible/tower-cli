@@ -430,11 +430,6 @@ class Resource(BaseResource):
                 raise exc.BadRequest('Attempted to set %s twice.' % query[0])
             kwargs[query[0]] = query[1]
 
-        # If debugging is on, print the URL and data being sent.
-        debug.log('GET %s' % url, fg='blue', bold=True)
-        debug.log('Params: %s' % kwargs, fg='blue', bold=True)
-        debug.log('')
-
         # Make the request to the Ansible Tower API.
         r = client.get(url, params=kwargs)
         resp = r.json()
@@ -505,6 +500,7 @@ class Resource(BaseResource):
             existing_data = self._lookup(
                 fail_on_found=fail_on_found,
                 fail_on_missing=not create_on_missing,
+                include_debug_header=False,
                 **kwargs
             )
             if existing_data:
@@ -559,9 +555,6 @@ class Resource(BaseResource):
 
         # If debugging is on, print the URL and data being sent.
         debug.log('Writing the record.', header='details')
-        debug.log('%s %s' % (method, url), fg='blue', bold=True)
-        debug.log('Data: %s' % kwargs, fg='blue', bold=True)
-        debug.log('')
 
         # Actually perform the write.
         r = getattr(client, method.lower())(url, data=kwargs)
@@ -618,7 +611,8 @@ class Resource(BaseResource):
 
         If the number of results does not equal one, raise an exception.
         """
-        debug.log('Getting the record.', header='details')
+        if kwargs.pop('include_debug_header', True):
+            debug.log('Getting the record.', header='details')
         response = self.read(pk=pk, fail_on_no_results=True,
                              fail_on_multiple_results=True, **kwargs)
         return response['results'][0]
@@ -744,7 +738,8 @@ class Resource(BaseResource):
         r = client.post(url, data={'disassociate': True, 'id': other})
         return {'changed': True}
 
-    def _lookup(self, fail_on_missing=False, fail_on_found=False, **kwargs):
+    def _lookup(self, fail_on_missing=False, fail_on_found=False,
+                      include_debug_header=True, **kwargs):
         """Attempt to perform a lookup that is expected to return a single
         result, and return the record.
 
@@ -767,7 +762,8 @@ class Resource(BaseResource):
 
         # Get the record to write.
         try:
-            existing_data = self.get(**read_params)
+            existing_data = self.get(include_debug_header=include_debug_header,
+                                     **read_params)
             if fail_on_found:
                 raise exc.Found('A record matching %s already exists, and '
                                 'you requested a failure in that case.')
