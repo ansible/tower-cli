@@ -42,10 +42,14 @@ class Resource(models.BaseResource):
 
     @resources.command
     @click.option('--job-template', type=int)
+    @click.option('--monitor', is_flag=True, default=False,
+                  help='If sent, immediately calls `job monitor` on the newly '
+                       'launched job rather than exiting with a success.')
     @click.option('--no-input', is_flag=True, default=False,
                                 help='Suppress any requests for input.')
     @click.option('--extra-vars', type=types.File('r'), required=False)
-    def launch(self, job_template, no_input=True, extra_vars=None):
+    def launch(self, job_template, monitor=False, no_input=True,
+                     extra_vars=None):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately stats it, and
@@ -93,6 +97,13 @@ class Resource(models.BaseResource):
 
         # Actually start the job.
         result = client.post('/jobs/%d/start/' % job['id'], start_data)
+
+        # If we were told to monitor the job once it started, then call
+        # monitor from here.
+        if monitor:
+            return self.monitor(job['id'])
+
+        # Return the job ID.
         return {
             'changed': True,
             'id': job['id'],

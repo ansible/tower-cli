@@ -46,6 +46,20 @@ class LaunchTests(unittest.TestCase):
             result = self.res.launch(1)
             self.assertEqual(result, {'changed': True, 'id': 42})
 
+    def test_basic_launch_monitor_option(self):
+        """Establish that we are able to create a job that doesn't require
+        any invocation-time input, and that monitor is called if requested.
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {'id': 1,
+                                                  'name': 'frobnicate'})
+            t.register_json('/jobs/42/start/', {}, method='GET')
+            t.register_json('/jobs/42/start/', {}, method='POST')
+            t.register_json('/jobs/', {'id': 42}, method='POST')
+            with mock.patch.object(type(self.res), 'monitor') as monitor:
+                result = self.res.launch(1, monitor=True)
+                monitor.assert_called_once_with(42)
+
     def test_extra_vars_at_runtime(self):
         """Establish that if we should be asking for extra variables at
         runtime, that we do.
