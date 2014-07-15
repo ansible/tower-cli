@@ -766,7 +766,8 @@ class Resource(BaseResource):
                                      **read_params)
             if fail_on_found:
                 raise exc.Found('A record matching %s already exists, and '
-                                'you requested a failure in that case.')
+                                'you requested a failure in that case.' %
+                                read_params)
             return existing_data
         except exc.NotFound as ex:
             if fail_on_missing:
