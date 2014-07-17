@@ -1,7 +1,9 @@
 ## Welcome to tower-cli
 
 **tower-cli** is a command line tool for Ansible Tower. It allows Tower
-commands to be easily run from the Unix command-line.
+commands to be easily run from the Unix command-line.  It can also be used
+as a client library for other python apps, or as a reference for others 
+developing API interactions with Tower's REST API.
 
 
 ### About Tower
@@ -24,10 +26,9 @@ retrieving, creating, modifying, and deleting most objects within Tower.
 
 A few potential uses include:
 
-  * System-based job launches (for instance, from Jenkins, cron, etc.)
-  * Use in callbacks from Ansible playbooks
-  * Custom syncronization of inventory
-
+  * Launching playbook runs (for instance, from Jenkins, TeamCity, Bamboo, etc)
+  * Checking on job statuses
+  * Rapidly creating objects like organizations, users, teams, and more
 
 ### Installation
 
@@ -41,11 +42,12 @@ The preferred way to install is through pip:
 $ pip install ansible-tower-cli
 ```
 
+The main branch of this project may also be consumed directly from source.
 
 ### Configuration
 
-Configuration can be set in several places, and either through a command
-sent to `tower-cli` or through direct editing of the configuration file.
+Configuration can be set in several places.  The `tower-cli` itself can edit it's own configuration, or
+users can directly edit the configuration file.
 
 #### Set configuration with tower-cli config.
 
@@ -63,11 +65,15 @@ You will generally need to set at least three configuration options:
 `host`, `username`, and `password`; these correspond to the location of
 your Ansible Tower instance and your credentials to authenticate to Tower.
 
+```bash
+$ tower-cli config host tower.example.com
+$ tower-cli config username leeroyjenkins
+$ tower-cli config password myPassw0rd
+```
 
 #### Write to the config files directly.
 
-A configuration file is a simple file with keys and values, separated by
-`:` or `=`:
+The configuration file can also be edited directly.  A configuration file is a simple file with keys and values, separated by `:` or `=`:
 
 ```yaml
 host: tower.example.com
@@ -75,10 +81,11 @@ username: admin
 password: p4ssw0rd
 ```
 
+The locations searched for the configuration file are given below.
 
-#### Order of Precedence
+#### File Locations
 
-The order of precedence for configuration is as follows, from least to
+The order of precedence for configuration file locations is as follows, from least to
 greatest:
 
   * internal defaults
@@ -142,11 +149,18 @@ $ tower-cli job launch --job-template=144
 $ tower-cli job monitor 95
 ```
 
+When in doubt, help is available!
+
+```bash
+$ tower-cli # help
+$ tower-cli user --help # resource specific help
+$ tower-cli user create --help # command specific help
+```
+
 ### License
 
-While Tower is commercial software, _tower-cli_ is an open source project,
+While Tower is commercially licensed software, _tower-cli_ is an open source project,
 and we encorage contributions.  Specfically, this CLI project is licensed
-under the Apache license.
+under the Apache 2.0 license.  Pull requests and tickets filed in GitHub are welcome.
 
-Michael DeHaan
-(C) 2014, Ansible, Inc.
+(C) 2014, Michael DeHaan, and others, Ansible, Inc.
