@@ -69,7 +69,7 @@ class Resource(models.BaseResource):
         # and removing the ID.
         data = copy(jt)
         data.pop('id')
-        data['name'] = '%s [invocated via. Tower CLI]' % data['name']
+        data['name'] = '%s [invoked via. Tower CLI]' % data['name']
 
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
