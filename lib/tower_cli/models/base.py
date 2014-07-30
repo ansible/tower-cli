@@ -57,6 +57,18 @@ class ResourceMeta(type):
         for key, value in attrs.items():
             if getattr(value, '_cli_command', False):
                 commands.add(key)
+
+            # If this method has been overwritten from the superclass, copy
+            # any click options or arguments from the superclass implementation
+            # down tot the subclass implementation.
+            if not len(bases):
+                continue
+            superclass = bases[0]
+            super_method = getattr(superclass, key, None)
+            if super_method and getattr(super_method, '_cli_command', False):
+                cp = getattr(value, '__click_params__', [])
+                cp = getattr(super_method, '__click_params__', []) + cp
+                value.__click_params__ = cp
         attrs['commands'] = sorted(commands)
 
         # Sanity check: Only perform remaining initialization for subclasses

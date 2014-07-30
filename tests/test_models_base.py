@@ -82,6 +82,23 @@ class ResourceMetaTests(unittest.TestCase):
         self.assertEqual(set(MyResource.commands),
                          set(['create', 'modify', 'list', 'get', 'delete']))
 
+    def test_subclassed_commands(self):
+        """Establish that commands overridden in subclasses retain their
+        superclass implementation options.
+        """
+        # Create the subclass resource, overriding a superclass command.
+        class MyResource(models.Resource):
+            endpoint = '/bogus/'
+
+            @resources.command
+            def list(self, **kwargs):
+                return super(MyResource, self).list(**kwargs)
+
+        # Establish that it has one of the options added to the
+        # superclass list command.
+        self.assertTrue(any([i.name == 'query'
+                            for i in MyResource.list.__click_params__]))
+
     def test_fields(self):
         """Establish that fields are appropriately classified within
         the resource.
