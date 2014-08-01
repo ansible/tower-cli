@@ -372,7 +372,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         if isinstance(raw_row[col], bool):
                             template = template.replace('{0:', '{0:>')
                             value = six.text_type(value).lower()
-                        data_row += template.format(value) + ' '
+                        data_row += template.format(value or '') + ' '
                     data_rows.append(data_row.rstrip())
 
                 # Result the resulting table.
@@ -715,8 +715,9 @@ class Resource(BaseResource):
 
         To modify unique fields, you must use the primary key for the lookup.
         """
+        force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
-                              force_on_exists=True, **kwargs)
+                              force_on_exists=force_on_exists, **kwargs)
 
     def _assoc(self, url_fragment, me, other):
         """Associate the `other` record with the `me` record."""
