@@ -73,12 +73,12 @@ class Resource(models.Resource):
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
                               default='manual',
                               help='The source to use for this group.')
-    def modify(self, credential=None, source=None, **kwargs):
+    def modify(self, pk=None, credential=None, source=None, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
         """
         # First, modify the group.
-        answer = super(Resource, self).modify(**kwargs)
+        answer = super(Resource, self).modify(pk=pk, **kwargs)
 
         # If the group already exists and we aren't supposed to make changes,
         # then we're done.
@@ -92,7 +92,12 @@ class Resource(models.Resource):
 
         # We now have our inventory source ID; modify it according to the
         # provided parameters.
+        #
+        # Note: Any fields that were part of the group modification need
+        # to be expunged from kwargs before making this call.
         isrc = get_resource('inventory_source')
+        for field in self.fields:
+            kwargs.pop(field.name, None)
         return isrc.modify(isid, credential=credential, source=source,
                                  force_on_exists=True, **kwargs)
 
