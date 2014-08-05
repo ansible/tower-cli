@@ -24,6 +24,7 @@ from tower_cli.utils import types, exceptions as exc
 class Resource(models.Resource):
     cli_help = 'Manage inventory sources within Ansible Tower.'
     endpoint = '/inventory_sources/'
+    internal = True
 
     credential = models.Field(type=types.Related('credential'), required=False)
     source = models.Field(
@@ -31,32 +32,6 @@ class Resource(models.Resource):
         help_text='The type of inventory source in use.',
         type=click.Choice(['manual', 'ec2', 'rax', 'gce', 'azure']),
     )    
-
-    @click.option('--name', help='The name field.')
-    @click.option('--inventory', type=types.Related('inventory'))
-    def create(self, name=None, inventory=None, credential=None,
-                     source=None, **kwargs):
-        """Create a group and inventory source within the
-        given inventory.
-        """
-        # Inventory sources are not created directly; rather, we create
-        # a group, which will automatically create an inventory source.
-        # Then, we'll modify the inventory source appropriately.
-        group_resource = tower_cli.get_resource('group')        
-        group = group_resource.create(name=name, inventory=inventory, **kwargs)
-        isource_id = int(group['related']['inventory_source'].split('/')[-2])
-
-        # If the group already exists and we aren't supposed to make changes,
-        # then abort now, but send back the inventory source.
-        if not kwargs.pop('force_on_exists', False) and not group['changed']:
-            answer = self.get(isource_id)
-            answer['changed'] = False
-            return answer
-
-        # We now have our inventory source ID; modify it according to the
-        # provided parameters.
-        return self.modify(isource_id, credential=credential, source=source,
-                                       force_on_exists=True, **kwargs)
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @resources.command(use_fields_as_options=False, no_args_is_help=True)

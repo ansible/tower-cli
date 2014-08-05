@@ -31,8 +31,8 @@ class TowerCLI(click.MultiCommand):
       [1]: http://www.ansible.com/tower/
     """
     def list_commands(self, ctx):
-        """Return a list of commands present in the commands folder, but
-        not subcommands.
+        """Return a list of commands present in the commands and resources
+        folders, but not subcommands.
         """
         answer = set()
         locations = ('commands', 'resources')
@@ -40,7 +40,12 @@ class TowerCLI(click.MultiCommand):
             path = '%s/%s/' % (tower_cli.whereami, loc)
             for filename in os.listdir(path):
                 if filename.endswith('.py') and not filename.startswith('_'):
-                    answer.add(filename[:-3])
+                    if loc == 'resources':
+                        res = tower_cli.get_resource(filename[:-3])
+                        if not getattr(res, 'internal', False):
+                            answer.add(filename[:-3])
+                    else:
+                        answer.add(filename[:-3])
         return sorted(answer)
 
     def get_command(self, ctx, name):
@@ -59,8 +64,7 @@ class TowerCLI(click.MultiCommand):
 
         # No command was found; try to get a resource.
         try:
-            module = importlib.import_module('tower_cli.resources.%s' % name)
-            resource = module.Resource()
+            resource = tower_cli.get_resource(name)
             return resource.as_command()
         except ImportError:
             pass

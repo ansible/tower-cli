@@ -66,9 +66,16 @@ class ResourceMeta(type):
             superclass = bases[0]
             super_method = getattr(superclass, key, None)
             if super_method and getattr(super_method, '_cli_command', False):
+                # Copy the click parameters from the parent method to the
+                # child.
                 cp = getattr(value, '__click_params__', [])
                 cp = getattr(super_method, '__click_params__', []) + cp
                 value.__click_params__ = cp
+
+                # Copy the command attributes from the parent to the child,
+                # if the child has not overridden them.
+                for attkey, attval in super_method._cli_command_attrs.items():
+                    value._cli_command_attrs.setdefault(attkey, attval)
         attrs['commands'] = sorted(commands)
 
         # Sanity check: Only perform remaining initialization for subclasses

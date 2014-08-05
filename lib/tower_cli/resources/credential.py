@@ -42,8 +42,8 @@ class Resource(models.Resource):
     # What type of credential is this (machine, SCM, etc.)?
     kind = models.Field(
         help_text='The type of credential being added. '
-                  'Valid options are: ssh, scm, aws, rax.',
-        type=click.Choice(['ssh', 'scm', 'aws', 'rax']),
+                  'Valid options are: ssh, scm, aws, rax, gce, azure.',
+        type=click.Choice(['ssh', 'scm', 'aws', 'rax', 'gce', 'azure']),
     )
 
     # SSH and SCM fields.
