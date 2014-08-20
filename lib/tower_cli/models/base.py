@@ -143,7 +143,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     help=self.resource.cli_help,
                     **kwargs
                 )
-                
+
             def list_commands(self, ctx):
                 """Return a list of all methods decorated with the
                 @resources.command decorator.
@@ -393,7 +393,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 return response
 
         return Subcommand(resource=self)
-        
+
 
 class Resource(BaseResource):
     """Abstract subclass of BaseResource that adds the standard create,
@@ -409,7 +409,7 @@ class Resource(BaseResource):
     # `get` and `list` are wrappers around `read` and `create` and
     # `modify` are wrappers around `write`.
 
-    def read(self, pk=None, fail_on_no_results=False, 
+    def read(self, pk=None, fail_on_no_results=False,
                    fail_on_multiple_results=False, **kwargs):
         """Retrieve and return objects from the Ansible Tower API.
 
