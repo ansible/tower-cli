@@ -31,11 +31,11 @@ class Resource(models.Resource):
         default='manual',
         help_text='The type of inventory source in use.',
         type=click.Choice(['manual', 'ec2', 'rax', 'gce', 'azure']),
-    )    
+    )
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
-    def update(self, inventory_source, **kwargs):
+    def sync(self, inventory_source, **kwargs):
         """Update the given inventory source."""
 
         # Establish that we are able to update this inventory source

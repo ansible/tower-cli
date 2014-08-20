@@ -125,12 +125,12 @@ class Resource(models.Resource):
 
     @click.argument('group', type=types.Related('group'))
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
-    def update(self, group, **kwargs):
+    def sync(self, group, **kwargs):
         """Update the given group's inventory source."""
 
         isrc = get_resource('inventory_source')
         isid = self._get_inventory_source_id(group)
-        return isrc.update(isid, **kwargs)
+        return isrc.sync(isid, **kwargs)
 
     def _get_inventory_source_id(self, group):
         """Return the inventory source ID given a group dictionary returned

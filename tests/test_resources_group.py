@@ -155,17 +155,17 @@ class GroupTests(unittest.TestCase):
                 source='rax', credential=None, force_on_exists=True,
             )
 
-    def test_update(self):
-        """Establish that the update method correctly forwards to the
+    def test_sync(self):
+        """Establish that the sync method correctly forwards to the
         inventory source method, after getting the inventory source ID.
         """
         isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'update') as isrc_update:
+        with mock.patch.object(type(isrc), 'sync') as isrc_sync:
             with client.test_mode as t:
                 t.register_json('/groups/1/', {
                     'id': 1, 'name': 'foo', 'inventory': 1,
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='GET')
-                self.gr.update(1)
-                isrc_update.assert_called_once_with(42)
+                self.gr.sync(1)
+                isrc_sync.assert_called_once_with(42)
                 self.assertEqual(len(t.requests), 1)
