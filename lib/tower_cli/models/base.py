@@ -66,9 +66,16 @@ class ResourceMeta(type):
             superclass = bases[0]
             super_method = getattr(superclass, key, None)
             if super_method and getattr(super_method, '_cli_command', False):
+                # Copy the click parameters from the parent method to the
+                # child.
                 cp = getattr(value, '__click_params__', [])
                 cp = getattr(super_method, '__click_params__', []) + cp
                 value.__click_params__ = cp
+
+                # Copy the command attributes from the parent to the child,
+                # if the child has not overridden them.
+                for attkey, attval in super_method._cli_command_attrs.items():
+                    value._cli_command_attrs.setdefault(attkey, attval)
         attrs['commands'] = sorted(commands)
 
         # Sanity check: Only perform remaining initialization for subclasses
@@ -136,7 +143,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     help=self.resource.cli_help,
                     **kwargs
                 )
-                
+
             def list_commands(self, ctx):
                 """Return a list of all methods decorated with the
                 @resources.command decorator.
@@ -372,7 +379,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         if isinstance(raw_row[col], bool):
                             template = template.replace('{0:', '{0:>')
                             value = six.text_type(value).lower()
-                        data_row += template.format(value) + ' '
+                        data_row += template.format(value or '') + ' '
                     data_rows.append(data_row.rstrip())
 
                 # Result the resulting table.
@@ -386,7 +393,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 return response
 
         return Subcommand(resource=self)
-        
+
 
 class Resource(BaseResource):
     """Abstract subclass of BaseResource that adds the standard create,
@@ -402,7 +409,7 @@ class Resource(BaseResource):
     # `get` and `list` are wrappers around `read` and `create` and
     # `modify` are wrappers around `write`.
 
-    def read(self, pk=None, fail_on_no_results=False, 
+    def read(self, pk=None, fail_on_no_results=False,
                    fail_on_multiple_results=False, **kwargs):
         """Retrieve and return objects from the Ansible Tower API.
 
@@ -715,8 +722,9 @@ class Resource(BaseResource):
 
         To modify unique fields, you must use the primary key for the lookup.
         """
+        force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
-                              force_on_exists=True, **kwargs)
+                              force_on_exists=force_on_exists, **kwargs)
 
     def _assoc(self, url_fragment, me, other):
         """Associate the `other` record with the `me` record."""

@@ -42,7 +42,7 @@ class Resource(models.BaseResource):
     endpoint = '/jobs/'
 
     @resources.command
-    @click.option('--job-template', type=int)
+    @click.option('--job-template', type=types.Related('job_template'))
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
                        'launched job rather than exiting with a success.')
