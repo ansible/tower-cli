@@ -27,24 +27,24 @@ class InventorySourceTests(unittest.TestCase):
     def setUp(self):
         self.isr = tower_cli.get_resource('inventory_source')
 
-    def test_cannot_update(self):
-        """Establish that if we attempt to update an inventory source that
+    def test_cannot_sync(self):
+        """Establish that if we attempt to sync an inventory source that
         cannot be updated, that we raise BadRequest.
         """
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/update/',
                             {'can_update': False}, method='GET')
             with self.assertRaises(exc.BadRequest):
-                self.isr.update(1)
+                self.isr.sync(1)
 
-    def test_update(self):
+    def test_sync(self):
         """Establish that if we are able to update an inventory source,
-        that the update command does so.
+        that the sync command does so.
         """
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/update/',
                             {'can_update': True}, method='GET')
             t.register_json('/inventory_sources/1/update/',
                             {}, method='POST')
-            answer = self.isr.update(1)
+            answer = self.isr.sync(1)
             self.assertEqual(answer['status'], 'ok')
