@@ -74,7 +74,7 @@ class Resource(models.BaseResource):
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
         if extra_vars:
-            data['extra_vars'] = extra_vars
+            data['extra_vars'] = extra_vars.read()
         elif data.pop('ask_variables_on_launch', False) and not no_input:
             initial = data['extra_vars']
             initial = '\n'.join((
