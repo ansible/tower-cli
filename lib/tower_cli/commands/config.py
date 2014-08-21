@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import warnings
 
 import six
 
@@ -30,11 +31,19 @@ from tower_cli.utils import exceptions as exc
 @click.argument('value', required=False)
 @click.option('global_', '--global', is_flag=True,
               help='Write this config option to the global configuration. '
-                   'Probably will require sudo.')
+                   'Probably will require sudo.\n'
+                   'Deprecated: Use `--scope=global` instead.')
+@click.option('--scope', type=click.Choice(['local', 'user', 'global']),
+                         default='user',
+                         help='The config file to write. '
+                              '"local" writes to a config file in the local '
+                              'directory; "user" writes to the home directory,'
+                              ' and "global" to a system-wide directory '
+                              '(probably requires sudo).')
 @click.option('--unset', is_flag=True,
               help='Remove reference to this configuration option from '
                    'the config file.')
-def config(key=None, value=None, global_=False, unset=False):
+def config(key=None, value=None, scope='user', global_=False, unset=False):
     """Read or write tower-cli configuration.
 
     `tower config` saves the given setting to the appropriate Tower CLI;
@@ -44,17 +53,27 @@ def config(key=None, value=None, global_=False, unset=False):
     Writing to /etc/awx/tower_cli.cfg is likely to require heightened
     permissions (in other words, sudo).
     """
+    # If the old-style `global_` option is set, issue a deprecation notice.
+    if global_:
+        scope = 'global'
+        warnings.warn('The `--global` option is deprecated and will be '
+                      'removed. Use `--scope=global` to get the same effect.',
+                      DeprecationWarning)
+
     # If no key was provided, print out the current configuration
     # in play.
     if not key:
         seen = set()
         parser_desc = {
             'runtime': 'Runtime options.',
-            'user': 'User options (set with `tower-cli config`, stored in '
+            'local': 'Local options (set with `tower-cli config '
+                     '--scope=local`; stored in .tower_cli.cfg of this '
+                     'directory or a parent)',
+            'user': 'User options (set with `tower-cli config`; stored in '
                     '~/.tower_cli.cfg).',
-            'global': 'Global options (set with `tower-cli config --global`, '
-                      'stored in /etc/awx/tower_cli.cfg).',
-            'defaults': 'Defaults.'
+            'global': 'Global options (set with `tower-cli config '
+                      '--scope=global`, stored in /etc/awx/tower_cli.cfg).',
+            'defaults': 'Defaults.',
         }
 
         # Iterate over each parser (English: location we can get settings from)
@@ -109,11 +128,13 @@ def config(key=None, value=None, global_=False, unset=False):
     # Okay, so we're *writing* a key. Let's do this.
     # First, we need the appropriate file.
     filename = os.path.expanduser('~/.tower_cli.cfg')
-    if global_:
+    if scope == 'global':
         if not os.path.isdir('/etc/awx/'):
             raise exc.TowerCLIError('/etc/awx/ does not exist, and this '
                                     'command cowardly declines to create it.')
         filename = '/etc/awx/tower_cli.cfg'
+    elif scope == 'local':
+        filename = '.tower_cli.cfg'
 
     # Read in the appropriate config file, write this value, and save
     # the result back to the file.

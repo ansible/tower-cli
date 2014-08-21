@@ -32,18 +32,20 @@ class SettingsTests(unittest.TestCase):
         """Establish that if /etc/awx/ exists but isn't readable,
         that we properly catch it and whine about it.
         """
-        with mock.patch.object(warnings, 'warn') as warn:
-            with mock.patch.object(os.path, 'isdir') as isdir:
-                isdir.return_value = True
-                with mock.patch.object(os, 'listdir') as listdir:
-                    listdir.side_effect = OSError
-                    settings = Settings()
-                    warn.assert_called_once_with(
-                        '/etc/awx/ is present, but not readable with current '
-                        'permissions. Any settings defined in '
-                        '/etc/awx/tower_cli.cfg will not be honored.',
-                        RuntimeWarning,
-                    )
+        with mock.patch.object(os, 'getcwd') as getcwd:
+            getcwd.return_value = os.path.expanduser('~')
+            with mock.patch.object(warnings, 'warn') as warn:
+                with mock.patch.object(os.path, 'isdir') as isdir:
+                    isdir.return_value = True
+                    with mock.patch.object(os, 'listdir') as listdir:
+                        listdir.side_effect = OSError
+                        settings = Settings()
+                        warn.assert_called_once_with(
+                            '/etc/awx/ is present, but not readable with '
+                            'current permissions. Any settings defined in '
+                            '/etc/awx/tower_cli.cfg will not be honored.',
+                            RuntimeWarning,
+                        )
 
 
 class ParserTests(unittest.TestCase):

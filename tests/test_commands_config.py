@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os.path
+import warnings
 
 import click
 from click.testing import CliRunner
@@ -93,7 +94,8 @@ class ConfigTests(unittest.TestCase):
             with mock.patch.object(os.path, 'isdir') as isdir:
                 isdir.return_value = True
                 result = self.runner.invoke(config,
-                                            ['username', 'luke', '--global'])
+                    ['username', 'luke', '--scope=global'],
+                )
                 isdir.assert_called_once_with('/etc/awx/')
 
         # Ensure that the command completed successfully.
@@ -105,6 +107,30 @@ class ConfigTests(unittest.TestCase):
         self.assertIn(mock.call('/etc/awx/tower_cli.cfg', 'w'),
                       mock_open.mock_calls)
         self.assertIn(mock.call().write('username = luke\n'),
+                      mock_open.mock_calls)
+
+    def test_write_local_setting(self):
+        """Establish that if we attempt to write a valid setting locally, that
+        the correct parser's write method is run.
+        """
+        # Invoke the command, but trap the file-write at the end
+        # so we don't plow over real things.
+        mock_open = mock.mock_open()
+        with mock.patch('tower_cli.commands.config.open', mock_open,
+                        create=True):
+            result = self.runner.invoke(config,
+                ['username', 'meagan', '--scope=local'],
+            )
+
+        # Ensure that the command completed successfully.
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(),
+                         'Configuration updated successfully.')
+
+        # Ensure that the output seems to be correct.
+        self.assertIn(mock.call('.tower_cli.cfg', 'w'),
+                      mock_open.mock_calls)
+        self.assertIn(mock.call().write('username = meagan\n'),
                       mock_open.mock_calls)
 
     def test_unset(self):
@@ -151,7 +177,8 @@ class ConfigTests(unittest.TestCase):
         """
         with mock.patch.object(os.path, 'isdir') as isdir:
             isdir.return_value = False
-            result = self.runner.invoke(config, ['host', 'foo', '--global'])
+            result = self.runner.invoke(config,
+                                        ['host', 'foo', '--scope=global'])
             isdir.assert_called_once_with('/etc/awx/')
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(result.output.strip(),
@@ -174,3 +201,42 @@ class SupportTests(unittest.TestCase):
                     mock.call('host: ', fg='magenta', bold=True, nl=False),
                     mock.call('20.12.4.21', fg='white', bold=True),
                 ])
+
+
+class DeprecationTests(unittest.TestCase):
+    """Establish any deprecation notices are sent with a command if they
+    are expected.
+    """
+    def setUp(self):
+        self.runner = CliRunner()
+
+    def test_write_global_setting_deprecated(self):
+        """Establish that if we attempt to write a valid setting, that
+        the parser's write method is run.
+        """
+        # Invoke the command, but trap the file-write at the end
+        # so we don't plow over real things.
+        mock_open = mock.mock_open()
+        with mock.patch('tower_cli.commands.config.open', mock_open,
+                        create=True):
+            with mock.patch.object(os.path, 'isdir') as isdir:
+                isdir.return_value = True
+                with mock.patch.object(warnings, 'warn') as warn:
+                    result = self.runner.invoke(config,
+                        ['username', 'meagan', '--global'],
+                    )
+                    warn.assert_called_once()
+                    self.assertEqual(warn.mock_calls[0][1][1],
+                                     DeprecationWarning)
+                isdir.assert_called_once_with('/etc/awx/')
+
+        # Ensure that the command completed successfully.
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual('Configuration updated successfully.',
+                         result.output.strip())
+
+        # Ensure that the output seems to be correct.
+        self.assertIn(mock.call('/etc/awx/tower_cli.cfg', 'w'),
+                      mock_open.mock_calls)
+        self.assertIn(mock.call().write('username = meagan\n'),
+                      mock_open.mock_calls)
