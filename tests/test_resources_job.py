@@ -19,6 +19,8 @@ from copy import copy
 
 import click
 
+from six.moves import StringIO
+
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
@@ -97,6 +99,24 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/jobs/42/start/', {}, method='POST')
             t.register_json('/jobs/', {'id': 42}, method='POST')
             result = self.res.launch(1, extra_vars='foo: bar')
+
+            self.assertEqual(
+                json.loads(t.requests[1].body)['extra_vars'],
+                'foo: bar',
+            )
+            self.assertEqual(result, {'changed': True, 'id': 42})
+
+    def test_extra_vars_file_at_call_time(self):
+        """Establish that extra variables specified at call time as a file are
+        appropriately specified.
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {'id': 1,
+                                                  'name': 'frobnicate'})
+            t.register_json('/jobs/42/start/', {}, method='GET')
+            t.register_json('/jobs/42/start/', {}, method='POST')
+            t.register_json('/jobs/', {'id': 42}, method='POST')
+            result = self.res.launch(1, extra_vars=StringIO('foo: bar'))
 
             self.assertEqual(
                 json.loads(t.requests[1].body)['extra_vars'],
@@ -305,7 +325,6 @@ class MonitorTests(unittest.TestCase):
             # We should have gotten two requests total, to the same URL.
             self.assertEqual(len(t.requests), 2)
             self.assertEqual(t.requests[0].url, t.requests[1].url)
-
 
 
 class CancelTests(unittest.TestCase):
