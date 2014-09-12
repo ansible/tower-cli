@@ -28,7 +28,12 @@ class Resource(models.Resource):
     organization = models.Field(type=types.Related('organization'),
                                 display=False)
     scm_type = models.Field(
-        type=click.Choice(['manual', 'git', 'hg', 'svn']),
+        type=types.MappedChoice([
+            ('', 'manual'),
+            ('git', 'git'),
+            ('hg', 'hg'),
+            ('svn', 'svn'),
+        ]),
     )
     scm_url = models.Field(required=False)
     scm_branch = models.Field(required=False, display=False)
