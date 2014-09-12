@@ -95,7 +95,7 @@ class RelatedTests(unittest.TestCase):
         the resource's unique criterion, and return back the ID that we get
         back in response.
         """
-        p = click.Option(('name',))
+        p = click.Option(('name', '-n'))
         with client.test_mode as t:
             t.register_json('/users/?username=meagan', {
                 'count': 1,
@@ -107,7 +107,7 @@ class RelatedTests(unittest.TestCase):
         """Establish that if doing a foriegn key lookup fails, that we
         raise an appropriate exception.
         """
-        p = click.Option(('name',))
+        p = click.Option(('name', '-n'))
         with client.test_mode as t:
             t.register_json('/users/?username=meagan', {}, status_code=404)
             with self.assertRaises(TowerCLIError):
