@@ -68,7 +68,7 @@ class Resource(models.BaseResource):
         # Update the job data by adding an automatically-generated job name,
         # and removing the ID.
         data = copy(jt)
-        data.pop('id')
+        data['job_template'] = data.pop('id')
         data['name'] = '%s [invoked via. Tower CLI]' % data['name']
 
         # If the job template requires prompting for extra variables,
