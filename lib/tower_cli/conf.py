@@ -61,7 +61,7 @@ class Settings(object):
         - command line arguments
 
     """
-    _parser_names = ['runtime', 'user', 'global', 'defaults']
+    _parser_names = ['runtime', 'local', 'user', 'global', 'defaults']
 
     def __init__(self):
         """Create the settings object, and read from appropriate files as
@@ -86,7 +86,7 @@ class Settings(object):
         self._global.add_section('general')
         if os.path.isdir('/etc/awx/'):
             # Sanity check: Try to actually get a list of files in `/etc/awx/`.
-            # 
+            #
             # The default Tower installation caused `/etc/awx/` to have
             # extremely restrictive permissions, since it has its own user
             # and group and has a chmod of 0750.
@@ -113,10 +113,38 @@ class Settings(object):
         self._user = Parser()
         self._user.add_section('general')
 
-        # If there is a user settings file, read it into the parser
-        # object.
+        # If there is a user settings file, read it into the parser object.
         user_filename = os.path.expanduser('~/.tower_cli.cfg')
         self._user.read(user_filename)
+
+        # Initialize a parser for the local settings file.
+        self._local = Parser()
+        self._local.add_section('general')
+
+        # If there is a local settings file in the current working directory
+        # or any parent, read it into the parser object.
+        #
+        # As a first step, we need to get each of the parents.
+        cwd = os.getcwd()
+        local_dirs = []
+        for i in range(0, len(cwd.split('/'))):
+            local_dir = '/'.join(cwd.split('/')[0:i + 1])
+            if len(local_dir) == 0:
+                local_dir = '/'
+
+            # Sanity check: if this directory corresponds to our global or
+            # user directory, skip it.
+            if local_dir in (os.path.expanduser('~'), '/etc/awx'):
+                continue
+
+            # Add this directory to the list.
+            local_dirs.append(local_dir)
+
+        # Iterate over each potential local config file and attempt to read
+        # it (most won't exist, which is fine).
+        for local_dir in local_dirs:
+            local_filename = '%s/.tower_cli.cfg' % local_dir
+            self._local.read(local_filename)
 
         # Put a stubbed runtime parser in.
         self._runtime = Parser()
@@ -184,7 +212,7 @@ class Settings(object):
                 continue
 
             # Remove these keys from the cache, if they are present.
-            self._cache.pop(k, None)            
+            self._cache.pop(k, None)
 
             # Coerce values to strings.
             kwargs[k] = six.text_type(v)
@@ -193,7 +221,7 @@ class Settings(object):
         # the context manager's kwargs as the "defaults" (there can never
         # be anything other than defaults, but that isn't a problem for our
         # purposes because we're using our own precedence system).
-        # 
+        #
         # Ensure that everything is put back to rights at the end of the
         # context manager call.
         old_runtime_parser = self._runtime
