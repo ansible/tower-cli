@@ -40,11 +40,14 @@ class LaunchTests(unittest.TestCase):
         any invocation-time input.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {'id': 1,
-                                                  'name': 'frobnicate'})
-            t.register_json('/jobs/42/start/', {}, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
             result = self.res.launch(1)
             self.assertEqual(result, {'changed': True, 'id': 42})
 
@@ -53,11 +56,14 @@ class LaunchTests(unittest.TestCase):
         any invocation-time input, and that monitor is called if requested.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {'id': 1,
-                                                  'name': 'frobnicate'})
-            t.register_json('/jobs/42/start/', {}, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
                 result = self.res.launch(1, monitor=True)
                 monitor.assert_called_once_with(42, timeout=None)
@@ -72,10 +78,39 @@ class LaunchTests(unittest.TestCase):
                 'extra_vars': 'spam: eggs',
                 'id': 1,
                 'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
             })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
+            with mock.patch.object(click, 'edit') as edit:
+                edit.return_value = '# Nothing.\nfoo: bar'
+                result = self.res.launch(1, no_input=False)
+                self.assertTrue(
+                    edit.mock_calls[0][1][0].endswith('spam: eggs'),
+                )
+            self.assertEqual(
+                json.loads(t.requests[2].body)['extra_vars'],
+                'foo: bar',
+            )
+            self.assertEqual(result, {'changed': True, 'id': 42})
+
+    def test_extra_vars_at_runtime_tower_20(self):
+        """Establish that if we should be asking for extra variables at
+        runtime, that we do.
+        (This test is intended for Tower 2.0 compatibility.)
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {
+                'ask_variables_on_launch': True,
+                'extra_vars': 'spam: eggs',
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {},
+            })
+            t.register_json('/jobs/', {'id': 42}, method='POST')
             t.register_json('/jobs/42/start/', {}, method='GET')
             t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
             with mock.patch.object(click, 'edit') as edit:
                 edit.return_value = '# Nothing.\nfoo: bar'
                 result = self.res.launch(1, no_input=False)
@@ -93,15 +128,18 @@ class LaunchTests(unittest.TestCase):
         appropriately specified.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {'id': 1,
-                                                  'name': 'frobnicate'})
-            t.register_json('/jobs/42/start/', {}, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
             result = self.res.launch(1, extra_vars='foo: bar')
 
             self.assertEqual(
-                json.loads(t.requests[1].body)['extra_vars'],
+                json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
             self.assertEqual(result, {'changed': True, 'id': 42})
@@ -111,15 +149,18 @@ class LaunchTests(unittest.TestCase):
         appropriately specified.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {'id': 1,
-                                                  'name': 'frobnicate'})
-            t.register_json('/jobs/42/start/', {}, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
             result = self.res.launch(1, extra_vars=StringIO('foo: bar'))
 
             self.assertEqual(
-                json.loads(t.requests[1].body)['extra_vars'],
+                json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
             self.assertEqual(result, {'changed': True, 'id': 42})
@@ -129,13 +170,16 @@ class LaunchTests(unittest.TestCase):
         any invocation-time input.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {'id': 1,
-                                                  'name': 'frobnicate'})
-            t.register_json('/jobs/42/start/', {
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {
                 'passwords_needed_to_start': ['foo'],
             }, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
 
             with mock.patch('tower_cli.resources.job.getpass') as getpass:
                 getpass.return_value = 'bar'

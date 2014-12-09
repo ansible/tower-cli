@@ -89,35 +89,55 @@ class Resource(models.BaseResource):
                                             if not i.startswith('#')])
             data['extra_vars'] = extra_vars
 
+        # In Tower 2.1 and later, we create the new job with
+        # /job_templates/N/launch/; in Tower 2.0 and before, there is a two
+        # step process of posting to /jobs/ and then /jobs/N/start/.
+        supports_job_template_launch = False
+        if 'launch' in jt['related']:
+            supports_job_template_launch = True
+
         # Create the new job in Ansible Tower.
-        debug.log('Creating the job.', header='details')
-        job = client.post('/jobs/', data=data).json()
+        start_data = {}
+        if supports_job_template_launch:
+            endpoint = '/job_templates/%d/launch/' % jt['id']
+            if 'extra_vars' in data:
+                start_data['extra_vars'] = data['extra_vars']
+        else:
+            debug.log('Creating the job.', header='details')
+            job = client.post('/jobs/', data=data).json()
+            job_id = job['id']
+            endpoint = '/jobs/%d/start/' % job_id
 
         # There's a non-trivial chance that we are going to need some
         # additional information to start the job; in particular, many jobs
         # rely on passwords entered at run-time.
         #
         # If there are any such passwords on this job, ask for them now.
+
         debug.log('Asking for information necessary to start the job.',
                   header='details')
-        job_start_info = client.get('/jobs/%d/start/' % job['id']).json()
-        start_data = {}
+        job_start_info = client.get(endpoint).json()
         for password in job_start_info.get('passwords_needed_to_start', []):
             start_data[password] = getpass('Password for %s: ' % password)
 
         # Actually start the job.
         debug.log('Launching the job.', header='details')
-        result = client.post('/jobs/%d/start/' % job['id'], start_data)
+        result = client.post(endpoint, start_data)
+
+        # If this used the /job_template/N/launch/ route, get the job
+        # ID from the result.
+        if supports_job_template_launch:
+            job_id = result.json()['job']
 
         # If we were told to monitor the job once it started, then call
         # monitor from here.
         if monitor:
-            return self.monitor(job['id'], timeout=timeout)
+            return self.monitor(job_id, timeout=timeout)
 
         # Return the job ID.
         return {
             'changed': True,
-            'id': job['id'],
+            'id': job_id,
         }
 
     @resources.command
