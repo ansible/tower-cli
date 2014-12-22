@@ -47,8 +47,16 @@ class Resource(models.Resource):
     )
 
     # SSH and SCM fields.
-    username = models.Field(required=False)
-    password = models.Field(password=True, required=False)
+    username = models.Field(
+        help_text='The username. For AWS credentials, the access key.',
+        required=False,
+    )
+    password = models.Field(
+        help_text='The password. For AWS credentials, the secret key. '
+                  'For Rackspace credentials, the API key.',
+        password=True,
+        required=False,
+    )
     private_key = models.Field('ssh_key_data',
         display=False,
         help_text="The full path to the SSH private key to store. "
@@ -63,10 +71,3 @@ class Resource(models.Resource):
     sudo_username = models.Field(required=False, display=False)
     sudo_password = models.Field(password=True, required=False)
     vault_password = models.Field(password=True, required=False)
-
-    # AWS fields.
-    access_key = models.Field(required=False, display=False)
-    secret_key = models.Field(required=False, display=False)
-
-    # Rackspace fields.
-    api_key = models.Field(required=False, display=False)
