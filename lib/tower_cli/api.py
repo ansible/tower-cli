@@ -17,6 +17,7 @@ import contextlib
 import copy
 import functools
 import json
+import warnings
 
 from requests.exceptions import ConnectionError
 from requests.sessions import Session
@@ -88,8 +89,9 @@ class Client(Session):
 
         # Call the superclass method.
         try:
-            r = super(Client, self).request(method, url, *args,
-                                            verify=False, **kwargs)
+            with warnings.catch_warnings():
+                r = super(Client, self).request(method, url, *args,
+                                                verify=False, **kwargs)
         except ConnectionError as ex:
             if settings.verbose:
                 debug.log('Cannot connect to Tower:', fg='yellow', bold=True)
