@@ -817,3 +817,15 @@ class ResourceTests(unittest.TestCase):
             ], 'next': None, 'previous': None})
             with self.assertRaises(exc.Found):
                 self.res._lookup(name='bar', fail_on_found=True)
+
+
+class MonitorableResourcesTests(unittest.TestCase):
+    """Estblaish that the MonitorableResource abstract class works in the
+    way that we expect.
+    """
+    def test_status_not_implemented(self):
+        """Establish that the abstract MonitorableResource's status
+        method raises NotImplementedError.
+        """
+        with self.assertRaises(NotImplementedError):
+            models.MonitorableResource().status(None)

@@ -266,7 +266,7 @@ class MonitorTests(unittest.TestCase):
             })
             with self.assertRaises(exc.JobFailure):
                 with mock.patch.object(click, 'secho') as secho:
-                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                    with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
                         result = self.res.monitor(42)
                 self.assertTrue(secho.call_count >= 1)
@@ -284,7 +284,7 @@ class MonitorTests(unittest.TestCase):
             })
             with self.assertRaises(exc.JobFailure):
                 with mock.patch.object(click, 'echo') as echo:
-                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                    with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = False
                         result = self.res.monitor(42)
                 self.assertTrue(echo.call_count >= 1)
@@ -311,7 +311,7 @@ class MonitorTests(unittest.TestCase):
             with mock.patch.object(time, 'sleep') as sleep:
                 sleep.side_effect = assign_success
                 with mock.patch.object(click, 'secho') as secho:
-                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                    with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
                         result = self.res.monitor(42, min_interval=0.21)
                 self.assertTrue(secho.call_count >= 100)
@@ -334,7 +334,7 @@ class MonitorTests(unittest.TestCase):
             t.register_json('/jobs/42/', copy(data))
             with mock.patch.object(click, 'secho') as secho:
                 with self.assertRaises(exc.Timeout):
-                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                    with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
                         result = self.res.monitor(42, min_interval=0.21,
                                                       timeout=0.1)
@@ -361,7 +361,7 @@ class MonitorTests(unittest.TestCase):
             with mock.patch.object(time, 'sleep') as sleep:
                 sleep.side_effect = assign_success
                 with mock.patch.object(click, 'echo') as echo:
-                    with mock.patch('tower_cli.resources.job.is_tty') as tty:
+                    with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = False
                         result = self.res.monitor(42, min_interval=0.21)
                 self.assertTrue(echo.call_count >= 1)
