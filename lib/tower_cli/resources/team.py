@@ -22,6 +22,7 @@ from tower_cli.utils import types
 class Resource(models.Resource):
     cli_help = 'Manage teams within Ansible Tower.'
     endpoint = '/teams/'
+    identity = ('organization', 'name')
 
     name = models.Field(unique=True)
     organization = models.Field(type=types.Related('organization'))

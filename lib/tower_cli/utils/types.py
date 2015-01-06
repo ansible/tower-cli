@@ -99,7 +99,16 @@ class Related(click.types.ParamType):
         try:
             debug.log('The %s field is given as a name; '
                       'looking it up.' % param.name, header='details')
-            rel = resource.get(**{resource.unique_criterion: value})
+            rel = resource.get(**{resource.identity[-1]: value})
+        except exc.MultipleResults as ex:
+            raise exc.MultipleRelatedError(
+                'Cannot look up {0} exclusively by name, because multiple {0} '
+                'objects exist with that name.\n'
+                'Please send an ID. You can get the ID for the {0} you want '
+                'with:\n'
+                '  tower-cli {0} list --name "{1}"'.format(self.resource_name,
+                                                           value),
+            )
         except exc.TowerCLIError as ex:
             raise exc.RelatedError('Could not get %s. %s' %
                                    (self.resource_name, str(ex)))

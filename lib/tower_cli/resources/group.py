@@ -25,6 +25,7 @@ INVENTORY_SOURCES = ['manual', 'ec2', 'rax', 'gce', 'azure']
 class Resource(models.Resource):
     cli_help = 'Manage groups belonging to an inventory.'
     endpoint = '/groups/'
+    identity = ('inventory', 'name')
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

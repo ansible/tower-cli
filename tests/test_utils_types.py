@@ -21,8 +21,7 @@ import click
 
 from tower_cli.api import client
 from tower_cli.resources.user import Resource as UserResource
-from tower_cli.utils import types
-from tower_cli.utils.exceptions import TowerCLIError
+from tower_cli.utils import exceptions as exc, types
 
 from tests.compat import unittest, mock
 
@@ -92,8 +91,8 @@ class RelatedTests(unittest.TestCase):
 
     def test_convert_by_lookup(self):
         """Establish that if we get a string value, we do a lookup against
-        the resource's unique criterion, and return back the ID that we get
-        back in response.
+        the resource's identity, and return back the ID that we get back
+        in response.
         """
         p = click.Option(('name', '-n'))
         with client.test_mode as t:
@@ -110,8 +109,21 @@ class RelatedTests(unittest.TestCase):
         p = click.Option(('name', '-n'))
         with client.test_mode as t:
             t.register_json('/users/?username=meagan', {}, status_code=404)
-            with self.assertRaises(TowerCLIError):
+            with self.assertRaises(exc.RelatedError):
                 self.related.convert('meagan', p, None)
+
+    def test_convert_by_lookup_multi(self):
+        """Establish that if doing a foreign key lookup returns multiple
+        results, that we return a special error.
+        """
+        p = click.Option(('name', '-n'))
+        with client.test_mode as t:
+            t.register_json('/users/?username=meagan', {
+                'count': 2,
+                'results': [{'id': 42}, {'id': 84}],
+            })
+            with self.assertRaises(exc.MultipleRelatedError):
+                self.assertEqual(self.related.convert('meagan', p, None), 42)
 
     def test_get_metavar(self):
         """Establish that the metavar ends up being what we expect,

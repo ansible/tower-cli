@@ -20,6 +20,7 @@ from tower_cli.utils import types
 class Resource(models.Resource):
     cli_help = 'Manage inventory within Ansible Tower.'
     endpoint = '/inventories/'
+    identity = ('organization', 'name')
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

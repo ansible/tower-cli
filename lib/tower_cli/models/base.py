@@ -124,7 +124,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     abstract = True  # Not inherited.
     cli_help = ''
     endpoint = None
-    unique_criterion = 'name'
+    identity = ('name',)
 
     def as_command(self):
         """Return a `click.Command` class for interacting with this
@@ -699,9 +699,9 @@ class Resource(BaseResource):
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create an object.
 
-        If unique fields exist and all unique fields are provided, and a match
-        is found, then no-op (unless `force_on_exists` is set) but do not
-        fail (unless `fail_on_found` is set).
+        Fields in the resource's `identity` tuple are used for a lookup;
+        if a match is found, then no-op (unless `force_on_exists` is set) but
+        do not fail (unless `fail_on_found` is set).
         """
         return self.write(create_on_missing=True, fail_on_found=fail_on_found,
                           force_on_exists=force_on_exists, **kwargs)
@@ -716,9 +716,9 @@ class Resource(BaseResource):
     def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify an already existing object.
 
-        If unique fields exist and are provided, they can be used in lieu of
-        a primary key for a lookup; in such a case, only non-unique fields
-        are written.
+        Fields in the resource's `identity` tuple can be used in lieu of a
+        primary key for a lookup; in such a case, only other fields are
+        written.
 
         To modify unique fields, you must use the primary key for the lookup.
         """
@@ -769,9 +769,9 @@ class Resource(BaseResource):
         # Determine which parameters we are using to determine
         # the appropriate field.
         read_params = {}
-        for unique_field in self.unique_fields:
-            if unique_field in kwargs:
-                read_params[unique_field] = kwargs[unique_field]
+        for field_name in self.identity:
+            if field_name in kwargs:
+                read_params[field_name] = kwargs[field_name]
 
         # Sanity check: Do we have any parameters?
         # If not, then there's no way for us to do this read.

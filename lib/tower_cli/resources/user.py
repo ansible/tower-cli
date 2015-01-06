@@ -19,7 +19,7 @@ from tower_cli import models
 class Resource(models.Resource):
     cli_help = 'Manage users within Ansible Tower.'
     endpoint = '/users/'
-    unique_criterion = 'username'
+    identity = ('username',)
 
     username = models.Field(unique=True)
     password = models.Field(required=False, display=False)

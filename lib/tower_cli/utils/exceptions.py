@@ -105,6 +105,13 @@ class RelatedError(TowerCLIError):
     """
     exit_code = 61
 
+
+class MultipleRelatedError(RelatedError):
+    """An exception class for errors where we try to find a single related
+    object, and get more than one.
+    """
+    exit_code = 62
+
     
 class ValidationError(TowerCLIError):
     """An exception class for invalid values being sent as option

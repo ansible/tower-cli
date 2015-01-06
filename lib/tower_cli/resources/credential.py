@@ -23,6 +23,7 @@ from tower_cli.utils import types
 class Resource(models.Resource):
     cli_help = 'Manage credentials within Ansible Tower.'
     endpoint = '/credentials/'
+    identity = ('user', 'team', 'kind', 'name')
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
