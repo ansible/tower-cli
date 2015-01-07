@@ -15,11 +15,14 @@
 
 import click
 
-from tower_cli import models
-from tower_cli.utils import types
+from sdict import adict
+
+from tower_cli import models, resources
+from tower_cli.api import client
+from tower_cli.utils import debug, exceptions as exc, types
 
 
-class Resource(models.Resource):
+class Resource(models.MonitorableResource):
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
 
@@ -48,3 +51,77 @@ class Resource(models.Resource):
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
 
+    @resources.command(use_fields_as_options=('name', 'organization'))
+    @click.option('--monitor', is_flag=True, default=False,
+                  help='If sent, immediately calls `job monitor` on the newly '
+                       'launched job rather than exiting with a success.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided with --monitor, this command (not the job)'
+                       ' will time out after the given number of seconds. '
+                       'Does nothing if --monitor is not sent.')
+    def update(self, pk, monitor=False, timeout=None, name=None,
+                     organization=None):
+        """Trigger a project update job within Ansible Tower.
+        Only meaningful on non-manual projects.
+        """
+        # First, get the appropriate project.
+        # This should be uniquely identified at this point, and if not, then
+        # we just want the error that `get` will throw to bubble up.
+        project = self.get(pk, name=name, organization=organization)
+        pk = project['id']
+
+        # Determine whether this project is able to be updated.
+        debug.log('Asking whether the project can be updated.',
+                  header='details')
+        result = client.get('/projects/%d/update/' % pk)
+        if not result.json()['can_update']:
+            raise exc.CannotStartJob('Cannot update project.')
+
+        # Okay, this project can be updated, according to Tower.
+        # Commence the update.
+        debug.log('Updating the project.', header='details')
+        result = client.post('/projects/%d/update/' % pk)
+        project_update_id = result.json()['project_update']
+
+        # If we were told to monitor the project update's status, do so.
+        if monitor:
+            return self.monitor(pk, timeout=timeout)
+
+        # Return the project update ID.
+        return {
+            'changed': True,
+        }
+
+    @resources.command
+    @click.option('--detail', is_flag=True, default=False,
+                              help='Print more detail.')
+    def status(self, pk, detail=False):
+        """Print the current job status."""
+        # Get the job from Ansible Tower.
+        debug.log('Asking for project update status.', header='details')
+        project = client.get('/projects/%d/' % pk).json()
+
+        # Determine the appropriate project update.
+        if 'current_update' in project['related']:
+            debug.log('A current update exists; retrieving it.',
+                      header='details')
+            job = client.get(project['related']['current_update'][7:]).json()
+        elif 'last_update' in project['related']:
+            debug.log('No current update exists; retrieving the most '
+                      'recent update.', header='details')
+            job = client.get(project['related']['last_update'][7:]).json()
+        else:
+            raise exc.NotFound('No project updates exist.')
+
+        # In most cases, we probably only want to know the status of the job
+        # and the amount of time elapsed. However, if we were asked for
+        # verbose information, provide it.
+        if detail:
+            return job
+
+        # Print just the information we need.
+        return adict({
+            'elapsed': job['elapsed'],
+            'failed': job['failed'],
+            'status': job['status'],
+        })

@@ -203,9 +203,16 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 new_method.__click_params__ = copy(click_params)
 
                 # Write options based on the fields available on this resource.
-                if attrs.pop('use_fields_as_options', True):
+                fao = attrs.pop('use_fields_as_options', True)
+                if fao:
                     for field in reversed(self.resource.fields):
                         if not field.is_option:
+                            continue
+
+                        # If we got an iterable rather than a boolean,
+                        # then it is a list of fields to use; check for
+                        # presence in that list.
+                        if not isinstance(fao, bool) and field.name not in fao:
                             continue
 
                         # Create the initial arguments based on the

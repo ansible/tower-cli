@@ -229,6 +229,29 @@ class SubcommandTests(unittest.TestCase):
         self.assertFalse(any([o.name == 'f1' for o in noopt.params]))
         self.assertFalse(any([o.name == 'f2' for o in noopt.params]))
 
+    def test_use_fields_as_options_enumerated(self):
+        """Establish that the `use_fields_as_options` attribute is honored
+        if set to a tuple containing a subset of fields.
+        """
+        # Create a resource with a command that doesn't expect its
+        # fields to become options.
+        class NoOptResource(models.BaseResource):
+            endpoint = '/nor/'
+
+            f1 = models.Field()
+            f2 = models.Field()
+
+            @resources.command(use_fields_as_options=('f2',))
+            def noopt(self):
+                pass
+
+        # Make the resource into a command, and get the noopt subcommand.
+        noopt = NoOptResource().as_command().get_command(None, 'noopt')
+
+        # Establish that the noopt command does NOT have fields as options.
+        self.assertFalse(any([o.name == 'f1' for o in noopt.params]))
+        self.assertTrue(any([o.name == 'f2' for o in noopt.params]))
+
     def test_fields_not_options(self):
         """Establish that a field which is not an option is not made into
         an option for commands.

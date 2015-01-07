@@ -120,6 +120,13 @@ class ValidationError(TowerCLIError):
     exit_code = 64
 
 
+class CannotStartJob(TowerCLIError):
+    """An exception class for jobs that cannot be started within Tower
+    for whatever reason.
+    """
+    exit_code = 97
+
+
 class Timeout(TowerCLIError):
     """An exception class for timeouts encountered within Tower CLI,
     usually for monitoring.
