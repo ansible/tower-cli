@@ -21,6 +21,7 @@ import sys
 import click
 
 import tower_cli
+from tower_cli.utils import secho
 
 
 class TowerCLI(click.MultiCommand):
@@ -70,7 +71,7 @@ class TowerCLI(click.MultiCommand):
             pass
 
         # Okay, we weren't able to find a command.        
-        click.secho('No such command: %s.' % name, fg='red', bold=True)
+        secho('No such command: %s.' % name, fg='red', bold=True)
         sys.exit(2)
 
 

@@ -21,7 +21,7 @@ import six
 import click
 
 from tower_cli.conf import Parser, settings
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import exceptions as exc, secho
 
 
 # Note: This uses `click.command`, not `tower_cli.utils.decorators.command`,
@@ -93,8 +93,7 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
 
             # Print a segment header
             if will_echo:
-                click.secho('# %s' % parser_desc[name],
-                            fg='green', bold=True)
+                secho('# %s' % parser_desc[name], fg='green', bold=True)
 
             # Iterate over each option in the parser and, if we haven't
             # already seen an option at higher precedence, print it.
@@ -153,8 +152,8 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
 def echo_setting(key):
     """Echo a setting to the CLI."""
     value = getattr(settings, key)
-    click.secho('%s: ' % key, fg='magenta', bold=True, nl=False)
-    click.secho(six.text_type(value),
+    secho('%s: ' % key, fg='magenta', bold=True, nl=False)
+    secho(six.text_type(value),
         bold=True,
         fg='white' if isinstance(value, six.text_type) else 'cyan',
     )

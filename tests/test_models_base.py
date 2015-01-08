@@ -334,7 +334,7 @@ class SubcommandTests(unittest.TestCase):
         """
         func = self.command._echo_method(lambda: {'changed': False})
         with mock.patch.object(click, 'secho') as secho:
-            with settings.runtime_values(format='json'):
+            with settings.runtime_values(format='json', color=True):
                 func()
             answer = json.dumps({'changed': False}, indent=2)
             secho.assert_called_once_with(answer, fg='green')
@@ -345,7 +345,7 @@ class SubcommandTests(unittest.TestCase):
         """
         func = self.command._echo_method(lambda: {'changed': True})
         with mock.patch.object(click, 'secho') as secho:
-            with settings.runtime_values(format='json'):
+            with settings.runtime_values(format='json', color=True):
                 func()
             answer = json.dumps({'changed': True}, indent=2)
             secho.assert_called_once_with(answer, fg='yellow')

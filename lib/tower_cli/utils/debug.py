@@ -18,6 +18,7 @@ import sys
 import click
 
 from tower_cli.conf import settings
+from tower_cli.utils import secho
 
 
 def log(s, header='', file=sys.stderr, nl=1, **kwargs):
@@ -41,4 +42,4 @@ def log(s, header='', file=sys.stderr, nl=1, **kwargs):
         s += '\n' * (nl - 1)
 
     # Output to stderr.
-    return click.secho(s, file=file, **kwargs)
+    return secho(s, file=file, **kwargs)

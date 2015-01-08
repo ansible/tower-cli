@@ -41,7 +41,7 @@ from tower_cli.conf import settings
 from tower_cli.models.fields import Field
 from tower_cli.utils import exceptions as exc
 from tower_cli.utils.command import Command
-from tower_cli.utils import debug
+from tower_cli.utils import debug, secho
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.decorators import command
 from tower_cli.utils.types import File
@@ -300,7 +300,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     output = format(result)
 
                     # Perform the echo.
-                    click.secho(output, **color_info)
+                    secho(output, **color_info)
                 return func
 
             def _format_json(self, payload):
@@ -843,7 +843,7 @@ class MonitorableResource(Resource):
         # Poll the Ansible Tower instance for status, and print the status
         # to the outfile (usually standard out).
         #
-        # Note that this is one of the few places where we use `click.secho`
+        # Note that this is one of the few places where we use `secho`
         # even though we're in a function that might theoretically be imported
         # and run in Python.  This seems fine; outfile can be set to /dev/null
         # and very much the normal use for this method should be CLI
@@ -856,8 +856,7 @@ class MonitorableResource(Resource):
             # so we get a non-zero response.
             if result['failed']:
                 if is_tty(outfile) and not settings.verbose:
-                    click.secho('\r' + ' ' * longest_string + '\n',
-                                file=outfile)
+                    secho('\r' + ' ' * longest_string + '\n', file=outfile)
                 raise exc.JobFailure('Job failed.')
 
             # Sanity check: Have we officially timed out?
@@ -875,7 +874,7 @@ class MonitorableResource(Resource):
             else:
                 longest_string = len(output)
             if is_tty(outfile) and not settings.verbose:
-                click.secho(output, nl=False, file=outfile)
+                secho(output, nl=False, file=outfile)
 
             # Put the process to sleep briefly.
             time.sleep(0.2)
@@ -913,9 +912,8 @@ class MonitorableResource(Resource):
 
             # Wipe out the previous output
             if is_tty(outfile) and not settings.verbose:
-                click.secho('\r' + ' ' * longest_string,
-                            file=outfile, nl=False)
-                click.secho('\r', file=outfile, nl=False)
+                secho('\r' + ' ' * longest_string, file=outfile, nl=False)
+                secho('\r', file=outfile, nl=False)
 
         # Done; return the result
         return result

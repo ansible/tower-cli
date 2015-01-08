@@ -72,6 +72,7 @@ class Settings(object):
         # Initialize the data dictionary for the default level
         # precedence (that is, the bottom of the totem pole).
         defaults = {
+            'color': 'true',
             'format': 'human',
             'host': '127.0.0.1',
             'password': '',
