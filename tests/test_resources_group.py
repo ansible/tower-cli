@@ -160,12 +160,13 @@ class GroupTests(unittest.TestCase):
         inventory source method, after getting the inventory source ID.
         """
         isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'sync') as isrc_sync:
+        with mock.patch.object(type(isrc), 'update') as isrc_sync:
             with client.test_mode as t:
                 t.register_json('/groups/1/', {
                     'id': 1, 'name': 'foo', 'inventory': 1,
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='GET')
                 self.gr.sync(1)
-                isrc_sync.assert_called_once_with(42)
+                isrc_sync.assert_called_once_with(42, monitor=False,
+                                                      timeout=None)
                 self.assertEqual(len(t.requests), 1)

@@ -125,13 +125,20 @@ class Resource(models.Resource):
         return super(Resource, self).list(**kwargs)
 
     @click.argument('group', type=types.Related('group'))
+    @click.option('--monitor', is_flag=True, default=False,
+                  help='If sent, immediately calls `monitor` on the newly '
+                       'launched job rather than exiting with a success.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided with --monitor, this command (not the job)'
+                       ' will time out after the given number of seconds. '
+                       'Does nothing if --monitor is not sent.')
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
-    def sync(self, group, **kwargs):
+    def sync(self, group, monitor=False, timeout=None, **kwargs):
         """Update the given group's inventory source."""
 
         isrc = get_resource('inventory_source')
         isid = self._get_inventory_source_id(group)
-        return isrc.sync(isid, **kwargs)
+        return isrc.update(isid, monitor=monitor, timeout=timeout, **kwargs)
 
     def _get_inventory_source_id(self, group):
         """Return the inventory source ID given a group dictionary returned

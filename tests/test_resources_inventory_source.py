@@ -20,7 +20,7 @@ from tower_cli.utils import exceptions as exc
 from tests.compat import unittest, mock
 
 
-class InventorySourceTests(unittest.TestCase):
+class UpdateTests(unittest.TestCase):
     """A set of tests to establish that the inventory source resource works
     in the way that we expect.
     """
@@ -28,23 +28,131 @@ class InventorySourceTests(unittest.TestCase):
         self.isr = tower_cli.get_resource('inventory_source')
 
     def test_cannot_sync(self):
-        """Establish that if we attempt to sync an inventory source that
+        """Establish that if we attempt to update an inventory source that
         cannot be updated, that we raise BadRequest.
         """
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/update/',
                             {'can_update': False}, method='GET')
             with self.assertRaises(exc.BadRequest):
-                self.isr.sync(1)
+                self.isr.update(1)
 
-    def test_sync(self):
+    def test_update(self):
         """Establish that if we are able to update an inventory source,
-        that the sync command does so.
+        that the update command does so.
         """
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/update/',
                             {'can_update': True}, method='GET')
             t.register_json('/inventory_sources/1/update/',
                             {}, method='POST')
-            answer = self.isr.sync(1)
+            answer = self.isr.update(1)
             self.assertEqual(answer['status'], 'ok')
+
+    def test_update_with_monitor(self):
+        """Establish that if we call update with the monitor flag, that the
+        monitor method runs.
+        """
+        with client.test_mode as t:
+            t.register_json('/inventory_sources/1/update/',
+                            {'can_update': True}, method='GET')
+            t.register_json('/inventory_sources/1/update/',
+                            {}, method='POST')
+            with mock.patch.object(type(self.isr), 'monitor') as monitor:
+                answer = self.isr.update(1, monitor=True)
+                monitor.assert_called_once_with(1, timeout=None)
+
+
+class StatusTests(unittest.TestCase):
+    """A set of tests to establish that the inventory_source status command
+    works in the way that we expect.
+    """
+    def setUp(self):
+        self.res = tower_cli.get_resource('inventory_source')
+        self.detail_uri = '/inventory_sources/1/inventory_updates/42/'
+
+    def test_normal(self):
+        """Establish that the data about a project update retrieved from the
+        project updates endpoint is provided.
+        """
+        with client.test_mode as t:
+            t.register_json('/inventory_sources/1/', {
+                'id': 1,
+                'related': {'last_update': '/api/v1%s' % self.detail_uri},
+            })
+            t.register_json(self.detail_uri, {
+                'elapsed': 1335024000.0,
+                'extra': 'ignored',
+                'failed': False,
+                'status': 'successful',
+            })
+            result = self.res.status(1)
+            self.assertEqual(result, {
+                'elapsed': 1335024000.0,
+                'failed': False,
+                'status': 'successful',
+            })
+            self.assertEqual(len(t.requests), 2)
+
+    def test_detailed(self):
+        """Establish that a detailed request is sent back in the way
+        that we expect.
+        """
+        with client.test_mode as t:
+            t.register_json('/inventory_sources/1/', {
+                'id': 1,
+                'related': {'last_update': '/api/v1%s' % self.detail_uri},
+            })
+            t.register_json(self.detail_uri, {
+                'elapsed': 1335024000.0,
+                'extra': 'ignored',
+                'failed': False,
+                'status': 'successful',
+            })
+            result = self.res.status(1, detail=True)
+            self.assertEqual(result, {
+                'elapsed': 1335024000.0,
+                'extra': 'ignored',
+                'failed': False,
+                'status': 'successful',
+            })
+            self.assertEqual(len(t.requests), 2)
+
+    def test_currently_running_update(self):
+        """Establish that if an update is currently running, that we see this
+        and send back the appropriate status.
+        """
+        with client.test_mode as t:
+            t.register_json('/inventory_sources/1/', {
+                'id': 1,
+                'related': {
+                    'current_update': '/api/v1%s' % self.detail_uri,
+                    'last_update': '/api/v1%s' %
+                                   self.detail_uri.replace('42', '41'),
+                },
+            })
+            t.register_json(self.detail_uri, {
+                'elapsed': 1335024000.0,
+                'extra': 'ignored',
+                'failed': False,
+                'status': 'running',
+            })
+            result = self.res.status(1)
+            self.assertEqual(result, {
+                'elapsed': 1335024000.0,
+                'failed': False,
+                'status': 'running',
+            })
+            self.assertEqual(len(t.requests), 2)
+
+    def test_no_updates(self):
+        """Establish that running `status` against a project with no updates
+        raises the error we expect.
+        """
+        with client.test_mode as t:
+            t.register_json('/inventory_sources/1/', {
+                'id': 1,
+                'related': {},
+            })
+            with self.assertRaises(exc.NotFound):
+                result = self.res.status(1)

@@ -106,7 +106,7 @@ class Resource(models.MonitorableResource):
             debug.log('A current update exists; retrieving it.',
                       header='details')
             job = client.get(project['related']['current_update'][7:]).json()
-        elif 'last_update' in project['related']:
+        elif project['related'].get('last_update', None):
             debug.log('No current update exists; retrieving the most '
                       'recent update.', header='details')
             job = client.get(project['related']['last_update'][7:]).json()

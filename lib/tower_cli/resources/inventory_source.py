@@ -15,13 +15,15 @@
 
 import click
 
+from sdict import adict
+
 import tower_cli
 from tower_cli import models, resources
 from tower_cli.api import client
-from tower_cli.utils import types, exceptions as exc
+from tower_cli.utils import debug, types, exceptions as exc
 
 
-class Resource(models.Resource):
+class Resource(models.MonitorableResource):
     cli_help = 'Manage inventory sources within Ansible Tower.'
     endpoint = '/inventory_sources/'
     internal = True
@@ -34,17 +36,67 @@ class Resource(models.Resource):
     )
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
+    @click.option('--monitor', is_flag=True, default=False,
+                  help='If sent, immediately calls `monitor` on the newly '
+                       'launched job rather than exiting with a success.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided with --monitor, this command (not the job)'
+                       ' will time out after the given number of seconds. '
+                       'Does nothing if --monitor is not sent.')
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
-    def sync(self, inventory_source, **kwargs):
+    def update(self, inventory_source, monitor=False, timeout=None, **kwargs):
         """Update the given inventory source."""
 
         # Establish that we are able to update this inventory source
         # at all.
+        debug.log('Asking whether the inventory source can be updated.',
+                  header='details')
         r = client.get('%s%d/update/' % (self.endpoint, inventory_source))
         if not r.json()['can_update']:
             raise exc.BadRequest('Tower says it cannot run an update against '
                                  'this inventory source.')
 
         # Run the update.
+        debug.log('Updating the inventory source.', header='details')
         r = client.post('%s%d/update/' % (self.endpoint, inventory_source))
+
+        # If we were told to monitor the project update's status, do so.
+        if monitor:
+            return self.monitor(inventory_source, timeout=timeout)
+
+        # Done.
         return {'status': 'ok'}
+
+    @resources.command
+    @click.option('--detail', is_flag=True, default=False,
+                              help='Print more detail.')
+    def status(self, pk, detail=False):
+        """Print the current job status."""
+        # Get the job from Ansible Tower.
+        debug.log('Asking for inventory source status.', header='details')
+        inv_src = client.get('/inventory_sources/%d/' % pk).json()
+
+        # Determine the appropriate inventory source update.
+        if 'current_update' in inv_src['related']:
+            debug.log('A current update exists; retrieving it.',
+                      header='details')
+            job = client.get(inv_src['related']['current_update'][7:]).json()
+        elif inv_src['related'].get('last_update', None):
+            debug.log('No current update exists; retrieving the most '
+                      'recent update.', header='details')
+            job = client.get(inv_src['related']['last_update'][7:]).json()
+        else:
+            raise exc.NotFound('No inventory source updates exist.')
+
+        # In most cases, we probably only want to know the status of the job
+        # and the amount of time elapsed. However, if we were asked for
+        # verbose information, provide it.
+        if detail:
+            return job
+
+        # Print just the information we need.
+        return adict({
+            'elapsed': job['elapsed'],
+            'failed': job['failed'],
+            'status': job['status'],
+        })
