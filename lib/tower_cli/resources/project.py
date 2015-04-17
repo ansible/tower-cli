@@ -39,6 +39,7 @@ class Resource(models.MonitorableResource):
         ]),
     )
     scm_url = models.Field(required=False)
+    local_path = models.Field(help_text='For manual projects, the server playbook directory name', required=False)
     scm_branch = models.Field(required=False, display=False)
     scm_credential = models.Field('credential',
         display=False,
