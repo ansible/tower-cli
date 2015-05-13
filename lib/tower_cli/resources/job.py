@@ -51,7 +51,8 @@ class Resource(models.MonitorableResource):
     @click.option('--no-input', is_flag=True, default=False,
                                 help='Suppress any requests for input.')
     @click.option('--extra-vars', type=types.File('r'), required=False)
-    def launch(self, job_template, monitor=False, timeout=None,
+    @click.option('--tags', required=False)
+    def launch(self, job_template, tags, monitor=False, timeout=None,
                      no_input=True, extra_vars=None):
         """Launch a new job based on a job template.
 
@@ -68,6 +69,8 @@ class Resource(models.MonitorableResource):
         data = copy(jt)
         data['job_template'] = data.pop('id')
         data['name'] = '%s [invoked via. Tower CLI]' % data['name']
+        if tags:
+            data['job_tags'] = tags
 
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
@@ -100,6 +103,8 @@ class Resource(models.MonitorableResource):
             endpoint = '/job_templates/%d/launch/' % jt['id']
             if 'extra_vars' in data:
                 start_data['extra_vars'] = data['extra_vars']
+            if tags:
+                start_data['job_tags'] = data['job_tags']
         else:
             debug.log('Creating the job.', header='details')
             job = client.post('/jobs/', data=data).json()
