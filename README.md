@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/ansible/tower-cli.svg?branch=master)](https://travis-ci.org/ansible/tower-cli)
+[![Coverage Status](https://coveralls.io/repos/ansible/tower-cli/badge.svg)](https://coveralls.io/r/ansible/tower-cli)
+
 ## Welcome to tower-cli
 
 **tower-cli** is a command line tool for Ansible Tower. It allows Tower

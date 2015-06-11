@@ -1,12 +1,13 @@
+sudo: false
 language: python
-python:
-#  - "2.6"
-  - "2.7"
-#  - "3.3"
-#  - "3.4"
-# command to install dependencies
-install: 
-  - "sudo pip install ."
-  - "sudo pip install -r requirements.txt"
+env:
+    - TOXENV=py2.6
+    - TOXENV=py2.7
+    - TOXENV=py3.3
+    - TOXENV=py3.4
+install:
+    - pip install -r requirements.txt --use-mirrors
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then sudo python setup.py test -a "-epy2.7"; fi
+    - tox
+after_success:
+    coveralls
