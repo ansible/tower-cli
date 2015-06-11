@@ -52,7 +52,7 @@ class Resource(models.MonitorableResource):
                                 help='Suppress any requests for input.')
     @click.option('--extra-vars', type=types.File('r'), required=False)
     @click.option('--tags', required=False)
-    def launch(self, job_template, tags, monitor=False, timeout=None,
+    def launch(self, job_template, tags=None, monitor=False, timeout=None,
                      no_input=True, extra_vars=None):
         """Launch a new job based on a job template.
 
