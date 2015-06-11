@@ -6,7 +6,7 @@ env:
     - TOXENV=py3.3
     - TOXENV=py3.4
 install:
-    - pip install tox --use-mirrors
+    - pip install tox coveralls --use-mirrors
 script:
     - tox
 after_success:
