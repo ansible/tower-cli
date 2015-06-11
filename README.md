@@ -1,5 +1,10 @@
 [![Build Status](https://travis-ci.org/ansible/tower-cli.svg?branch=master)](https://travis-ci.org/ansible/tower-cli)
 [![Coverage Status](https://coveralls.io/repos/ansible/tower-cli/badge.svg)](https://coveralls.io/r/ansible/tower-cli)
+[![Version](https://pypip.in/v/ansible-tower-cli/badge.svg)](https://pypi.python.org/pypi/ansible-tower-cli/)
+[![Downloads](https://pypip.in/d/ansible-tower-cli/badge.svg)](https://pypi.python.org/pypi/ansible-tower-cli/)
+[![License](https://pypip.in/license/ansible-tower-cli/badge.svg)](https://pypi.python.org/pypi/ansible-tower-cli/)
+[![Supported Python Versions](https://pypip.in/py_versions/ansible-tower-cli/badge.svg)](https://pypi.python.org/pypi/ansible-tower-cli/)
+
 
 ## Welcome to tower-cli
 
@@ -166,4 +171,4 @@ While Tower is commercially licensed software, _tower-cli_ is an open source pro
 and we encorage contributions.  Specfically, this CLI project is licensed
 under the Apache 2.0 license.  Pull requests and tickets filed in GitHub are welcome.
 
-(C) 2014, Michael DeHaan, and others, Ansible, Inc.
+(C) 2015, Michael DeHaan, and others, Ansible, Inc.
