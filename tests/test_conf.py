@@ -69,3 +69,18 @@ class ParserTests(unittest.TestCase):
         read_file_method = getattr(parser, 'read_file', parser.readfp)
         read_file_method(StringIO('foo: bar'))
         self.assertEqual(parser.get('general', 'foo'), 'bar')
+
+    def test_file_permission_warning(self):
+        """Warn file permissions may expose credentials
+        """
+        with mock.patch.object(warnings, 'warn') as warn:
+            with mock.patch.object(os.path, 'isfile') as isfile:
+                with mock.patch.object(os, 'stat') as os_stat:
+                    isfile.return_value = True
+                    import posix
+                    test_statz = posix.stat_result([0o604,0,0,0,0,0,0,0,0,0])
+                    os_stat.return_value = test_statz # group/others can read file
+                    parser = Parser()
+                    read_file_method = getattr(parser, 'read_file', parser.readfp)
+                    read_file_method(StringIO('[general]\nfoo: bar\n'))
+                    warn.assert_called_once_with(mock.ANY, RuntimeWarning)

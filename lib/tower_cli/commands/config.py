@@ -146,6 +146,12 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
         parser.set('general', key, value)
     with open(filename, 'w') as config_file:
         parser.write(config_file)
+    try:
+        os.chmod(filename, int('0600', 8)) # give rw permissions to user only
+                                           # fix for issue number 48
+    except Exception as e:
+        warnings.warn('Unable to set permissions on {0} - {1} '.format(filename,e),
+                            UserWarning)
     click.echo('Configuration updated successfully.')
 
 

@@ -37,6 +37,16 @@ class Parser(configparser.ConfigParser):
         """
         # Attempt to read the file using the superclass implementation.
         #
+        # Check the permissions of the file we are considering reading
+        # if the file exists and the permissions expose it to reads from
+        # other users, raise a warning
+        if os.path.isfile(fpname):
+            file_permission = os.stat(fpname)
+            nth_permission = [(file_permission.st_mode/8**i)%8 for i in range(3)]
+            for i in range(2):
+                if nth_permission[i] >=4:
+                    warnings.warn('File {0} readable by group/others.'.format(fpname),
+                                    RuntimeWarning)
         # If it doesn't work because there's no section header, then
         # create a section header and call the superclass implementation
         # again.
