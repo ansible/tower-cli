@@ -59,3 +59,6 @@ debian/
 cover-html
 coverage.xml
 results.xml
+
+# ignore personal configs
+.tower_cli.cfg

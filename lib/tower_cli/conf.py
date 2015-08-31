@@ -16,13 +16,12 @@
 import contextlib
 import copy
 import os
+import stat
 import warnings
 
 import six
 from six.moves import configparser
 from six import StringIO
-
-from sdict import adict
 
 
 class Parser(configparser.ConfigParser):
@@ -37,6 +36,15 @@ class Parser(configparser.ConfigParser):
         """
         # Attempt to read the file using the superclass implementation.
         #
+        # Check the permissions of the file we are considering reading
+        # if the file exists and the permissions expose it to reads from
+        # other users, raise a warning
+        if os.path.isfile(fpname):
+            file_permission = os.stat(fpname)
+            if (file_permission.st_mode & stat.S_IRGRP) or \
+               (file_permission.st_mode & stat.S_IROTH):
+                warnings.warn('File {0} readable by group or others.'
+                              .format(fpname), RuntimeWarning)
         # If it doesn't work because there's no section header, then
         # create a section header and call the superclass implementation
         # again.

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os.path
+import stat
 import warnings
 
 import click
@@ -21,9 +22,8 @@ from click.testing import CliRunner
 
 from tower_cli.commands.config import config, echo_setting
 from tower_cli.conf import settings, Parser
-from tower_cli.utils import exceptions as exc
 
-from tests.compat import unittest, mock, TextIOWrapper
+from tests.compat import unittest, mock
 
 
 class ConfigTests(unittest.TestCase):
@@ -67,9 +67,12 @@ class ConfigTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
+        filename = os.path.expanduser('~/.tower_cli.cfg')
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
-            result = self.runner.invoke(config, ['username', 'luke'])
+            with mock.patch.object(os, 'chmod') as chmod:
+                result = self.runner.invoke(config, ['username', 'luke'])
+                chmod.assert_called_once_with(filename, int('0600', 8))
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -82,21 +85,46 @@ class ConfigTests(unittest.TestCase):
         self.assertIn(mock.call().write('username = luke\n'),
                       mock_open.mock_calls)
 
+    def test_permissions_warning(self):
+        """Warn user if configuration file permissions can not be set
+        """
+        # Try to set permissions on file that does not exist, expecting warning
+        mock_open = mock.mock_open()
+        filename = '.tower_cli.cfg'
+        with mock.patch('tower_cli.commands.config.open', mock_open,
+                        create=True):
+            with mock.patch.object(os, 'chmod') as chmod:
+                chmod.side_effect = OSError
+                with mock.patch.object(warnings, 'warn') as warn:
+                    result = self.runner.invoke(
+                        config, ['username', 'luke', '--scope=local'])
+                    warn.assert_called_once_with(mock.ANY, UserWarning)
+                    chmod.assert_called_once_with(
+                        filename, stat.S_IRUSR | stat.S_IWUSR)
+
+        # Ensure that the command completed successfully.
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(),
+                         'Configuration updated successfully.')
+
     def test_write_global_setting(self):
         """Establish that if we attempt to write a valid setting, that
         the parser's write method is run.
         """
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
+        filename = '/etc/awx/tower_cli.cfg'
         mock_open = mock.mock_open()
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
             with mock.patch.object(os.path, 'isdir') as isdir:
-                isdir.return_value = True
-                result = self.runner.invoke(config,
-                    ['username', 'luke', '--scope=global'],
-                )
-                isdir.assert_called_once_with('/etc/awx/')
+                with mock.patch.object(os, 'chmod') as chmod:
+                    isdir.return_value = True
+                    result = self.runner.invoke(
+                        config, ['username', 'luke', '--scope=global'],
+                    )
+                    isdir.assert_called_once_with('/etc/awx/')
+                    chmod.assert_called_once_with(filename, int('0600', 8))
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -118,9 +146,12 @@ class ConfigTests(unittest.TestCase):
         mock_open = mock.mock_open()
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
-            result = self.runner.invoke(config,
-                ['username', 'meagan', '--scope=local'],
-            )
+            with mock.patch.object(os, 'chmod') as chmod:
+                result = self.runner.invoke(
+                    config, ['username', 'meagan', '--scope=local'],
+                )
+                filename = ".tower_cli.cfg"
+                chmod.assert_called_once_with(filename, int('0600', 8))
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -142,7 +173,8 @@ class ConfigTests(unittest.TestCase):
         mock_open = mock.mock_open()
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
-            result = self.runner.invoke(config, ['username', '--unset'])
+            with mock.patch.object(os, 'chmod'):
+                result = self.runner.invoke(config, ['username', '--unset'])
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -217,18 +249,22 @@ class DeprecationTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
+        warning_text = 'The `--global` option is deprecated and will be '\
+                       'removed. Use `--scope=global` to get the same effect.'
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
             with mock.patch.object(os.path, 'isdir') as isdir:
-                isdir.return_value = True
-                with mock.patch.object(warnings, 'warn') as warn:
-                    result = self.runner.invoke(config,
-                        ['username', 'meagan', '--global'],
-                    )
-                    warn.assert_called_once()
-                    self.assertEqual(warn.mock_calls[0][1][1],
-                                     DeprecationWarning)
-                isdir.assert_called_once_with('/etc/awx/')
+                with mock.patch.object(os, 'chmod'):
+                    with mock.patch.object(warnings, 'warn') as warn:
+                        isdir.return_value = True
+                        result = self.runner.invoke(
+                            config, ['username', 'meagan', '--global'],
+                        )
+                        warn.assert_called_once_with(warning_text,
+                                                     DeprecationWarning)
+                        self.assertEqual(warn.mock_calls[0][1][1],
+                                         DeprecationWarning)
+                        isdir.assert_called_once_with('/etc/awx/')
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
