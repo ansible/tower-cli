@@ -9,7 +9,7 @@
 ## Welcome to tower-cli
 
 **tower-cli** is a command line tool for Ansible Tower. It allows Tower
-commands to be easily run from the Unix command-line.  It can also be used
+commands to be easily run from the Unix command line.  It can also be used
 as a client library for other python apps, or as a reference for others 
 developing API interactions with Tower's REST API.
 
@@ -54,7 +54,7 @@ The main branch of this project may also be consumed directly from source.
 
 ### Configuration
 
-Configuration can be set in several places.  The `tower-cli` itself can edit it's own configuration, or
+Configuration can be set in several places: `tower-cli` can edit its own configuration, or
 users can directly edit the configuration file.
 
 #### Set configuration with tower-cli config.
@@ -69,8 +69,8 @@ $ tower-cli config key value
 By issuing `tower-cli config` with no arguments, you can see a full list
 of configuration options and where they are set.
 
-You will generally need to set at least three configuration options:
-`host`, `username`, and `password`; these correspond to the location of
+You will generally need to set at least three configuration options--`host`, 
+`username`, and `password`--which correspond to the location of
 your Ansible Tower instance and your credentials to authenticate to Tower.
 
 ```bash
@@ -81,7 +81,8 @@ $ tower-cli config password myPassw0rd
 
 #### Write to the config files directly.
 
-The configuration file can also be edited directly.  A configuration file is a simple file with keys and values, separated by `:` or `=`:
+The configuration file can also be edited directly.  A configuration file is a 
+simple file with keys and values, separated by `:` or `=`:
 
 ```yaml
 host: tower.example.com
@@ -115,8 +116,8 @@ The "resource" is a type of object within Tower (a noun), such as `user`,
 Tower CLI (so: it's `tower-cli user`, never `tower-cli users`).
 
 The "action" is the thing you want to do (a verb). Most Tower CLI resources
-have the following actions: `get`, `list`, `create`, `modify`, and `delete`,
-and have options corresponding to fields on the object in Tower.
+have the following actions--`get`, `list`, `create`, `modify`, and `delete`--and 
+have options corresponding to fields on the object in Tower.
 
 Some examples:
 
@@ -168,7 +169,7 @@ $ tower-cli user create --help # command specific help
 ### License
 
 While Tower is commercially licensed software, _tower-cli_ is an open source project,
-and we encorage contributions.  Specfically, this CLI project is licensed
+and we encourage contributions.  Specifically, this CLI project is licensed
 under the Apache 2.0 license.  Pull requests and tickets filed in GitHub are welcome.
 
 (C) 2015, Michael DeHaan, and others, Ansible, Inc.
