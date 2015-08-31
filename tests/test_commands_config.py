@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os.path
+import stat
 import warnings
 
 import click
@@ -21,9 +22,8 @@ from click.testing import CliRunner
 
 from tower_cli.commands.config import config, echo_setting
 from tower_cli.conf import settings, Parser
-from tower_cli.utils import exceptions as exc
 
-from tests.compat import unittest, mock, TextIOWrapper
+from tests.compat import unittest, mock
 
 
 class ConfigTests(unittest.TestCase):
@@ -96,9 +96,11 @@ class ConfigTests(unittest.TestCase):
             with mock.patch.object(os, 'chmod') as chmod:
                 chmod.side_effect = OSError
                 with mock.patch.object(warnings, 'warn') as warn:
-                    result = self.runner.invoke(config, ['username', 'luke', '--scope=local'])
+                    result = self.runner.invoke(
+                        config, ['username', 'luke', '--scope=local'])
                     warn.assert_called_once_with(mock.ANY, UserWarning)
-                    chmod.assert_called_once_with(filename, int('0600', 8))
+                    chmod.assert_called_once_with(
+                        filename, stat.S_IRUSR | stat.S_IWUSR)
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -118,8 +120,8 @@ class ConfigTests(unittest.TestCase):
             with mock.patch.object(os.path, 'isdir') as isdir:
                 with mock.patch.object(os, 'chmod') as chmod:
                     isdir.return_value = True
-                    result = self.runner.invoke(config,
-                        ['username', 'luke', '--scope=global'],
+                    result = self.runner.invoke(
+                        config, ['username', 'luke', '--scope=global'],
                     )
                     isdir.assert_called_once_with('/etc/awx/')
                     chmod.assert_called_once_with(filename, int('0600', 8))
@@ -145,8 +147,8 @@ class ConfigTests(unittest.TestCase):
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
             with mock.patch.object(os, 'chmod') as chmod:
-                result = self.runner.invoke(config,
-                    ['username', 'meagan', '--scope=local'],
+                result = self.runner.invoke(
+                    config, ['username', 'meagan', '--scope=local'],
                 )
                 filename = ".tower_cli.cfg"
                 chmod.assert_called_once_with(filename, int('0600', 8))
@@ -169,8 +171,9 @@ class ConfigTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
-        with mock.patch('tower_cli.commands.config.open', mock_open, create=True):
-            with mock.patch.object(os, 'chmod') as chmod:
+        with mock.patch('tower_cli.commands.config.open', mock_open,
+                        create=True):
+            with mock.patch.object(os, 'chmod'):
                 result = self.runner.invoke(config, ['username', '--unset'])
 
         # Ensure that the command completed successfully.
@@ -246,18 +249,19 @@ class DeprecationTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
+        warning_text = 'The `--global` option is deprecated and will be '\
+                       'removed. Use `--scope=global` to get the same effect.'
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
             with mock.patch.object(os.path, 'isdir') as isdir:
-                with mock.patch.object(os, 'chmod') as chmod:
+                with mock.patch.object(os, 'chmod'):
                     with mock.patch.object(warnings, 'warn') as warn:
                         isdir.return_value = True
-                        result = self.runner.invoke(config,
-                            ['username', 'meagan', '--global'],
+                        result = self.runner.invoke(
+                            config, ['username', 'meagan', '--global'],
                         )
-                        warn.assert_called_once_with('The `--global` option is deprecated and will be '
-                                      'removed. Use `--scope=global` to get the same effect.',
-                                      DeprecationWarning)
+                        warn.assert_called_once_with(warning_text,
+                                                     DeprecationWarning)
                         self.assertEqual(warn.mock_calls[0][1][1],
                                          DeprecationWarning)
                         isdir.assert_called_once_with('/etc/awx/')

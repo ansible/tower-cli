@@ -16,13 +16,12 @@
 import contextlib
 import copy
 import os
+import stat
 import warnings
 
 import six
 from six.moves import configparser
 from six import StringIO
-
-from sdict import adict
 
 
 class Parser(configparser.ConfigParser):
@@ -42,11 +41,10 @@ class Parser(configparser.ConfigParser):
         # other users, raise a warning
         if os.path.isfile(fpname):
             file_permission = os.stat(fpname)
-            nth_permission = [(file_permission.st_mode/8**i)%8 for i in range(3)]
-            for i in range(2):
-                if nth_permission[i] >=4:
-                    warnings.warn('File {0} readable by group/others.'.format(fpname),
-                                    RuntimeWarning)
+            if (file_permission.st_mode & stat.S_IRGRP) or \
+               (file_permission.st_mode & stat.S_IROTH):
+                warnings.warn('File {0} readable by group or others.'
+                              .format(fpname), RuntimeWarning)
         # If it doesn't work because there's no section header, then
         # create a section header and call the superclass implementation
         # again.

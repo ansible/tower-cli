@@ -15,6 +15,7 @@
 
 import os
 import os.path
+import stat
 import warnings
 
 from six.moves import StringIO
@@ -77,10 +78,12 @@ class ParserTests(unittest.TestCase):
             with mock.patch.object(os.path, 'isfile') as isfile:
                 with mock.patch.object(os, 'stat') as os_stat:
                     isfile.return_value = True
-                    import posix
-                    test_statz = posix.stat_result([0o604,0,0,0,0,0,0,0,0,0])
-                    os_stat.return_value = test_statz # group/others can read file
+                    mock_stat = type('statobj', (), {})()  # placeholder object
+                    mock_stat.st_mode = stat.S_IRUSR | stat.S_IWUSR | \
+                        stat.S_IROTH
+                    os_stat.return_value = mock_stat  # readable to others
                     parser = Parser()
-                    read_file_method = getattr(parser, 'read_file', parser.readfp)
+                    read_file_method = getattr(parser, 'read_file',
+                                               parser.readfp)
                     read_file_method(StringIO('[general]\nfoo: bar\n'))
                     warn.assert_called_once_with(mock.ANY, RuntimeWarning)

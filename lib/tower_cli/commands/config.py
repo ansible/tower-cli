@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import stat
 import warnings
 
 import six
@@ -147,11 +148,11 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
     with open(filename, 'w') as config_file:
         parser.write(config_file)
     try:
-        os.chmod(filename, int('0600', 8)) # give rw permissions to user only
+        os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR) # give rw permissions to user only
                                            # fix for issue number 48
     except Exception as e:
         warnings.warn('Unable to set permissions on {0} - {1} '.format(filename,e),
-                            UserWarning)
+                      UserWarning)
     click.echo('Configuration updated successfully.')
 
 
