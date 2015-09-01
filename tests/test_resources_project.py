@@ -35,6 +35,38 @@ class UpdateTests(unittest.TestCase):
     def setUp(self):
         self.res = tower_cli.get_resource('project')
 
+    def test_create_with_organization(self):
+        """Establish that a project can be created inside of an organization
+        """
+        org_pk = 1
+        with client.test_mode as t:
+            endpoint = '/organizations/%s/projects/' % org_pk
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint, {'changed': True, 'id': 42},
+                            method='POST')
+            self.res.create(name='bar', organization=org_pk,
+                            scm_type="git")
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'POST')
+            self.assertEqual(len(t.requests), 2)
+
+    def test_create_without_organization(self):
+        """Establish that a project can be created without giving an org
+        """
+        with client.test_mode as t:
+            endpoint = '/projects/'
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint, {'changed': True, 'id': 42},
+                            method='POST')
+            self.res.create(name='bar', scm_type="git")
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'POST')
+            self.assertEqual(len(t.requests), 2)
+
     def test_basic_update(self):
         """Establish that we are able to create a project update
         and return the changed status.
