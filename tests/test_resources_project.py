@@ -26,6 +26,7 @@ from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest, mock
+import warnings
 
 
 class UpdateTests(unittest.TestCase):
@@ -66,6 +67,30 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
+
+    def test_modify_organization_warning(self):
+        """Test that warning is thrown when trying to modify organization
+        because that can not be done in this way.
+        """
+        org_pk = 1
+        with mock.patch.object(warnings, 'warn') as warn:
+            with client.test_mode as t:
+                t.register_json('/projects/', {'count': 1, 'results': [{'id':1,
+                                'name':'bar'}],
+                                'next': None, 'previous': None},
+                                method='GET')
+                t.register_json('/projects/1/', {'name':'bar', 'id':1,
+                                'type':'project', 'organization':1},
+                                method='GET')
+                t.register_json('/projects/1/', {'name':'bar', 'id':1,
+                                'type':'project', 'organization':1},
+                                method='PATCH')
+                self.res.modify(name='bar', organization=org_pk,
+                                scm_type="git")
+                self.assertEqual(t.requests[0].method, 'GET')
+                self.assertEqual(t.requests[1].method, 'PATCH')
+                self.assertEqual(len(t.requests), 2)
+                warn.assert_called_once_with(mock.ANY, UserWarning)
 
     def test_basic_update(self):
         """Establish that we are able to create a project update

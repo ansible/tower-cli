@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import click
+import warnings
 
 from sdict import adict
 
@@ -65,6 +66,19 @@ class Resource(models.MonitorableResource):
         to_return = super(Resource, self).create(*args, **kwargs)
         self.endpoint = '/projects/'
         return to_return
+
+    def modify(self, *args, **kwargs):
+        """Also associated with issue #52, the organization for a project
+        can't be modified after it's created. It is handled in another
+        part of the code base with a different command. So the user is warned.
+        """
+        if "organization" in kwargs:
+            warnings.warn('Option --organization is not functional.\n'
+                          'Instead, you might want to use either:\n'
+                          '   tower-cli organization associate_project, or\n'
+                          '   tower-cli organization disassociate_project\n'
+                          , UserWarning)
+        return super(Resource, self).modify(*args, **kwargs)
 
     @resources.command(use_fields_as_options=('name', 'organization'))
     @click.option('--monitor', is_flag=True, default=False,
