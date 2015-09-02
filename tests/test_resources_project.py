@@ -35,6 +35,57 @@ class UpdateTests(unittest.TestCase):
     def setUp(self):
         self.res = tower_cli.get_resource('project')
 
+    def test_create_with_organization(self):
+        """Establish that a project can be created inside of an organization.
+        This uses the --organization flag with the create command.
+        This action uses the /organizations/{id}/projects/ endpoint
+        """
+        with client.test_mode as t:
+            endpoint = '/organizations/1/projects/'
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint, {'changed': True, 'id': 42},
+                            method='POST')
+            self.res.create(name='bar', organization=1,
+                            scm_type="git")
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'POST')
+            self.assertEqual(len(t.requests), 2)
+
+    def test_create_without_organization(self):
+        """Establish that a project can be created without giving an
+        organization. This should create a project with no organization.
+        This action uses the /projects/ endpoint
+        """
+        with client.test_mode as t:
+            endpoint = '/projects/'
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint, {'changed': True, 'id': 42},
+                            method='POST')
+            self.res.create(name='bar', scm_type="git")
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'POST')
+            self.assertEqual(len(t.requests), 2)
+
+    def test_modify_project(self):
+        """Test modifying project in order to cover the special case that
+        removes the organization from its options.
+        """
+        with client.test_mode as t:
+            t.register_json('/projects/', {'count': 1, 'results': [{'id': 1,
+                            'name': 'bar'}], 'next': None, 'previous': None},
+                            method='GET')
+            t.register_json('/projects/1/', {'name': 'bar', 'id': 1,
+                            'type': 'project', 'organization': 1},
+                            method='PATCH')
+            self.res.modify(name='bar', scm_type="git")
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'PATCH')
+            self.assertEqual(len(t.requests), 2)
+
     def test_basic_update(self):
         """Establish that we are able to create a project update
         and return the changed status.

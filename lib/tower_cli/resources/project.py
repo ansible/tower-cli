@@ -29,7 +29,7 @@ class Resource(models.MonitorableResource):
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
     organization = models.Field(type=types.Related('organization'),
-                                display=False)
+                                display=False, required=False)
     scm_type = models.Field(
         type=types.MappedChoice([
             ('', 'manual'),
@@ -39,11 +39,12 @@ class Resource(models.MonitorableResource):
         ]),
     )
     scm_url = models.Field(required=False)
-    local_path = models.Field(help_text='For manual projects, the server playbook directory name', required=False)
+    local_path = models.Field(
+        help_text='For manual projects, the server playbook directory name',
+        required=False)
     scm_branch = models.Field(required=False, display=False)
-    scm_credential = models.Field('credential',
-        display=False,
-        required=False,
+    scm_credential = models.Field(
+        'credential', display=False, required=False,
         type=types.Related('credential'),
     )
     scm_clean = models.Field(type=bool, required=False, display=False)
@@ -51,6 +52,33 @@ class Resource(models.MonitorableResource):
                                         display=False)
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
+
+    def create(self, *args, **kwargs):
+        """Fix for issue #52, second method, replacing the /projects/
+        endpoint temporarily if the project has an organization specified
+        """
+        if "organization" in kwargs:
+            debug.log("using alternative endpoint for new project",
+                      header='details')
+            org_pk = kwargs['organization']
+            self.endpoint = '/organizations/%s/projects/' % org_pk
+        to_return = super(Resource, self).create(*args, **kwargs)
+        self.endpoint = '/projects/'
+        return to_return
+
+    @resources.command(use_fields_as_options=(
+        'name', 'description', 'scm_type', 'scm_url', 'local_path',
+        'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
+        'scm_update_on_launch'
+    ))
+    def modify(self, *args, **kwargs):
+        """Also associated with issue #52, the organization can't be modified
+        with the 'modify' command. This would create confusion about whether
+        it served the role of an identifier versus a field to modify. This
+        method is used to set the allowed fields on the modify command,
+        removing the organization from available options.
+        """
+        return super(Resource, self).modify(*args, **kwargs)
 
     @resources.command(use_fields_as_options=('name', 'organization'))
     @click.option('--monitor', is_flag=True, default=False,

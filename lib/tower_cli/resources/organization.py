@@ -40,3 +40,17 @@ class Resource(models.Resource):
     def disassociate(self, organization, user):
         """Disassociate a user from this organization."""
         return self._disassoc('users', organization, user)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'))
+    @click.option('--project', type=types.Related('project'))
+    def associate_project(self, organization, project):
+        """Associate a project with this organization."""
+        return self._assoc('projects', organization, project)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'))
+    @click.option('--project', type=types.Related('project'))
+    def disassociate_project(self, organization, project):
+        """Disassociate a project from this organization."""
+        return self._disassoc('projects', organization, project)
