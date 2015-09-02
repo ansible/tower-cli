@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import click
-import warnings
 
 from sdict import adict
 
@@ -67,17 +66,18 @@ class Resource(models.MonitorableResource):
         self.endpoint = '/projects/'
         return to_return
 
+    @resources.command(use_fields_as_options=(
+        'name', 'description', 'scm_type', 'scm_url', 'local_path',
+        'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
+        'scm_update_on_launch'
+    ))
     def modify(self, *args, **kwargs):
-        """Also associated with issue #52, the organization for a project
-        can't be modified after it's created. It is handled in another
-        part of the code base with a different command. So the user is warned.
+        """Also associated with issue #52, the organization can't be modified
+        with the 'modify' command. This would create confusion about whether
+        it served the role of an identifier versus a field to modify. This
+        method is used to set the allowed fields on the modify command,
+        removing the organization from available options.
         """
-        if "organization" in kwargs:
-            warnings.warn('Option --organization is not functional.\n'
-                          'Instead, you might want to use either:\n'
-                          '   tower-cli organization associate_project, or\n'
-                          '   tower-cli organization disassociate_project\n'
-                          , UserWarning)
         return super(Resource, self).modify(*args, **kwargs)
 
     @resources.command(use_fields_as_options=('name', 'organization'))

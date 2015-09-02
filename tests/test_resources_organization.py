@@ -54,7 +54,7 @@ class OrganizationTests(unittest.TestCase):
                              json.dumps({'disassociate': True, 'id': 84}))
 
     def test_project_associate(self):
-        """Test requests for associating project
+        """Test request for associating project with organization.
         """
         with client.test_mode as t:
             t.register_json('/organizations/42/projects/?id=84',
@@ -65,7 +65,7 @@ class OrganizationTests(unittest.TestCase):
                              json.dumps({'associate': True, 'id': 84}))
 
     def test_project_disassociate(self):
-        """Test requests for associating project
+        """Test request for disassociating project with organization.
         """
         with client.test_mode as t:
             t.register_json('/organizations/42/projects/?id=84',
