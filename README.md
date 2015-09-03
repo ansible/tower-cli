@@ -10,7 +10,7 @@
 
 **tower-cli** is a command line tool for Ansible Tower. It allows Tower
 commands to be easily run from the Unix command line.  It can also be used
-as a client library for other python apps, or as a reference for others 
+as a client library for other python apps, or as a reference for others
 developing API interactions with Tower's REST API.
 
 
@@ -169,13 +169,13 @@ $ tower-cli user create --help # command specific help
 #### SSL
 
 By default tower-cli will warn if the SSL certificate of the Tower server
-can not be verified. To disable this warning, set the config variable
+cannot be verified. To disable this warning, set the config variable
 `verify_ssl` to true. To disable it just for a single command, add the
 --insecure flag.
 
 ```bash
 # Disable insecure connection warnings permanently
-$ tower-cli config verify_ssl true
+$ tower-cli config verify_ssl false
 
 # Disable insecure connection warnings for just this command
 $ tower-cli job_template list --insecure
