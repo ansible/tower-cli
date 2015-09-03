@@ -85,6 +85,7 @@ class Settings(object):
             'host': '127.0.0.1',
             'password': '',
             'username': '',
+            'verify_ssl': 'true',
             'verbose': 'false',
         }
         self._defaults = Parser(defaults=defaults)

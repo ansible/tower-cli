@@ -44,6 +44,7 @@ def command(method=None, **kwargs):
                 'format': inner_kw.pop('format', None),
                 'username': inner_kw.pop('tower_username', None),
                 'verbose': inner_kw.pop('verbose', None),
+                'insecure': inner_kw.pop('insecure', None),
             }
             with settings.runtime_values(**runtime_settings):
                 return method(*inner_a, **inner_kw)
@@ -101,6 +102,16 @@ def with_global_options(method):
     method = click.option('-v', '--verbose',
         default=None,
         help='Show information about requests being made.',
+        is_flag=True,
+        required=False,
+    )(method)
+
+    # Create a global SSL warning option.
+    method = click.option(
+        '--insecure',
+        default=None,
+        help='Turn off insecure connection warnings. Set config verify_ssl '
+             'to make this permanent.',
         is_flag=True,
         required=False,
     )(method)

@@ -156,3 +156,14 @@ class ClientTests(unittest.TestCase):
             t.register('/ping/', "I'm a teapot!", status_code=418)
             with self.assertRaises(exc.BadRequest):
                 r = client.get('/ping/')
+
+    def test_disable_connection_warning(self):
+        """Establish that the --insecure flag will cause the program to
+        call disable_warnings in the urllib3 package.
+        """
+        with mock.patch('requests.packages.urllib3.disable_warnings') as g:
+            with client.test_mode as t:
+                t.register('/ping/', "I'm a teapot!", status_code=200)
+                with settings.runtime_values(insecure=False):
+                    client.get('/ping/')
+                    assert g.called
