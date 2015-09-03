@@ -19,7 +19,8 @@ from tower_cli import get_resource, models, resources
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc, types
 
-INVENTORY_SOURCES = ['manual', 'ec2', 'rax', 'gce', 'azure']
+INVENTORY_SOURCES = ['manual', 'ec2', 'rax', 'vmware',
+                     'gce', 'azure', 'openstack']
 
 
 class Resource(models.Resource):

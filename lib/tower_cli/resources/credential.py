@@ -43,8 +43,21 @@ class Resource(models.Resource):
     # What type of credential is this (machine, SCM, etc.)?
     kind = models.Field(
         help_text='The type of credential being added. '
-                  'Valid options are: ssh, scm, aws, rax, gce, azure.',
-        type=click.Choice(['ssh', 'scm', 'aws', 'rax', 'gce', 'azure']),
+                  'Valid options are: ssh, scm, aws, rax, vmware,'
+                  ' gce, azure, openstack.',
+        type=click.Choice(['ssh', 'scm', 'aws', 'rax', 'vmware',
+                           'gce', 'azure', 'openstack']),
+    )
+
+    # need host in order to use VMware
+    host = models.Field(
+        help_text = 'The hostname or IP address to use.',
+        required = False,
+    )
+    # need project to use openstack
+    project = models.Field(
+        help_text = 'The identifier for the project.',
+        required = False
     )
 
     # SSH and SCM fields.
