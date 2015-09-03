@@ -48,10 +48,10 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
     """Read or write tower-cli configuration.
 
     `tower config` saves the given setting to the appropriate Tower CLI;
-    either the user's ~/.tower_cli.cfg file, or the /etc/awx/tower_cli.cfg
+    either the user's ~/.tower_cli.cfg file, or the /etc/tower/tower_cli.cfg
     file if --global is used.
 
-    Writing to /etc/awx/tower_cli.cfg is likely to require heightened
+    Writing to /etc/tower/tower_cli.cfg is likely to require heightened
     permissions (in other words, sudo).
     """
     # If the old-style `global_` option is set, issue a deprecation notice.
@@ -73,7 +73,7 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
             'user': 'User options (set with `tower-cli config`; stored in '
                     '~/.tower_cli.cfg).',
             'global': 'Global options (set with `tower-cli config '
-                      '--scope=global`, stored in /etc/awx/tower_cli.cfg).',
+                      '--scope=global`, stored in /etc/tower/tower_cli.cfg).',
             'defaults': 'Defaults.',
         }
 
@@ -129,10 +129,10 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
     # First, we need the appropriate file.
     filename = os.path.expanduser('~/.tower_cli.cfg')
     if scope == 'global':
-        if not os.path.isdir('/etc/awx/'):
-            raise exc.TowerCLIError('/etc/awx/ does not exist, and this '
+        if not os.path.isdir('/etc/tower/'):
+            raise exc.TowerCLIError('/etc/tower/ does not exist, and this '
                                     'command cowardly declines to create it.')
-        filename = '/etc/awx/tower_cli.cfg'
+        filename = '/etc/tower/tower_cli.cfg'
     elif scope == 'local':
         filename = '.tower_cli.cfg'
 

@@ -113,7 +113,7 @@ class ConfigTests(unittest.TestCase):
         """
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
-        filename = '/etc/awx/tower_cli.cfg'
+        filename = '/etc/tower/tower_cli.cfg'
         mock_open = mock.mock_open()
         with mock.patch('tower_cli.commands.config.open', mock_open,
                         create=True):
@@ -123,7 +123,7 @@ class ConfigTests(unittest.TestCase):
                     result = self.runner.invoke(
                         config, ['username', 'luke', '--scope=global'],
                     )
-                    isdir.assert_called_once_with('/etc/awx/')
+                    isdir.assert_called_once_with('/etc/tower/')
                     chmod.assert_called_once_with(filename, int('0600', 8))
 
         # Ensure that the command completed successfully.
@@ -132,7 +132,7 @@ class ConfigTests(unittest.TestCase):
                          'Configuration updated successfully.')
 
         # Ensure that the output seems to be correct.
-        self.assertIn(mock.call('/etc/awx/tower_cli.cfg', 'w'),
+        self.assertIn(mock.call('/etc/tower/tower_cli.cfg', 'w'),
                       mock_open.mock_calls)
         self.assertIn(mock.call().write('username = luke\n'),
                       mock_open.mock_calls)
@@ -211,10 +211,10 @@ class ConfigTests(unittest.TestCase):
             isdir.return_value = False
             result = self.runner.invoke(config,
                                         ['host', 'foo', '--scope=global'])
-            isdir.assert_called_once_with('/etc/awx/')
+            isdir.assert_called_once_with('/etc/tower/')
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(result.output.strip(),
-                         'Error: /etc/awx/ does not exist, and this '
+                         'Error: /etc/tower/ does not exist, and this '
                          'command cowardly declines to create it.')
 
 
@@ -264,7 +264,7 @@ class DeprecationTests(unittest.TestCase):
                                                      DeprecationWarning)
                         self.assertEqual(warn.mock_calls[0][1][1],
                                          DeprecationWarning)
-                        isdir.assert_called_once_with('/etc/awx/')
+                        isdir.assert_called_once_with('/etc/tower/')
 
         # Ensure that the command completed successfully.
         self.assertEqual(result.exit_code, 0)
@@ -272,7 +272,7 @@ class DeprecationTests(unittest.TestCase):
                          result.output.strip())
 
         # Ensure that the output seems to be correct.
-        self.assertIn(mock.call('/etc/awx/tower_cli.cfg', 'w'),
+        self.assertIn(mock.call('/etc/tower/tower_cli.cfg', 'w'),
                       mock_open.mock_calls)
         self.assertIn(mock.call().write('username = meagan\n'),
                       mock_open.mock_calls)

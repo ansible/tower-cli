@@ -64,7 +64,7 @@ class Settings(object):
     The order of precedence for settings, from least to greatest, is:
 
         - defaults provided in this method
-        - `/etc/awx/tower_cli.cfg`
+        - `/etc/tower/tower_cli.cfg`
         - `~/.tower_cli.cfg`
         - command line arguments
 
@@ -93,10 +93,10 @@ class Settings(object):
         # If there is a global settings file, initialize it.
         self._global = Parser()
         self._global.add_section('general')
-        if os.path.isdir('/etc/awx/'):
-            # Sanity check: Try to actually get a list of files in `/etc/awx/`.
+        if os.path.isdir('/etc/tower/'):
+            # Sanity check: Try to actually get a list of files in `/etc/tower/`.
             #
-            # The default Tower installation caused `/etc/awx/` to have
+            # The default Tower installation caused `/etc/tower/` to have
             # extremely restrictive permissions, since it has its own user
             # and group and has a chmod of 0750.
             #
@@ -107,16 +107,16 @@ class Settings(object):
             # Therefore, check for that particular problem and give a warning
             # if we're in that situation.
             try:
-                global_settings = 'tower_cli.cfg' in os.listdir('/etc/awx/')
+                global_settings = 'tower_cli.cfg' in os.listdir('/etc/tower/')
             except OSError:
-                warnings.warn('/etc/awx/ is present, but not readable with '
+                warnings.warn('/etc/tower/ is present, but not readable with '
                               'current permissions. Any settings defined in '
-                              '/etc/awx/tower_cli.cfg will not be honored.',
+                              '/etc/tower/tower_cli.cfg will not be honored.',
                               RuntimeWarning)
 
             # If there is a global settings file for Tower CLI, read in its
             # contents.
-            self._global.read('/etc/awx/tower_cli.cfg')
+            self._global.read('/etc/tower/tower_cli.cfg')
 
         # Initialize a parser for the user settings file.
         self._user = Parser()
@@ -143,7 +143,7 @@ class Settings(object):
 
             # Sanity check: if this directory corresponds to our global or
             # user directory, skip it.
-            if local_dir in (os.path.expanduser('~'), '/etc/awx'):
+            if local_dir in (os.path.expanduser('~'), '/etc/tower'):
                 continue
 
             # Add this directory to the list.

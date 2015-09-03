@@ -30,7 +30,7 @@ class SettingsTests(unittest.TestCase):
     the way that we expect.
     """
     def test_error_etc_awx(self):
-        """Establish that if /etc/awx/ exists but isn't readable,
+        """Establish that if /etc/tower/ exists but isn't readable,
         that we properly catch it and whine about it.
         """
         with mock.patch.object(os, 'getcwd') as getcwd:
@@ -42,9 +42,9 @@ class SettingsTests(unittest.TestCase):
                         listdir.side_effect = OSError
                         settings = Settings()
                         warn.assert_called_once_with(
-                            '/etc/awx/ is present, but not readable with '
+                            '/etc/tower/ is present, but not readable with '
                             'current permissions. Any settings defined in '
-                            '/etc/awx/tower_cli.cfg will not be honored.',
+                            '/etc/tower/tower_cli.cfg will not be honored.',
                             RuntimeWarning,
                         )
 
