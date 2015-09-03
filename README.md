@@ -10,7 +10,7 @@
 
 **tower-cli** is a command line tool for Ansible Tower. It allows Tower
 commands to be easily run from the Unix command line.  It can also be used
-as a client library for other python apps, or as a reference for others 
+as a client library for other python apps, or as a reference for others
 developing API interactions with Tower's REST API.
 
 
@@ -69,7 +69,7 @@ $ tower-cli config key value
 By issuing `tower-cli config` with no arguments, you can see a full list
 of configuration options and where they are set.
 
-You will generally need to set at least three configuration options--`host`, 
+You will generally need to set at least three configuration options--`host`,
 `username`, and `password`--which correspond to the location of
 your Ansible Tower instance and your credentials to authenticate to Tower.
 
@@ -81,7 +81,7 @@ $ tower-cli config password myPassw0rd
 
 #### Write to the config files directly.
 
-The configuration file can also be edited directly.  A configuration file is a 
+The configuration file can also be edited directly.  A configuration file is a
 simple file with keys and values, separated by `:` or `=`:
 
 ```yaml
@@ -116,7 +116,7 @@ The "resource" is a type of object within Tower (a noun), such as `user`,
 Tower CLI (so: it's `tower-cli user`, never `tower-cli users`).
 
 The "action" is the thing you want to do (a verb). Most Tower CLI resources
-have the following actions--`get`, `list`, `create`, `modify`, and `delete`--and 
+have the following actions--`get`, `list`, `create`, `modify`, and `delete`--and
 have options corresponding to fields on the object in Tower.
 
 Some examples:
@@ -165,6 +165,22 @@ $ tower-cli # help
 $ tower-cli user --help # resource specific help
 $ tower-cli user create --help # command specific help
 ```
+
+#### SSL
+
+By default tower-cli will warn if the SSL certificate of the Tower server
+cannot be verified. To disable this warning, set the config variable
+`verify_ssl` to true. To disable it just for a single command, add the
+--insecure flag.
+
+```bash
+# Disable insecure connection warnings permanently
+$ tower-cli config verify_ssl false
+
+# Disable insecure connection warnings for just this command
+$ tower-cli job_template list --insecure
+```
+
 
 ### License
 

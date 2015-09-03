@@ -22,6 +22,7 @@ import warnings
 from requests.exceptions import ConnectionError
 from requests.sessions import Session
 from requests.models import Response
+from requests.packages import urllib3
 
 from tower_cli.conf import settings
 from tower_cli.utils import data_structures, debug, exceptions as exc
@@ -86,6 +87,10 @@ class Client(Session):
         # If this is a JSON request, encode the data value.
         if headers.get('Content-Type', '') == 'application/json':
             kwargs['data'] = json.dumps(kwargs.get('data', {}))
+
+        # Disable urllib3 warnings # still warn if verrify_ssl None
+        if (settings.verify_ssl is False) or hasattr(settings, 'insecure'):
+            urllib3.disable_warnings()
 
         # Call the superclass method.
         try:
@@ -177,7 +182,7 @@ class Client(Session):
             faux_adapter = FauxAdapter(
                 url_pattern=self.prefix.rstrip('/') + '%s',
             )
-            
+
             try:
                 self.adapters.clear()
                 self.mount('https://', faux_adapter)
@@ -185,7 +190,7 @@ class Client(Session):
                 yield faux_adapter
             finally:
                 self.adapters = adapters
-            
+
 
 class APIResponse(Response):
     """A Response subclass which preseves JSON key order (but makes no other
