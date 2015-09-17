@@ -65,7 +65,7 @@ class ResourceMeta(type):
 
             # If this method has been overwritten from the superclass, copy
             # any click options or arguments from the superclass implementation
-            # down tot the subclass implementation.
+            # down to the subclass implementation.
             if not len(bases):
                 continue
             superclass = bases[0]

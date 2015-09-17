@@ -51,13 +51,13 @@ class Resource(models.Resource):
 
     # need host in order to use VMware
     host = models.Field(
-        help_text = 'The hostname or IP address to use.',
-        required = False,
+        help_text='The hostname or IP address to use.',
+        required=False,
     )
     # need project to use openstack
     project = models.Field(
-        help_text = 'The identifier for the project.',
-        required = False
+        help_text='The identifier for the project.',
+        required=False
     )
 
     # SSH and SCM fields.
@@ -71,17 +71,31 @@ class Resource(models.Resource):
         password=True,
         required=False,
     )
-    private_key = models.Field('ssh_key_data',
+    ssh_key_data = models.Field(
+        'ssh_key_data',
         display=False,
         help_text="The full path to the SSH private key to store. "
                   "(Don't worry; it's encrypted.)",
         required=False,
         type=models.File('r'),
     )
-    private_key_password = models.Field('ssh_key_unlock', password=True,
-                                                          required=False)
+    ssh_key_unlock = models.Field('ssh_key_unlock', password=True,
+                                  required=False)
+
+    # Method with which to esclate
+    become_method = models.Field(
+        help_text='Privledge escalation method. ',
+        type=types.MappedChoice([
+            ('', 'None'),
+            ('sudo', 'sudo'),
+            ('su', 'su'),
+            ('pbrun', 'pbrun'),
+            ('pfexec', 'pfexec'),
+        ]),
+        required=False,
+    )
 
     # SSH specific fields.
-    sudo_username = models.Field(required=False, display=False)
-    sudo_password = models.Field(password=True, required=False)
+    become_username = models.Field(required=False, display=False)
+    become_password = models.Field(password=True, required=False)
     vault_password = models.Field(password=True, required=False)
