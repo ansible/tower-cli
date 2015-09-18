@@ -80,6 +80,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            t.register_json('/config/', {'version': '2.2.0'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
@@ -90,7 +91,7 @@ class LaunchTests(unittest.TestCase):
                     edit.mock_calls[0][1][0].endswith('spam: eggs'),
                 )
             self.assertEqual(
-                json.loads(t.requests[2].body)['extra_vars'],
+                json.loads(t.requests[3].body)['extra_vars'],
                 'foo: bar',
             )
             self.assertEqual(result, {'changed': True, 'id': 42})
@@ -108,6 +109,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {},
             })
+            t.register_json('/config/', {'version': '2.0'}, method='GET')
             t.register_json('/jobs/', {'id': 42}, method='POST')
             t.register_json('/jobs/42/start/', {}, method='GET')
             t.register_json('/jobs/42/start/', {}, method='POST')
@@ -118,7 +120,7 @@ class LaunchTests(unittest.TestCase):
                     edit.mock_calls[0][1][0].endswith('spam: eggs'),
                 )
             self.assertEqual(
-                json.loads(t.requests[1].body)['extra_vars'],
+                json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
             self.assertEqual(result, {'changed': True, 'id': 42})
@@ -136,7 +138,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
-            result = self.res.launch(1, extra_vars='foo: bar')
+            result = self.res.launch(1, extra_vars=['foo: bar'])
 
             self.assertEqual(
                 json.loads(t.requests[2].body)['extra_vars'],
@@ -157,7 +159,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
-            result = self.res.launch(1, extra_vars=StringIO('foo: bar'))
+            result = self.res.launch(1, extra_vars=['foo: bar'])
 
             self.assertEqual(
                 json.loads(t.requests[2].body)['extra_vars'],

@@ -17,8 +17,9 @@ from __future__ import absolute_import, unicode_literals
 
 import click
 
-from tower_cli import models, get_resource
+from tower_cli import models, get_resource, resources
 from tower_cli.utils import types
+from tower_cli.utils import parser
 
 
 class Resource(models.Resource):
@@ -54,7 +55,18 @@ class Resource(models.Resource):
         required=False,
     )
     job_tags = models.Field(required=False, display=False)
-    extra_vars = models.Field(type=models.File('r'), required=False,
-                              display=False)
+    extra_vars = models.Field(required=False, display=False)
     become_enabled = models.Field(type=bool, required=False,
                                   show_default=True, default=False)
+
+    @resources.command
+    @click.option('--extra-vars', required=False, multiple=True,
+                  help='yaml format text that contains extra variables '
+                       'to pass on. Use @ to get these from a file.')
+    def create(self, *args, **kwargs):
+        """Create a job template.
+        """
+        if extra_vars:
+        # if "extra_vars" in kwargs:
+            data['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
+        return super(Resource, self).create(*args, **kwargs)
