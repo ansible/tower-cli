@@ -53,8 +53,10 @@ class Resource(models.MonitorableResource):
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
 
+    @resources.command
     def create(self, *args, **kwargs):
-        """Fix for issue #52, second method, replacing the /projects/
+        """Create a project, with or w/o org.
+        Fix for issue #52, second method, replacing the /projects/
         endpoint temporarily if the project has an organization specified
         """
         if "organization" in kwargs:
@@ -72,7 +74,8 @@ class Resource(models.MonitorableResource):
         'scm_update_on_launch'
     ))
     def modify(self, *args, **kwargs):
-        """Also associated with issue #52, the organization can't be modified
+        """Modify a project, see org help to modify org.
+        Also associated with issue #52, the organization can't be modified
         with the 'modify' command. This would create confusion about whether
         it served the role of an identifier versus a field to modify. This
         method is used to set the allowed fields on the modify command,

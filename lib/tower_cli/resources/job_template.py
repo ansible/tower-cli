@@ -51,7 +51,10 @@ class Resource(models.Resource):
             (1, 'verbose'),
             (2, 'debug'),
         ]),
+        required=False,
     )
     job_tags = models.Field(required=False, display=False)
     extra_vars = models.Field(type=models.File('r'), required=False,
                               display=False)
+    become_enabled = models.Field(type=bool, required=False,
+                                  show_default=True, default=False)
