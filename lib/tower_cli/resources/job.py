@@ -51,13 +51,13 @@ class Resource(models.MonitorableResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     @click.option('--no-input', is_flag=True, default=False,
-                                help='Suppress any requests for input.')
+                  help='Suppress any requests for input.')
     @click.option('--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
-                       'to pass on. Use @ to get these from a file.')#, type=types.File('r')
+                       'to pass on. Use @ to get these from a file.')
     @click.option('--tags', required=False)
     def launch(self, job_template, tags=None, monitor=False, timeout=None,
-                     no_input=True, extra_vars=None):
+               no_input=True, extra_vars=None):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately starts it, and
@@ -89,17 +89,16 @@ class Resource(models.MonitorableResource):
         if extra_vars:
             extra_vars_list += extra_vars
 
+        # Call parser utility to process extra_vars, if any are present
         if len(extra_vars_list) > 0:
-            data['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars_list)
+            data['extra_vars'] = parser. \
+                extra_vars_loader_wrapper(extra_vars_list)
 
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
         if data.pop('ask_variables_on_launch', False) and not no_input \
-            and not extra_vars:
-            if 'extra_vars' not in data:
-                initial = ""
-            else:
-                initial = data['extra_vars']
+                and not extra_vars:
+            initial = data['extra_vars']
             initial = '\n'.join((
                 '# Specify extra variables (if any) here.',
                 '# Lines beginning with "#" are ignored.',

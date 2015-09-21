@@ -15,11 +15,11 @@
 
 import yaml
 
-# returns a dictionary given a yaml or json string
 def string_to_dict(var_string):
+    """Returns a dictionary given a string with yaml or json syntax.
+    If data is not present in a key: value format, then it return
+    an empty dictionary."""
     try:
-        import pdb
-        pdb.set_trace()
         return_dict = yaml.load(var_string)
         assert type(return_dict) is dict
     except (ValueError, AssertionError) as e:
@@ -27,11 +27,15 @@ def string_to_dict(var_string):
     return return_dict
 
 def load_from_file(filename):
+    """Returns the content of the file, filename"""
     with open(filename, 'r') as f:
         filetext = f.read()
     return string_to_dict(filetext)
 
 def load_extra_vars(extra_vars_list):
+    """Similar to the Ansible core routine by the same name, this returns
+    a dictionary with variables defined in all yaml, json, or file references
+    given in the input list. Also handles precidence order."""
     extra_vars = {}
     for extra_vars_opt in extra_vars_list:
         if extra_vars_opt.startswith("@"):
@@ -44,6 +48,10 @@ def load_extra_vars(extra_vars_list):
     return extra_vars
 
 def extra_vars_loader_wrapper(extra_vars_list):
+    """Specific to tower-cli, this specifically avoids doing processing
+    of the extra_vars list if there is only one element in it. In that case,
+    it will be sufficient to allow Tower to process the syntax
+    and return its own response."""
     # If there is only one set of extra_vars, then pass it  to the API
     # without alteration
     if len(extra_vars_list) == 1:

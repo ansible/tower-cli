@@ -63,10 +63,10 @@ class Resource(models.Resource):
     @click.option('--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
-    def create(self, *args, **kwargs):
+    def create(self, extra_vars=None, *args, **kwargs):
         """Create a job template.
         """
         if extra_vars:
         # if "extra_vars" in kwargs:
-            data['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
+            kwargs['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
         return super(Resource, self).create(*args, **kwargs)
