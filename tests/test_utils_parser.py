@@ -16,6 +16,7 @@
 import yaml
 
 from tower_cli.utils import parser
+from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest, mock
 
@@ -47,6 +48,8 @@ class ParserTests(unittest.TestCase):
         """Give it some with '@' and test that it reads from the file"""
         mock_open = mock.mock_open()
         with mock.patch('tower_cli.utils.parser.open', mock_open, create=True):
+            manager = mock_open.return_value.__enter__.return_value
+            manager.read.return_value = 'foo: bar'
             parser.extra_vars_loader_wrapper(["@fake_file1.yml"])
             parser.extra_vars_loader_wrapper(["@fake_file2.yml",
                                               "@fake_file3.yml"])
@@ -55,3 +58,8 @@ class ParserTests(unittest.TestCase):
         self.assertIn(mock.call("fake_file1.yml", 'r'), mock_open.mock_calls)
         self.assertIn(mock.call("fake_file2.yml", 'r'), mock_open.mock_calls)
         self.assertIn(mock.call("fake_file3.yml", 'r'), mock_open.mock_calls)
+
+    def test_parse_error(self):
+        """Given a yaml file with incorrect syntax, throw a warning"""
+        with self.assertRaises(exc.TowerCLIError):
+            parser.extra_vars_loader_wrapper(["a: b\nincorrect ]][ brackets"])

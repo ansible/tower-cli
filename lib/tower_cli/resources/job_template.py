@@ -17,7 +17,7 @@ from __future__ import absolute_import, unicode_literals
 
 import click
 
-from tower_cli import models, get_resource, resources
+from tower_cli import models, resources
 from tower_cli.utils import types
 from tower_cli.utils import parser
 
@@ -37,7 +37,8 @@ class Resource(models.Resource):
     inventory = models.Field(type=types.Related('inventory'))
     project = models.Field(type=types.Related('project'))
     playbook = models.Field()
-    machine_credential = models.Field('credential',
+    machine_credential = models.Field(
+        'credential',
         display=False,
         type=types.Related('credential'),
     )
@@ -67,6 +68,5 @@ class Resource(models.Resource):
         """Create a job template.
         """
         if extra_vars:
-        # if "extra_vars" in kwargs:
             kwargs['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
         return super(Resource, self).create(*args, **kwargs)

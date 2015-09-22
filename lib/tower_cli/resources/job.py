@@ -15,10 +15,7 @@
 
 from __future__ import absolute_import, unicode_literals
 from copy import copy
-from datetime import datetime
 from getpass import getpass
-import sys
-import time
 from distutils.version import LooseVersion
 
 import click
@@ -27,7 +24,6 @@ from sdict import adict
 
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
-from tower_cli.conf import settings
 from tower_cli.utils import debug, exceptions as exc, types
 from tower_cli.utils import parser
 
@@ -106,7 +102,7 @@ class Resource(models.MonitorableResource):
             ))
             extra_vars = click.edit(initial) or ''
             extra_vars = '\n'.join([i for i in extra_vars.split('\n')
-                                            if not i.startswith('#')])
+                                    if not i.startswith('#')])
             data['extra_vars'] = extra_vars
 
         # In Tower 2.1 and later, we create the new job with
@@ -164,7 +160,7 @@ class Resource(models.MonitorableResource):
 
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
-                              help='Print more detail.')
+                  help='Print more detail.')
     def status(self, pk, detail=False):
         """Print the current job status."""
         # Get the job from Ansible Tower.
