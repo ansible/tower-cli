@@ -98,7 +98,7 @@ The order of precedence for configuration file locations is as follows, from lea
 greatest:
 
   * internal defaults
-  * `/etc/awx/tower_cli.cfg` (written using `tower-cli config --global`)
+  * `/etc/tower/tower_cli.cfg` (written using `tower-cli config --global`)
   * `~/.tower_cli.cfg` (written using `tower-cli config`)
   * run-time paramaters
 
@@ -164,6 +164,34 @@ When in doubt, help is available!
 $ tower-cli # help
 $ tower-cli user --help # resource specific help
 $ tower-cli user create --help # command specific help
+```
+
+#### Specify extra variables.
+
+There are a number of ways to pass extra variables to the Tower server when
+launching a job:
+
+* Pass a file using the flag `--extra-vars="@filename.yml"`
+* Include yaml data at runtime with the flag `--extra-vars="var: value"`
+* A command-line editor automatically pops up when the job template is marked to prompt on launch
+* If the job template has extra variables, these will not be over-ridden
+
+These methods can also be combined. For instance, if you give the flag multiple
+times on the command line, specifying a file in addition to manually giving
+extra variables, these two sources will be combined and sent to the Tower
+server. Also note that you may not combine multiple sources when modifying
+a job template.
+
+```bash
+# Launch a job with extra variables from filename.yml, and also a=5
+$ tower-cli job launch --job-template=1 --extra-vars="a: 5" \   
+                                        --extra-vars="@filename.yml"
+
+# Create a job template with that same set of extra variables
+$ tower-cli job_template create --name=test_job_template --project=1 \
+                                --inventory=1 --playbook=helloworld.yml \
+                                --machine-credential=1 --extra-vars="a: 5" \
+                                --extra-vars="@filename.yml"
 ```
 
 #### SSL
