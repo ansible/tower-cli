@@ -32,8 +32,8 @@ class ParserTests(unittest.TestCase):
                          parser.extra_vars_loader_wrapper([mock_text]))
 
     def test_many_combinations(self):
-        """Combine yaml with json with nonsense, check that values
-        are preserved at the end."""
+        """Combine yaml with json with bare values, check that key:value
+        pairs are preserved at the end."""
         adict = {"a": 1}
         bdict = {"b": 2}
         ayml = yaml.dump(adict)
@@ -43,6 +43,25 @@ class ParserTests(unittest.TestCase):
         rdict = yaml.load(result)
         self.assertEqual(rdict['a'], 1)
         self.assertEqual(rdict['b'], 2)
+
+    def test_combine_raw_params(self):
+        """Given multiple files which all have raw parameters, make sure
+        they are combined in the '_raw_params' key entry"""
+        a_kv = "foo=bar\na"
+        b_kv = "baz=fam\nb"
+        result = parser.extra_vars_loader_wrapper([a_kv, b_kv])
+        rdict = yaml.load(result)
+        self.assertEqual(rdict['_raw_params'], "a b")
+
+    def test_precedence(self):
+        """Test that last value is the one that overwrites the others"""
+        adict = {"a": 1}
+        ayml = yaml.dump(adict)
+        a2dict = {"a": 2}
+        a2yml = yaml.dump(a2dict)
+        result = parser.extra_vars_loader_wrapper([ayml, a2yml])
+        rdict = yaml.load(result)
+        self.assertEqual(rdict['a'], 2)
 
     def test_read_from_file(self):
         """Give it some with '@' and test that it reads from the file"""
@@ -62,4 +81,103 @@ class ParserTests(unittest.TestCase):
     def test_parse_error(self):
         """Given a yaml file with incorrect syntax, throw a warning"""
         with self.assertRaises(exc.TowerCLIError):
-            parser.extra_vars_loader_wrapper(["a: b\nincorrect ]][ brackets"])
+            parser.extra_vars_loader_wrapper(["a: b\nincorrect == brackets"])
+
+        with self.assertRaises(exc.TowerCLIError):
+            parser.extra_vars_loader_wrapper(["a: b\nincorrect = =brackets"])
+
+
+class TestSplitter_Gen(unittest.TestCase):
+    """Set of strings paired with expected output is ran agains the parsing
+    functions in this code in order to verrify desired accuracy.
+
+    SPLIT_DATA is taken from Ansible tests located in:
+        ansible/test/units/parsing/test_splitter.py
+    within the ansible project source.
+    """
+    SPLIT_DATA = (
+        (u'a',
+            [u'a'],
+            {u'_raw_params': u'a'}),
+        (u'a=b',
+            [u'a=b'],
+            {u'a': u'b'}),
+        (u'a="foo bar"',
+            [u'a="foo bar"'],
+            {u'a': u'foo bar'}),
+        (u'"foo bar baz"',
+            [u'"foo bar baz"'],
+            {u'_raw_params': '"foo bar baz"'}),
+        (u'foo bar baz',
+            [u'foo', u'bar', u'baz'],
+            {u'_raw_params': u'foo bar baz'}),
+        (u'a=b c="foo bar"',
+            [u'a=b', u'c="foo bar"'],
+            {u'a': u'b', u'c': u'foo bar'}),
+        (u'a="echo \\"hello world\\"" b=bar',
+            [u'a="echo \\"hello world\\""', u'b=bar'],
+            {u'a': u'echo "hello world"', u'b': u'bar'}),
+        (u'a="multi\nline"',
+            [u'a="multi\nline"'],
+            {u'a': u'multi\nline'}),
+        (u'a="blank\n\nline"',
+            [u'a="blank\n\nline"'],
+            {u'a': u'blank\n\nline'}),
+        (u'a="blank\n\n\nlines"',
+            [u'a="blank\n\n\nlines"'],
+            {u'a': u'blank\n\n\nlines'}),
+        (u'a="a long\nmessage\\\nabout a thing\n"',
+            [u'a="a long\nmessage\\\nabout a thing\n"'],
+            {u'a': u'a long\nmessage\\\nabout a thing\n'}),
+        (u'a="multiline\nmessage1\\\n" b="multiline\nmessage2\\\n"',
+            [u'a="multiline\nmessage1\\\n"', u'b="multiline\nmessage2\\\n"'],
+            {u'a': 'multiline\nmessage1\\\n',
+                   u'b': u'multiline\nmessage2\\\n'}),
+        (u'a={{jinja}}',
+            [u'a={{jinja}}'],
+            {u'a': u'{{jinja}}'}),
+        (u'a="{{ jinja }}"',  # edited for reduced scope
+            [u'a={{ jinja }}'],
+            {u'a': u'{{ jinja }}'}),
+        (u'a="{{jinja}}"',
+            [u'a="{{jinja}}"'],
+            {u'a': u'{{jinja}}'}),
+        (u'a="{{ jinja }}{{jinja2}}"',  # edited for reduced scope
+            [u'a={{ jinja }}{{jinja2}}'],
+            {u'a': u'{{ jinja }}{{jinja2}}'}),
+        (u'a="{{ jinja }}{{jinja2}}"',
+            [u'a="{{ jinja }}{{jinja2}}"'],
+            {u'a': u'{{ jinja }}{{jinja2}}'}),
+        (u'a={{jinja}} b={{jinja2}}',
+            [u'a={{jinja}}', u'b={{jinja2}}'],
+            {u'a': u'{{jinja}}', u'b': u'{{jinja2}}'}),
+        (u'a="{{jinja}}\n" b="{{jinja2}}\n"',
+            [u'a="{{jinja}}\n"', u'b="{{jinja2}}\n"'],
+            {u'a': u'{{jinja}}\n', u'b': u'{{jinja2}}\n'}),
+        ('a=b\na',
+            ['a=b', 'a'],
+            {'a': 'b', '_raw_params': 'a'}),
+        )
+
+    CUSTOM_DATA = [
+        ("test=23 site=example.com", {"test": 23, "site": "example.com"}),
+        ("2 site=example.com", {"_raw_params": '2', "site": "example.com"}),
+        ('test=23 key="white space"', {"test": 23, "key": "white space"}),
+        ("test=23 key='white space'", {"test": 23, "key": "white space"}),
+        # YAML list
+        ('a: [1, 2, 3, 4, 5]', {'a': [1, 2, 3, 4, 5]}),
+        # JSON list
+        ('{"a": [6,7,8,9]}', {u'a': [6, 7, 8, 9]}),
+        ("{'a': True, 'list_thing': [1, 2, 3, 4]}",
+            {'a': True, 'list_thing': [1, 2, 3, 4]})
+        ]
+
+    def test_parse_list(self):
+        """Run tests on the data from Ansible core project."""
+        for data in self.SPLIT_DATA:
+            self.assertEqual(parser.string_to_dict(data[0]), data[2])
+
+    def test_custom_parse_list(self):
+        """Custom input-output scenario tests."""
+        for data in self.CUSTOM_DATA:
+            self.assertEqual(parser.string_to_dict(data[0]), data[1])

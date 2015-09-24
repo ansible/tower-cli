@@ -179,22 +179,28 @@ launching a job:
 These methods can also be combined. For instance, if you give the flag multiple
 times on the command line, specifying a file in addition to manually giving
 extra variables, these two sources will be combined and sent to the Tower
-server. Also note that you may not combine multiple sources when modifying
-a job template.
+server.
 
 ```bash
 # Launch a job with extra variables from filename.yml, and also a=5
-$ tower-cli job launch --job-template=1 --extra-vars="a: 5" \   
+$ tower-cli job launch --job-template=1 --extra-vars="a=5 b=3" \   
                                         --extra-vars="@filename.yml"
 
 # Create a job template with that same set of extra variables
 $ tower-cli job_template create --name=test_job_template --project=1 \
                                 --inventory=1 --playbook=helloworld.yml \
-                                --machine-credential=1 --extra-vars="a: 5" \
+                                --machine-credential=1 --extra-vars="a=5 b=3" \
                                 --extra-vars="@filename.yml"
 ```
 
-#### SSL
+Also note that you may not combine multiple sources when modifying
+a job template. Whitespace can be used in strings like
+ `--extra-vars="a='white space'" `, and list-valued parameters can be sent
+as JSON or YAML, but not key=value pairs. For instance,
+`--extra-vars="a: [1, 2, 3, 4, 5]" ` will send the parameter
+"a" with that list as its value.
+
+#### SSL warnings
 
 By default tower-cli will warn if the SSL certificate of the Tower server
 cannot be verified. To disable this warning, set the config variable
