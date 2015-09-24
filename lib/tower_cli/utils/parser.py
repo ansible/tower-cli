@@ -15,8 +15,11 @@
 
 import yaml
 import json
+
 import ast
 import shlex
+import sys
+
 from tower_cli.utils import exceptions as exc
 
 
@@ -28,7 +31,7 @@ def parse_kv(var_string):
 
     # Python 2.6 / shlex has problems handling unicode, this is a fix
     fix_encoding_26 = False
-    if type(var_string) is unicode and '\x00' in shlex.split(u'a')[0]:
+    if sys.version_info < (2, 7) and '\x00' in shlex.split(u'a')[0]:
         var_string = str(var_string)
         fix_encoding_26 = True
 
