@@ -171,7 +171,7 @@ $ tower-cli user create --help # command specific help
 There are a number of ways to pass extra variables to the Tower server when
 launching a job:
 
-* Pass a file using the flag `--extra-vars="@filename.yml"`
+* Pass data in a file using the flag `--extra-vars="@filename.yml"`
 * Include yaml data at runtime with the flag `--extra-vars="var: value"`
 * A command-line editor automatically pops up when the job template is marked to prompt on launch
 * If the job template has extra variables, these will not be over-ridden
@@ -193,12 +193,11 @@ $ tower-cli job_template create --name=test_job_template --project=1 \
                                 --extra-vars="@filename.yml"
 ```
 
-Also note that you may not combine multiple sources when modifying
-a job template. Whitespace can be used in strings like
- `--extra-vars="a='white space'" `, and list-valued parameters can be sent
-as JSON or YAML, but not key=value pairs. For instance,
-`--extra-vars="a: [1, 2, 3, 4, 5]" ` will send the parameter
-"a" with that list as its value.
+You may not combine multiple sources when modifying a job template. Whitespace
+can be used in strings like `--extra-vars="a='white space'" `, and list-valued
+parameters can be sent as JSON or YAML, but not key=value pairs. For instance,
+`--extra-vars="a: [1, 2, 3, 4, 5]" ` will send the parameter "a" with that list
+as its value.
 
 #### SSL warnings
 

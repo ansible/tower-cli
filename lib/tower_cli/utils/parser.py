@@ -142,6 +142,6 @@ def extra_vars_loader_wrapper(extra_vars_list):
     extra_vars_dict = load_extra_vars(extra_vars_list)
     if len(extra_vars_list) == 1:
         return file_or_yaml_split(extra_vars_list[0])
-    # For a list of extra_vars, combine them into a single input
+    # For a single string of extra_vars, combine them into a single input
     else:
-        return yaml.dump(extra_vars_dict)
+        return json.dumps(extra_vars_dict)

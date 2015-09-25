@@ -145,7 +145,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
-            t.register_json('/config/', {'version': '2.3'}, method='GET')
+            t.register_json('/config/', {'version': '2.4'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')

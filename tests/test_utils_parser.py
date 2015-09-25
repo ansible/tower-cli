@@ -154,23 +154,35 @@ class TestSplitter_Gen(unittest.TestCase):
         (u'a="{{jinja}}\n" b="{{jinja2}}\n"',
             [u'a="{{jinja}}\n"', u'b="{{jinja2}}\n"'],
             {u'a': u'{{jinja}}\n', u'b': u'{{jinja2}}\n'}),
-        ('a=b\na',
-            ['a=b', 'a'],
-            {'a': 'b', '_raw_params': 'a'}),
         )
 
     CUSTOM_DATA = [
         ("test=23 site=example.com", {"test": 23, "site": "example.com"}),
         ("2 site=example.com", {"_raw_params": '2', "site": "example.com"}),
+        ('a=b\na', {'a': 'b', '_raw_params': 'a'}),
+        ('var: value', {"var": "value"}),
+        # key=value
         ('test=23 key="white space"', {"test": 23, "key": "white space"}),
         ("test=23 key='white space'", {"test": 23, "key": "white space"}),
+        ('a="[1, 2, 3, 4, 5]" b="white space" ',
+            {"a": [1, 2, 3, 4, 5], "b": 'white space'}),
         # YAML list
         ('a: [1, 2, 3, 4, 5]', {'a': [1, 2, 3, 4, 5]}),
         # JSON list
-        ('{"a": [6,7,8,9]}', {u'a': [6, 7, 8, 9]}),
+        ('{"a": [6,7,8,9]}', {'a': [6, 7, 8, 9]}),
         ("{'a': True, 'list_thing': [1, 2, 3, 4]}",
-            {'a': True, 'list_thing': [1, 2, 3, 4]})
+            {'a': True, 'list_thing': [1, 2, 3, 4]}),
+        ("a: [1, 2, 3, 4, 5]\nb: 'white space' ",
+            {"a": [1, 2, 3, 4, 5], "b": 'white space'}),
         ]
+
+    # tests that combine two sources into one
+    COMBINATION_DATA = [
+        (["a: [1, 2, 3, 4, 5]", "b='white space'"],
+            {"a": [1, 2, 3, 4, 5], "b": 'white space'}),
+        (['{"a":3}', "b='white space'"],  # json
+            {"a": 3, "b": 'white space'}),
+    ]
 
     def test_parse_list(self):
         """Run tests on the data from Ansible core project."""
@@ -181,3 +193,16 @@ class TestSplitter_Gen(unittest.TestCase):
         """Custom input-output scenario tests."""
         for data in self.CUSTOM_DATA:
             self.assertEqual(parser.string_to_dict(data[0]), data[1])
+
+    def test_combination_parse_list(self):
+        """Custom input-output scenario tests for 2 sources into one."""
+        for data in self.COMBINATION_DATA:
+            self.assertEqual(parser.load_extra_vars(data[0]), data[1])
+
+    def test_unicode_dump(self):
+        """Test that data is dumped without unicode character marking."""
+        for data in self.COMBINATION_DATA:
+            string_rep = parser.extra_vars_loader_wrapper(data[0])
+            self.assertEqual(yaml.load(string_rep), data[1])
+            assert "python/unicode" not in string_rep
+            assert "\\n" not in string_rep

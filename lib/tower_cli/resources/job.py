@@ -78,7 +78,7 @@ class Resource(models.MonitorableResource):
         if 'extra_vars' in data:
             # But only do this for versions before 2.3
             r = client.get('/config/')
-            if LooseVersion(r.json()['version']) < LooseVersion('2.3'):
+            if LooseVersion(r.json()['version']) < LooseVersion('2.4'):
                 extra_vars_list = [data['extra_vars']]
 
         # Add the runtime extra_vars to this list
