@@ -18,7 +18,7 @@ import json
 import tower_cli
 from tower_cli.api import client
 
-from tests.compat import unittest, mock
+from tests.compat import unittest
 
 
 class HostTests(unittest.TestCase):

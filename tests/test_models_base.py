@@ -14,9 +14,7 @@
 # limitations under the License.
 
 import json
-import types
 
-import six
 from six.moves import StringIO
 
 from sdict import adict
@@ -58,7 +56,7 @@ class ResourceMetaTests(unittest.TestCase):
         # Establish that the commands are present on the resource where
         # we expect, and that the defined methods are still plain methods.
         #
-        # Note: We can use something like types.FunctionType or 
+        # Note: We can use something like types.FunctionType or
         # types.UnboundMethodType to test against directly, but using a
         # regular method is preferable because of differences between
         # the type internals in Python 2 vs. Python 3.
@@ -289,7 +287,7 @@ class SubcommandTests(unittest.TestCase):
         # Establish that the field has an option of --option-name, and
         # a name of internal_name.
         opt = cmd.params[0]
-        self.assertEqual(opt.name, 'internal_name')        
+        self.assertEqual(opt.name, 'internal_name')
         self.assertEqual(opt.opts, ['--option-name'])
 
     def test_docstring_replacement_an(self):
@@ -385,7 +383,7 @@ class SubcommandTests(unittest.TestCase):
             with settings.runtime_values(format='human'):
                 func()
             output = secho.mock_calls[-1][1][0]
-        self.assertEqual(output, 'No records found.')        
+        self.assertEqual(output, 'No records found.')
 
     def test_echo_method_human_formatted_single_result(self):
         """Establish that a single result sent to the human formatter
@@ -426,7 +424,7 @@ class SubcommandTests(unittest.TestCase):
                 func()
             output = secho.mock_calls[-1][1][0]
         self.assertIn('(Page 2 of 5.)', output)
-      
+
     def test_echo_method_human_pagination_last_page(self):
         """Establish that pagination works in human formatting, and it
         prints the way we expect on the final page..
@@ -448,7 +446,7 @@ class SubcommandTests(unittest.TestCase):
         with mock.patch.object(click, 'secho') as secho:
             with settings.runtime_values(format='human'):
                 func()
-            output = secho.mock_calls[-1][1][0]        
+            output = secho.mock_calls[-1][1][0]
         self.assertIn('foo spam', output)
         self.assertIn('bar eggs', output)
 
@@ -499,10 +497,10 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             # Register the first, second, and third page.
             t.register_json('/foo/', {'count': 3, 'results': [
-                {'id': 1, 'name': 'foo', 'description': 'bar'},                
+                {'id': 1, 'name': 'foo', 'description': 'bar'},
             ], 'next': '/foo/?page=2', 'previous': None})
             t.register_json('/foo/?page=2', {'count': 3, 'results': [
-                {'id': 2, 'name': 'spam', 'description': 'eggs'},                
+                {'id': 2, 'name': 'spam', 'description': 'eggs'},
             ], 'next': '/foo/?page=3', 'previous': None})
             t.register_json('/foo/?page=3', {'count': 3, 'results': [
                 {'id': 3, 'name': 'bacon', 'description': 'cheese'},
@@ -522,7 +520,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/?bar=baz', {'count': 0, 'results': [],
                                               'next': None, 'previous': None})
-            result = self.res.list(query=[('bar', 'baz')])
+            self.res.list(query=[('bar', 'baz')])
             self.assertTrue(t.requests[0].url.endswith('bar=baz'))
 
     def test_list_duplicate_kwarg(self):
@@ -531,8 +529,7 @@ class ResourceTests(unittest.TestCase):
         """
         with client.test_mode as t:
             with self.assertRaises(exc.BadRequest):
-                result = self.res.list(name='Batman',
-                                       query=[('name', 'Robin')])
+                self.res.list(name='Batman', query=[('name', 'Robin')])
             self.assertEqual(len(t.requests), 0)
 
     def test_get_unexpected_zero_results(self):
@@ -542,7 +539,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/?name=spam', {'count': 0, 'results': []})
             with self.assertRaises(exc.NotFound):
-                result = self.res.get(name='spam')
+                self.res.get(name='spam')
 
     def test_get_no_debug_header(self):
         """Establish that if get is called with include_debug_header=False,
@@ -572,7 +569,7 @@ class ResourceTests(unittest.TestCase):
                 {'id': 2, 'name': 'spam'},
             ], 'next': None, 'previous': None})
             with self.assertRaises(exc.MultipleResults):
-                result = self.res.get(name='spam')
+                self.res.get(name='spam')
 
     def test_list_with_none_kwargs(self):
         """Establish that if `list` is called with keyword arguments with
@@ -586,7 +583,7 @@ class ResourceTests(unittest.TestCase):
             t.register_json('/foo/?name=foo', {'count': 1, 'results': [
                 {'id': 1, 'name': 'foo', 'description': 'bar'},
             ], 'next': None, 'previous': None})
-            result = self.res.list(name='foo', description=None)
+            self.res.list(name='foo', description=None)
             self.assertEqual(len(t.requests), 1)
 
             # Ensure that there are no other query param arguments other
@@ -617,7 +614,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/?name=bar', {'count': 0, 'results': [],
                                                'next': None, 'previous': None})
-            result = self.res.list(name=sio)
+            self.res.list(name=sio)
             self.assertTrue(t.requests[0].url.endswith('?name=bar'))
 
     def test_create(self):
@@ -631,7 +628,7 @@ class ResourceTests(unittest.TestCase):
                                                'next': None, 'previous': None})
             t.register_json('/foo/', {'changed': True, 'id': 42},
                             method='POST')
-            result = self.res.create(name='bar')
+            self.res.create(name='bar')
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
 
@@ -694,7 +691,7 @@ class ResourceTests(unittest.TestCase):
         """Establish that we ignore keyword arguments set to None when
         performing writes.
         """
-        with client.test_mode as t:            
+        with client.test_mode as t:
             t.register_json('/foo/42/', {'id': 42, 'name': 'bar',
                                          'description': 'baz'})
             result = self.res.modify(42, name=None, description='baz')
@@ -754,7 +751,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/42/', '', method='DELETE', status_code=404)
             with self.assertRaises(exc.NotFound):
-                result = self.res.delete(42, fail_on_missing=True)
+                self.res.delete(42, fail_on_missing=True)
 
     def test_delete_without_pk_already_missing(self):
         """Establish that calling `delete` on a record without a primary
@@ -772,7 +769,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/?name=bar', {'count': 0, 'results': []})
             with self.assertRaises(exc.NotFound):
-                result = self.res.delete(name='bar', fail_on_missing=True)
+                self.res.delete(name='bar', fail_on_missing=True)
 
     def test_assoc_already_present(self):
         """Establish that the _assoc method returns an unchanged status
@@ -826,7 +823,7 @@ class ResourceTests(unittest.TestCase):
         """Establish that a if _lookup is invoked without any unique
         field specified, that BadRequest is raised.
         """
-        with client.test_mode as t:
+        with client.test_mode:
             with self.assertRaises(exc.BadRequest):
                 self.res._lookup(description='abcd')
 

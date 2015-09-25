@@ -92,7 +92,7 @@ class Resource(models.MonitorableResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     def update(self, pk, monitor=False, timeout=None, name=None,
-                     organization=None):
+               organization=None):
         """Trigger a project update job within Ansible Tower.
         Only meaningful on non-manual projects.
         """
@@ -113,7 +113,6 @@ class Resource(models.MonitorableResource):
         # Commence the update.
         debug.log('Updating the project.', header='details')
         result = client.post('/projects/%d/update/' % pk)
-        project_update_id = result.json()['project_update']
 
         # If we were told to monitor the project update's status, do so.
         if monitor:
@@ -126,7 +125,7 @@ class Resource(models.MonitorableResource):
 
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
-                              help='Print more detail.')
+                  help='Print more detail.')
     def status(self, pk, detail=False):
         """Print the current job status."""
         # Get the job from Ansible Tower.

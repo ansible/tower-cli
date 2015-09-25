@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 import tower_cli
 from tower_cli import models
 from tower_cli.api import client
@@ -133,8 +131,8 @@ class GroupTests(unittest.TestCase):
         with mock.patch.object(models.Resource, 'modify') as super_modify:
             super_modify.return_value = {'changed': False}
             with client.test_mode as t:
-                answer = self.gr.modify(42, source='rax',
-                                        force_on_exists=False)
+                self.gr.modify(42, source='rax',
+                               force_on_exists=False)
                 self.assertEqual(len(t.requests), 0)
             super_modify.assert_called_once_with(pk=42, force_on_exists=False)
 
@@ -149,10 +147,10 @@ class GroupTests(unittest.TestCase):
                     'id': 1, 'name': 'foo', 'inventory': 1,
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='GET')
-                answer = self.gr.modify(1, name='foo', source='rax')
+                self.gr.modify(1, name='foo', source='rax')
                 self.assertEqual(len(t.requests), 1)
-            isrc_modify.assert_called_once_with(42,
-                source='rax', credential=None, force_on_exists=True,
+            isrc_modify.assert_called_once_with(
+                42, source='rax', credential=None, force_on_exists=True,
             )
 
     def test_sync(self):
@@ -168,5 +166,5 @@ class GroupTests(unittest.TestCase):
                 }, method='GET')
                 self.gr.sync(1)
                 isrc_sync.assert_called_once_with(42, monitor=False,
-                                                      timeout=None)
+                                                  timeout=None)
                 self.assertEqual(len(t.requests), 1)

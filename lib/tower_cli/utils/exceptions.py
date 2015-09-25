@@ -112,7 +112,7 @@ class MultipleRelatedError(RelatedError):
     """
     exit_code = 62
 
-    
+
 class ValidationError(TowerCLIError):
     """An exception class for invalid values being sent as option
     switches to Tower CLI.

@@ -5,7 +5,9 @@ env:
     - TOXENV=py2.7
     - TOXENV=py3.3
     - TOXENV=py3.4
+    - TOXENV=flake8
 install:
+    - pip install flake8
     - pip install tox coveralls --use-mirrors
 script:
     - tox

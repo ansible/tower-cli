@@ -20,7 +20,6 @@ from six.moves import StringIO
 import click
 
 from tower_cli.api import client
-from tower_cli.resources.user import Resource as UserResource
 from tower_cli.utils import exceptions as exc, types
 
 from tests.compat import unittest, mock

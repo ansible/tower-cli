@@ -41,6 +41,7 @@ class SettingsTests(unittest.TestCase):
                     with mock.patch.object(os, 'listdir') as listdir:
                         listdir.side_effect = OSError
                         settings = Settings()
+                        settings
                         warn.assert_called_once_with(
                             '/etc/tower/ is present, but not readable with '
                             'current permissions. Any settings defined in '

@@ -32,3 +32,7 @@ if sys.version_info < (2, 7):
     import simplejson as json
 else:
     import json
+
+
+OrderedDict
+json

@@ -18,3 +18,10 @@ from __future__ import absolute_import, unicode_literals
 from tower_cli.models.base import BaseResource, Resource, MonitorableResource
 from tower_cli.models.fields import Field
 from tower_cli.utils.types import File
+
+
+Field
+File
+BaseResource
+Resource
+MonitorableResource

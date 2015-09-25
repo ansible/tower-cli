@@ -16,7 +16,6 @@
 import click
 
 from tower_cli import models
-from tower_cli.utils import exceptions as exc
 from tower_cli.utils import types
 
 

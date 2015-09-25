@@ -15,8 +15,6 @@
 
 import sys
 
-import click
-
 from tower_cli.conf import settings
 from tower_cli.utils import secho
 
@@ -33,8 +31,8 @@ def log(s, header='', file=sys.stderr, nl=1, **kwargs):
 
     # If this is a "header" line, make it a header.
     if header:
-        s = '*** %s: %s %s' % (header.upper(), s, 
-                               '*' * (72 - len(header) - len(s)))
+        s = '*** %s: %s %s' % \
+            (header.upper(), s, '*' * (72 - len(header) - len(s)))
 
     # If `nl` is an int greater than 1, add the appropriate newlines
     # to the output.

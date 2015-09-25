@@ -23,6 +23,7 @@ sys.path.append(APP_ROOT)
 
 from tests.compat import unittest
 
+
 # Find tests.
 def load_tests(loader, standard_tests, throwaway):
     return loader.discover('tests')

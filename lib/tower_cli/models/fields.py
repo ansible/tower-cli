@@ -24,9 +24,9 @@ class Field(object):
     This class tracks whether a field is unique, filterable, read-only, etc.
     """
     def __init__(self, key=None, type=six.text_type, default=None,
-                       display=True, filterable=True, help_text=None,
-                       is_option=True, password=False, read_only=False,
-                       required=True, show_default=False, unique=False):
+                 display=True, filterable=True, help_text=None,
+                 is_option=True, password=False, read_only=False,
+                 required=True, show_default=False, unique=False):
         # Init the name to blank.
         # What's going on here: This is set by the ResourceMeta metaclass
         # when the **resource** is instantiated.
@@ -68,7 +68,7 @@ class Field(object):
 
     @property
     def flags(self):
-        flags_list = [self.type.__name__.replace('unicode', 'str')]        
+        flags_list = [self.type.__name__.replace('unicode', 'str')]
         if self.read_only:
             flags_list.append('read-only')
         if self.unique:

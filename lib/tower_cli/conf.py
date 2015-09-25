@@ -95,7 +95,7 @@ class Settings(object):
         self._global = Parser()
         self._global.add_section('general')
         if os.path.isdir('/etc/tower/'):
-            # Sanity check: Try to actually get a list of files in `/etc/tower/`.
+            # Sanity check: Try to get a list of files in `/etc/tower/`.
             #
             # The default Tower installation caused `/etc/tower/` to have
             # extremely restrictive permissions, since it has its own user
@@ -108,7 +108,7 @@ class Settings(object):
             # Therefore, check for that particular problem and give a warning
             # if we're in that situation.
             try:
-                global_settings = 'tower_cli.cfg' in os.listdir('/etc/tower/')
+                os.listdir('/etc/tower/')
             except OSError:
                 warnings.warn('/etc/tower/ is present, but not readable with '
                               'current permissions. Any settings defined in '

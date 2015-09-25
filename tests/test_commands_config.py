@@ -21,7 +21,7 @@ import click
 from click.testing import CliRunner
 
 from tower_cli.commands.config import config, echo_setting
-from tower_cli.conf import settings, Parser
+from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
 
