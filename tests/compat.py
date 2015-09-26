@@ -20,21 +20,17 @@
 # Import unittest2 if we have it (required on Python 2.6),
 # otherwise just use the stdlib unittest.
 try:
-    import unittest2 as unittest
+    import unittest2 as unittest  # NOQA
 except ImportError:  # Python >= 2.7
-    import unittest
+    import unittest  # NOQA
 
 try:
-    from unittest import mock
+    from unittest import mock  # NOQA
 except ImportError:  # Python < 3.3
-    import mock
+    import mock  # NOQA
 
 # Import the correct class used for when a file is opened.
 try:
     from io import TextIOWrapper
 except ImportError:  # Python < 3
-    TextIOWrapper = file
-
-
-unittest
-mock
+    TextIOWrapper = file  # NOQA

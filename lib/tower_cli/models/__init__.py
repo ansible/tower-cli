@@ -13,15 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals  # NOQA
 
-from tower_cli.models.base import BaseResource, Resource, MonitorableResource
-from tower_cli.models.fields import Field
-from tower_cli.utils.types import File
-
-
-Field
-File
-BaseResource
-Resource
-MonitorableResource
+from tower_cli.models.base import BaseResource, Resource, MonitorableResource  # NOQA
+from tower_cli.models.fields import Field  # NOQA
+from tower_cli.utils.types import File  # NOQA
