@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import click
 from click.testing import CliRunner
 
 import requests
@@ -44,7 +43,8 @@ class VersionTests(unittest.TestCase):
 
             # Verify that we got the output we expected.
             self.assertEqual(result.exit_code, 0)
-            self.assertEqual(result.output.strip(),
+            self.assertEqual(
+                result.output.strip(),
                 'Ansible Tower 4.21\nTower CLI %s' % tower_cli.__version__,
             )
 

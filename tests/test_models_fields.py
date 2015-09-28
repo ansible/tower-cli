@@ -15,11 +15,11 @@
 
 from tower_cli import models
 
-from tests.compat import unittest, mock
+from tests.compat import unittest
 
 
 class FieldTests(unittest.TestCase):
-    """A set of tests to establish that the base Field class works in the 
+    """A set of tests to establish that the base Field class works in the
     way we expect.
     """
     def test_dunder_lt(self):
@@ -66,7 +66,7 @@ class FieldTests(unittest.TestCase):
         """
         f1 = models.Field(unique=True, filterable=False)
         self.assertIn('unique', f1.flags)
-        self.assertIn('not filterable', f1.flags)        
+        self.assertIn('not filterable', f1.flags)
 
     def test_flags_read_only(self):
         """Establish that the `flags` property successfully flags read-only

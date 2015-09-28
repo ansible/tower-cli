@@ -13,14 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import time
-from copy import copy
-
-import click
-
-from six.moves import StringIO
-
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
@@ -118,7 +110,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/update/', {'project_update': 42},
                             method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
-                result = self.res.update(1, monitor=True)
+                self.res.update(1, monitor=True)
                 monitor.assert_called_once_with(1, timeout=None)
 
     def test_cannot_update(self):
@@ -134,7 +126,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/update/', {'can_update': False},
                             method='GET')
             with self.assertRaises(exc.CannotStartJob):
-                result = self.res.update(1)
+                self.res.update(1)
 
 
 class StatusTests(unittest.TestCase):
@@ -229,4 +221,4 @@ class StatusTests(unittest.TestCase):
                 'related': {},
             })
             with self.assertRaises(exc.NotFound):
-                result = self.res.status(1)
+                self.res.status(1)

@@ -17,7 +17,7 @@ from six.moves import StringIO
 
 from tower_cli.utils.exceptions import TowerCLIError
 
-from tests.compat import unittest, mock
+from tests.compat import unittest
 
 
 class ExceptionTests(unittest.TestCase):

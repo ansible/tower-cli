@@ -59,7 +59,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/inventory_sources/1/update/',
                             {}, method='POST')
             with mock.patch.object(type(self.isr), 'monitor') as monitor:
-                answer = self.isr.update(1, monitor=True)
+                self.isr.update(1, monitor=True)
                 monitor.assert_called_once_with(1, timeout=None)
 
 
@@ -155,4 +155,4 @@ class StatusTests(unittest.TestCase):
                 'related': {},
             })
             with self.assertRaises(exc.NotFound):
-                result = self.res.status(1)
+                self.res.status(1)

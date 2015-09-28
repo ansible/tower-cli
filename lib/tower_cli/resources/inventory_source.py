@@ -17,7 +17,6 @@ import click
 
 from sdict import adict
 
-import tower_cli
 from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, types, exceptions as exc
@@ -33,7 +32,7 @@ class Resource(models.MonitorableResource):
         default='manual',
         help_text='The type of inventory source in use.',
         type=click.Choice(['manual', 'ec2', 'rax', 'vmware',
-                            'gce', 'azure', 'openstack']),
+                           'gce', 'azure', 'openstack']),
     )
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
@@ -70,7 +69,7 @@ class Resource(models.MonitorableResource):
 
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
-                              help='Print more detail.')
+                  help='Print more detail.')
     def status(self, pk, detail=False):
         """Print the current job status."""
         # Get the job from Ansible Tower.

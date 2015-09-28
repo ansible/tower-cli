@@ -27,13 +27,8 @@ from copy import copy
 
 import six
 
-from requests.compat import quote
-
 import click
 from click._compat import isatty as is_tty
-from click.decorators import _make_command
-
-from sdict import adict
 
 from tower_cli import resources
 from tower_cli.api import client
@@ -44,7 +39,6 @@ from tower_cli.utils.command import Command
 from tower_cli.utils import debug, secho
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.decorators import command
-from tower_cli.utils.types import File
 
 
 class ResourceMeta(type):
@@ -124,8 +118,7 @@ class ResourceMeta(type):
 
 class BaseResource(six.with_metaclass(ResourceMeta)):
     """Abstract class representing resources within the Ansible Tower
-    system, on which actions can be taken.
-    """
+    system, on which actions can be taken."""
     abstract = True  # Not inherited.
     cli_help = ''
     endpoint = None
@@ -141,10 +134,13 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
             """
             def __init__(self, resource, *args, **kwargs):
                 self.resource = resource
-                self.resource_name = getattr(resource, 'resource_name',
-                                            resource.__module__.split('.')[-1])
+                self.resource_name = getattr(
+                    resource, 'resource_name',
+                    resource.__module__.split('.')[-1]
+                )
                 self.resource_name = self.resource_name.replace('_', ' ')
-                super(Subcommand, self).__init__(*args,
+                super(Subcommand, self).__init__(
+                    *args,
                     help=self.resource.cli_help,
                     **kwargs
                 )
@@ -224,9 +220,10 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                             args.insert(0, field.key)
 
                         # Apply the option to the method.
-                        click.option(*args,
+                        click.option(
+                            *args,
                             default=field.default if not ignore_defaults
-                                                  else None,
+                            else None,
                             help=field.help,
                             type=field.type,
                             show_default=field.show_default
@@ -241,7 +238,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 code = six.get_function_code(method)
                 if 'pk' in code.co_varnames:
                     click.argument('pk', nargs=1, required=False,
-                                         type=int, metavar='[ID]')(cmd)
+                                   type=int, metavar='[ID]')(cmd)
 
                 # Done; return the command.
                 return cmd
@@ -318,7 +315,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
                 # What are the columns we will show?
                 columns = [field.name for field in self.resource.fields
-                                      if field.display]
+                           if field.display]
                 columns.insert(0, 'id')
 
                 # Sanity check: If there is a "changed" key in our payload
@@ -422,7 +419,7 @@ class Resource(BaseResource):
     # `modify` are wrappers around `write`.
 
     def read(self, pk=None, fail_on_no_results=False,
-                   fail_on_multiple_results=False, **kwargs):
+             fail_on_multiple_results=False, **kwargs):
         """Retrieve and return objects from the Ansible Tower API.
 
         If an `object_id` is provided, only attempt to read that object,
@@ -492,7 +489,7 @@ class Resource(BaseResource):
         return resp
 
     def write(self, pk=None, create_on_missing=False, fail_on_found=False,
-                    force_on_exists=True, **kwargs):
+              force_on_exists=True, **kwargs):
         """Modify the given object using the Ansible Tower API.
         Return the object and a boolean value informing us whether or not
         the record was changed.
@@ -654,8 +651,8 @@ class Resource(BaseResource):
                   help='If set, collate all pages of content from the API '
                        'when returning results.')
     @click.option('--page', default=1, type=int, show_default=True,
-                            help='The page to show. Ignored if --all-pages '
-                                 'is sent.')
+                  help='The page to show. Ignored if --all-pages '
+                       'is sent.')
     @click.option('-Q', '--query', required=False, nargs=2, multiple=True,
                   help='A key and value to be passed as an HTTP query string '
                        'key and value to the Tower API. Will be run through '
@@ -736,7 +733,7 @@ class Resource(BaseResource):
         """
         force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
-                              force_on_exists=force_on_exists, **kwargs)
+                          force_on_exists=force_on_exists, **kwargs)
 
     def _assoc(self, url_fragment, me, other):
         """Associate the `other` record with the `me` record."""
@@ -771,7 +768,7 @@ class Resource(BaseResource):
         return {'changed': True}
 
     def _lookup(self, fail_on_missing=False, fail_on_found=False,
-                      include_debug_header=True, **kwargs):
+                include_debug_header=True, **kwargs):
         """Attempt to perform a lookup that is expected to return a single
         result, and return the record.
 
@@ -801,9 +798,11 @@ class Resource(BaseResource):
                                 'you requested a failure in that case.' %
                                 read_params)
             return existing_data
-        except exc.NotFound as ex:
+        except exc.NotFound:
             if fail_on_missing:
-                raise
+                raise exc.NotFound('A record matching %s does not exist, and '
+                                   'you requested a failure in that case.' %
+                                   read_params)
             return {}
 
 
@@ -829,7 +828,7 @@ class MonitorableResource(Resource):
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
     def monitor(self, pk, min_interval=1, max_interval=30,
-                          timeout=None, outfile=sys.stdout):
+                timeout=None, outfile=sys.stdout):
         """Monitor a running job.
 
         Blocks further input until the job completes (whether successfully or

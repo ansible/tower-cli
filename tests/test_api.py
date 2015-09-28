@@ -16,8 +16,6 @@
 import requests
 from requests.sessions import Session
 
-from fauxquests.response import Resp
-
 from tower_cli.api import APIResponse, client
 from tower_cli.conf import settings
 from tower_cli.utils import debug, exceptions as exc
@@ -88,7 +86,7 @@ class ClientTests(unittest.TestCase):
             with mock.patch.object(Session, 'request') as req:
                 req.side_effect = requests.exceptions.ConnectionError
                 with self.assertRaises(exc.ConnectionError):
-                    r = client.get('/ping/')
+                    client.get('/ping/')
 
     def test_connection_error_verbose(self):
         """Establish that if we get a ConnectionError back from requests,
@@ -100,7 +98,7 @@ class ClientTests(unittest.TestCase):
                 req.side_effect = requests.exceptions.ConnectionError
                 with mock.patch.object(debug, 'log') as dlog:
                     with self.assertRaises(exc.ConnectionError):
-                        r = client.get('/ping/')
+                        client.get('/ping/')
                     self.assertEqual(dlog.call_count, 5)
 
     def test_server_error(self):
@@ -110,7 +108,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', 'ERRORED!!', status_code=500)
             with self.assertRaises(exc.ServerError):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_auth_error(self):
         """Establish that authentication errors raise the AuthError
@@ -119,7 +117,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', 'ERRORED!!', status_code=401)
             with self.assertRaises(exc.AuthError):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_forbidden_error(self):
         """Establish that forbidden errors raise the ForbiddenError
@@ -128,7 +126,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', 'ERRORED!!', status_code=403)
             with self.assertRaises(exc.Forbidden):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_not_found_error(self):
         """Establish that authentication errors raise the NotFound
@@ -137,7 +135,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', 'ERRORED!!', status_code=404)
             with self.assertRaises(exc.NotFound):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_method_not_allowed_error(self):
         """Establish that authentication errors raise the MethodNotAllowed
@@ -146,7 +144,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', 'ERRORED!!', status_code=405)
             with self.assertRaises(exc.MethodNotAllowed):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_bad_request_error(self):
         """Establish that other errors not covered above raise the
@@ -155,7 +153,7 @@ class ClientTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/ping/', "I'm a teapot!", status_code=418)
             with self.assertRaises(exc.BadRequest):
-                r = client.get('/ping/')
+                client.get('/ping/')
 
     def test_disable_connection_warning(self):
         """Establish that the --insecure flag will cause the program to

@@ -16,9 +16,9 @@
 # Import OrderedDict from the standard library if possible, and from
 # the ordereddict library (required on Python 2.6) otherwise.
 try:
-    from collections import OrderedDict
+    from collections import OrderedDict  # NOQA
 except ImportError:  # Python < 2.7
-    from ordereddict import OrderedDict
+    from ordereddict import OrderedDict  # NOQA
 
 
 # Import simplejson if we have it (Python 2.6), and use json from the
@@ -29,6 +29,6 @@ except ImportError:  # Python < 2.7
 # Python 2.6.
 import sys
 if sys.version_info < (2, 7):
-    import simplejson as json
+    import simplejson as json  # NOQA
 else:
-    import json
+    import json  # NOQA

@@ -35,12 +35,12 @@ from tower_cli.utils import exceptions as exc, secho
                    'Probably will require sudo.\n'
                    'Deprecated: Use `--scope=global` instead.')
 @click.option('--scope', type=click.Choice(['local', 'user', 'global']),
-                         default='user',
-                         help='The config file to write. '
-                              '"local" writes to a config file in the local '
-                              'directory; "user" writes to the home directory,'
-                              ' and "global" to a system-wide directory '
-                              '(probably requires sudo).')
+              default='user',
+              help='The config file to write. '
+                   '"local" writes to a config file in the local '
+                   'directory; "user" writes to the home directory,'
+                   ' and "global" to a system-wide directory '
+                   '(probably requires sudo).')
 @click.option('--unset', is_flag=True,
               help='Remove reference to this configuration option from '
                    'the config file.')
@@ -147,12 +147,15 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
         parser.set('general', key, value)
     with open(filename, 'w') as config_file:
         parser.write(config_file)
+
+    # Give rw permissions to user only fix for issue number 48
     try:
-        os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR) # give rw permissions to user only
-                                           # fix for issue number 48
+        os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR)
     except Exception as e:
-        warnings.warn('Unable to set permissions on {0} - {1} '.format(filename,e),
-                      UserWarning)
+        warnings.warn(
+            'Unable to set permissions on {0} - {1} '.format(filename, e),
+            UserWarning
+            )
     click.echo('Configuration updated successfully.')
 
 
@@ -160,7 +163,8 @@ def echo_setting(key):
     """Echo a setting to the CLI."""
     value = getattr(settings, key)
     secho('%s: ' % key, fg='magenta', bold=True, nl=False)
-    secho(six.text_type(value),
+    secho(
+        six.text_type(value),
         bold=True,
         fg='white' if isinstance(value, six.text_type) else 'cyan',
     )

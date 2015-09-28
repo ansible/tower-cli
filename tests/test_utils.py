@@ -25,15 +25,15 @@ class SechoTests(unittest.TestCase):
     """Establish that our wrapper around click.secho works in the way
     that we expect.
     """
-    def test_color_false(self):
-        """Establish that when the color setting is false, that color
-        data is stripped.
+    def test_color_true(self):
+        """Establish that when the color setting is true, that color
+        data is not stripped.
         """
         with settings.runtime_values(color=True):
             with mock.patch.object(click, 'secho') as click_secho:
                 secho('foo bar baz', fg='green')
                 click_secho.assert_called_once_with('foo bar baz',
-                                                    color='green')
+                                                    fg='green')
 
     def test_color_false(self):
         """Establish that when the color setting is false, that color

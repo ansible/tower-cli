@@ -19,7 +19,6 @@ import functools
 import types
 
 import click
-from click.decorators import _param_memo as add_param
 
 from tower_cli.conf import settings
 
@@ -70,20 +69,23 @@ def with_global_options(method):
     #
     # These are runtime options that will override the configuration file
     # settings.
-    method = click.option('-h', '--tower-host',
+    method = click.option(
+        '-h', '--tower-host',
         help='The location of the Ansible Tower host. '
              'HTTPS is assumed as the protocol unless "http://" is explicitly '
              'provided. This will take precedence over a host provided to '
-             '`tower config`, if any.', 
+             '`tower config`, if any.',
         required=False,
     )(method)
-    method = click.option('-u', '--tower-username',
+    method = click.option(
+        '-u', '--tower-username',
         help='Username to use to authenticate to Ansible Tower. '
              'This will take precedence over a username provided to '
              '`tower config`, if any.',
         required=False,
     )(method)
-    method = click.option('-p', '--tower-password',
+    method = click.option(
+        '-p', '--tower-password',
         help='Password to use to authenticate to Ansible Tower. '
              'This will take precedence over a password provided to '
              '`tower config`, if any.',
@@ -91,7 +93,8 @@ def with_global_options(method):
     )(method)
 
     # Create a global verbose/debug option.
-    method = click.option('-f', '--format',
+    method = click.option(
+        '-f', '--format',
         help='Output format. The "human" format is intended for humans '
              'reading output on the CLI; the "json" format is intended for '
              'scripts that wish to parse output. Note that the "json" format '
@@ -99,7 +102,8 @@ def with_global_options(method):
         type=click.Choice(['human', 'json']),
         required=False,
     )(method)
-    method = click.option('-v', '--verbose',
+    method = click.option(
+        '-v', '--verbose',
         default=None,
         help='Show information about requests being made.',
         is_flag=True,

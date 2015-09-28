@@ -35,11 +35,11 @@ class Resource(models.Resource):
                              display=False)
 
     @click.option('--credential', type=types.Related('credential'),
-                                  required=False,
-                                  help='The cloud credential to use.')
+                  required=False,
+                  help='The cloud credential to use.')
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
-                              default='manual',
-                              help='The source to use for this group.')
+                  default='manual',
+                  help='The source to use for this group.')
     def create(self, credential=None, source=None, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
@@ -68,13 +68,13 @@ class Resource(models.Resource):
         # provided parameters.
         isrc = get_resource('inventory_source')
         return isrc.modify(isid, credential=credential, source=source,
-                                 force_on_exists=True, **kwargs)
+                           force_on_exists=True, **kwargs)
 
     @click.option('--credential', type=types.Related('credential'),
-                                  required=False)
+                  required=False)
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
-                              default='manual',
-                              help='The source to use for this group.')
+                  default='manual',
+                  help='The source to use for this group.')
     def modify(self, pk=None, credential=None, source=None, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
@@ -101,7 +101,7 @@ class Resource(models.Resource):
         for field in self.fields:
             kwargs.pop(field.name, None)
         return isrc.modify(isid, credential=credential, source=source,
-                                 force_on_exists=True, **kwargs)
+                           force_on_exists=True, **kwargs)
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
     @click.option('--root', is_flag=True, default=False,

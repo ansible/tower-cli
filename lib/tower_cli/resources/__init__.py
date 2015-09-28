@@ -18,7 +18,7 @@ import types
 
 def command(method=None, **kwargs):
     """Mark this method as a CLI command.
-    
+
     This will only have any meaningful effect in methods that are members of a
     Resource subclass.
     """

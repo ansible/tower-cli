@@ -25,4 +25,4 @@ class GetResourceTests(unittest.TestCase):
     def test_get_resource(self):
         for res in ('credential', 'group', 'host', 'inventory', 'job_template',
                     'job', 'organization', 'project', 'team', 'user'):
-            resource = tower_cli.get_resource(res)
+            tower_cli.get_resource(res)
