@@ -87,3 +87,16 @@ class ParserTests(unittest.TestCase):
                                                parser.readfp)
                     read_file_method(StringIO('[general]\nfoo: bar\n'))
                     warn.assert_called_once_with(mock.ANY, RuntimeWarning)
+        # Also run with acceptable permissions, verrify that no warning issued
+        with mock.patch.object(warnings, 'warn') as warn:
+            with mock.patch.object(os.path, 'isfile') as isfile:
+                with mock.patch.object(os, 'stat') as os_stat:
+                    isfile.return_value = True
+                    mock_stat = type('statobj', (), {})()  # placeholder object
+                    mock_stat.st_mode = stat.S_IRUSR | stat.S_IWUSR
+                    os_stat.return_value = mock_stat  # not readable to others
+                    parser = Parser()
+                    read_file_method = getattr(parser, 'read_file',
+                                               parser.readfp)
+                    read_file_method(StringIO('[general]\nfoo: bar\n'))
+                    assert not warn.called

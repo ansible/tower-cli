@@ -15,10 +15,8 @@
 
 from __future__ import absolute_import, unicode_literals
 from copy import copy
-from datetime import datetime
 from getpass import getpass
-import sys
-import time
+from distutils.version import LooseVersion
 
 import click
 
@@ -26,8 +24,8 @@ from sdict import adict
 
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
-from tower_cli.conf import settings
 from tower_cli.utils import debug, exceptions as exc, types
+from tower_cli.utils import parser
 
 
 class Resource(models.MonitorableResource):
@@ -49,14 +47,16 @@ class Resource(models.MonitorableResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     @click.option('--no-input', is_flag=True, default=False,
-                                help='Suppress any requests for input.')
-    @click.option('--extra-vars', type=types.File('r'), required=False)
+                  help='Suppress any requests for input.')
+    @click.option('--extra-vars', required=False, multiple=True,
+                  help='yaml format text that contains extra variables '
+                       'to pass on. Use @ to get these from a file.')
     @click.option('--tags', required=False)
     def launch(self, job_template, tags=None, monitor=False, timeout=None,
-                     no_input=True, extra_vars=None):
+               no_input=True, extra_vars=None):
         """Launch a new job based on a job template.
 
-        Creates a new job in Ansible Tower, immediately stats it, and
+        Creates a new job in Ansible Tower, immediately starts it, and
         returns back an ID in order for its status to be monitored.
         """
         # Get the job template from Ansible Tower.
@@ -72,13 +72,28 @@ class Resource(models.MonitorableResource):
         if tags:
             data['job_tags'] = tags
 
+        # Initialize an extra_vars list that starts with the job template
+        # preferences first, if they exist
+        extra_vars_list = []
+        if 'extra_vars' in data:
+            # But only do this for versions before 2.3
+            r = client.get('/config/')
+            if LooseVersion(r.json()['version']) < LooseVersion('2.4'):
+                extra_vars_list = [data['extra_vars']]
+
+        # Add the runtime extra_vars to this list
+        if extra_vars:
+            extra_vars_list += extra_vars
+
+        # Call parser utility to process extra_vars, if any are present
+        if len(extra_vars_list) > 0:
+            data['extra_vars'] = parser. \
+                extra_vars_loader_wrapper(extra_vars_list)
+
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
-        if extra_vars:
-            if hasattr(extra_vars, 'read'):
-                extra_vars = extra_vars.read()
-            data['extra_vars'] = extra_vars
-        elif data.pop('ask_variables_on_launch', False) and not no_input:
+        if data.pop('ask_variables_on_launch', False) and not no_input \
+                and not extra_vars:
             initial = data['extra_vars']
             initial = '\n'.join((
                 '# Specify extra variables (if any) here.',
@@ -87,7 +102,7 @@ class Resource(models.MonitorableResource):
             ))
             extra_vars = click.edit(initial) or ''
             extra_vars = '\n'.join([i for i in extra_vars.split('\n')
-                                            if not i.startswith('#')])
+                                    if not i.startswith('#')])
             data['extra_vars'] = extra_vars
 
         # In Tower 2.1 and later, we create the new job with
@@ -145,7 +160,7 @@ class Resource(models.MonitorableResource):
 
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
-                              help='Print more detail.')
+                  help='Print more detail.')
     def status(self, pk, detail=False):
         """Print the current job status."""
         # Get the job from Ansible Tower.

@@ -14,12 +14,11 @@
 # limitations under the License.
 
 import json
+import yaml
 import time
 from copy import copy
 
 import click
-
-from six.moves import StringIO
 
 import tower_cli
 from tower_cli.api import client
@@ -51,6 +50,23 @@ class LaunchTests(unittest.TestCase):
             result = self.res.launch(1)
             self.assertEqual(result, {'changed': True, 'id': 42})
 
+    def test_launch_w_tags(self):
+        """Establish that we are able to create a job and attach tags to it.
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
+            self.res.launch(1, tags="a, b, c")
+            self.assertEqual(
+                json.loads(t.requests[2].body)['job_tags'], 'a, b, c',
+            )
+
     def test_basic_launch_monitor_option(self):
         """Establish that we are able to create a job that doesn't require
         any invocation-time input, and that monitor is called if requested.
@@ -65,7 +81,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
-                result = self.res.launch(1, monitor=True)
+                self.res.launch(1, monitor=True)
                 monitor.assert_called_once_with(42, timeout=None)
 
     def test_extra_vars_at_runtime(self):
@@ -80,6 +96,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            t.register_json('/config/', {'version': '2.2.0'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
@@ -90,9 +107,53 @@ class LaunchTests(unittest.TestCase):
                     edit.mock_calls[0][1][0].endswith('spam: eggs'),
                 )
             self.assertEqual(
-                json.loads(t.requests[2].body)['extra_vars'],
+                json.loads(t.requests[3].body)['extra_vars'],
                 'foo: bar',
             )
+            self.assertEqual(result, {'changed': True, 'id': 42})
+
+    def test_job_template_variables(self):
+        """Establish that job template extra_vars are combined with local
+        extra vars, but only for older versions
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {
+                'ask_variables_on_launch': True,
+                'extra_vars': 'spam: eggs',
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/config/', {'version': '2.2.0'}, method='GET')
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
+            result = self.res.launch(1, extra_vars=['foo: bar'])
+            response_json = yaml.load(t.requests[3].body)
+            ev_json = yaml.load(response_json['extra_vars'])
+            self.assertTrue('foo' in ev_json)
+            self.assertTrue('spam' in ev_json)
+            self.assertEqual(result, {'changed': True, 'id': 42})
+
+        # check that in recent versions, it does not include job template
+        # variables along with the rest
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', {
+                'ask_variables_on_launch': True,
+                'extra_vars': 'spam: eggs',
+                'id': 1,
+                'name': 'frobnicate',
+                'related': {'launch': '/job_templates/1/launch/'},
+            })
+            t.register_json('/config/', {'version': '2.4'}, method='GET')
+            t.register_json('/job_templates/1/launch/', {}, method='GET')
+            t.register_json('/job_templates/1/launch/', {'job': 42},
+                            method='POST')
+            result = self.res.launch(1, extra_vars=['foo: bar'])
+            response_json = yaml.load(t.requests[3].body)
+            ev_json = yaml.load(response_json['extra_vars'])
+            self.assertTrue('foo' in ev_json)
+            self.assertTrue('spam' not in ev_json)
             self.assertEqual(result, {'changed': True, 'id': 42})
 
     def test_extra_vars_at_runtime_tower_20(self):
@@ -108,6 +169,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {},
             })
+            t.register_json('/config/', {'version': '2.0'}, method='GET')
             t.register_json('/jobs/', {'id': 42}, method='POST')
             t.register_json('/jobs/42/start/', {}, method='GET')
             t.register_json('/jobs/42/start/', {}, method='POST')
@@ -118,7 +180,7 @@ class LaunchTests(unittest.TestCase):
                     edit.mock_calls[0][1][0].endswith('spam: eggs'),
                 )
             self.assertEqual(
-                json.loads(t.requests[1].body)['extra_vars'],
+                json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
             self.assertEqual(result, {'changed': True, 'id': 42})
@@ -136,7 +198,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
-            result = self.res.launch(1, extra_vars='foo: bar')
+            result = self.res.launch(1, extra_vars=['foo: bar'])
 
             self.assertEqual(
                 json.loads(t.requests[2].body)['extra_vars'],
@@ -157,7 +219,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
-            result = self.res.launch(1, extra_vars=StringIO('foo: bar'))
+            result = self.res.launch(1, extra_vars=['foo: bar'])
 
             self.assertEqual(
                 json.loads(t.requests[2].body)['extra_vars'],
@@ -268,7 +330,7 @@ class MonitorTests(unittest.TestCase):
                 with mock.patch.object(click, 'secho') as secho:
                     with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
-                        result = self.res.monitor(42)
+                        self.res.monitor(42)
                 self.assertTrue(secho.call_count >= 1)
 
     def test_failure_non_tty(self):
@@ -286,7 +348,7 @@ class MonitorTests(unittest.TestCase):
                 with mock.patch.object(click, 'echo') as echo:
                     with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = False
-                        result = self.res.monitor(42)
+                        self.res.monitor(42)
                 self.assertTrue(echo.call_count >= 1)
 
     def test_monitoring(self):
@@ -313,7 +375,7 @@ class MonitorTests(unittest.TestCase):
                 with mock.patch.object(click, 'secho') as secho:
                     with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
-                        result = self.res.monitor(42, min_interval=0.21)
+                        self.res.monitor(42, min_interval=0.21)
                 self.assertTrue(secho.call_count >= 100)
 
             # We should have gotten two requests total, to the same URL.
@@ -336,8 +398,7 @@ class MonitorTests(unittest.TestCase):
                 with self.assertRaises(exc.Timeout):
                     with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = True
-                        result = self.res.monitor(42, min_interval=0.21,
-                                                      timeout=0.1)
+                        self.res.monitor(42, min_interval=0.21, timeout=0.1)
                 self.assertTrue(secho.call_count >= 1)
 
     def test_monitoring_not_tty(self):
@@ -363,7 +424,7 @@ class MonitorTests(unittest.TestCase):
                 with mock.patch.object(click, 'echo') as echo:
                     with mock.patch('tower_cli.models.base.is_tty') as tty:
                         tty.return_value = False
-                        result = self.res.monitor(42, min_interval=0.21)
+                        self.res.monitor(42, min_interval=0.21)
                 self.assertTrue(echo.call_count >= 1)
 
             # We should have gotten two requests total, to the same URL.
@@ -405,4 +466,4 @@ class CancelTests(unittest.TestCase):
         with client.test_mode as t:
             t.register('/jobs/42/cancel/', '', method='POST', status_code=405)
             with self.assertRaises(exc.TowerCLIError):
-                result = self.res.cancel(42, fail_if_not_running=True)
+                self.res.cancel(42, fail_if_not_running=True)

@@ -17,8 +17,9 @@ from __future__ import absolute_import, unicode_literals
 
 import click
 
-from tower_cli import models, get_resource
+from tower_cli import models, resources
 from tower_cli.utils import types
+from tower_cli.utils import parser
 
 
 class Resource(models.Resource):
@@ -36,7 +37,8 @@ class Resource(models.Resource):
     inventory = models.Field(type=types.Related('inventory'))
     project = models.Field(type=types.Related('project'))
     playbook = models.Field()
-    machine_credential = models.Field('credential',
+    machine_credential = models.Field(
+        'credential',
         display=False,
         type=types.Related('credential'),
     )
@@ -54,7 +56,32 @@ class Resource(models.Resource):
         required=False,
     )
     job_tags = models.Field(required=False, display=False)
-    extra_vars = models.Field(type=models.File('r'), required=False,
-                              display=False)
-    become_enabled = models.Field(type=bool, required=False,
+    extra_vars = models.Field(required=False, display=False)
+    become_enabled = models.Field(type=bool, required=False, display=False,
                                   show_default=True, default=False)
+
+    @resources.command
+    @click.option('--extra-vars', required=False, multiple=True,
+                  help='yaml format text that contains extra variables '
+                       'to pass on. Use @ to get these from a file.')
+    def create(self, extra_vars=None, *args, **kwargs):
+        """Create a job template.
+        You may include multiple --extra-vars flags in order to combine
+        different sources of extra variables. Start this
+        with @ in order to indicate a filename."""
+        if extra_vars:
+            # combine sources of extra variables, if given
+            kwargs['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
+        return super(Resource, self).create(*args, **kwargs)
+
+    @resources.command
+    def modify(self, *args, **kwargs):
+        """Modify a job template.
+        You may only include one --extra-vars flag with this command, and
+        whatever you provde will overwrite the existing field. Start this
+        with @ in order to indicate a filename."""
+        if 'extra_vars' in kwargs:
+            # read from file, if given
+            kwargs['extra_vars'] = \
+                parser.file_or_yaml_split(kwargs['extra_vars'])
+        return super(Resource, self).modify(*args, **kwargs)
