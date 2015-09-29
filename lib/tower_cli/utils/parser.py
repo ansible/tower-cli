@@ -100,7 +100,7 @@ def string_to_dict(var_string):
 def file_or_yaml_split(extra_vars_opt):
     """If the input text starts with @, then it is treated as a file name
     and the contents of the file are returned."""
-    if extra_vars_opt.startswith("@"):
+    if extra_vars_opt and extra_vars_opt.startswith("@"):
         # Argument is a file with variables in it, so return its content
         with open(extra_vars_opt[1:], 'r') as f:
             filetext = f.read()
