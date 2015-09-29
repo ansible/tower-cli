@@ -29,14 +29,18 @@ def parse_kv(var_string):
     but not as fully featured as the corresponding Ansible code."""
     return_dict = {}
 
+    # Output updates dictionaries, so return empty one if no vals in
     if var_string is None:
         return {}
 
     # Python 2.6 / shlex has problems handling unicode, this is a fix
     fix_encoding_26 = False
     if sys.version_info < (2, 7) and '\x00' in shlex.split(u'a')[0]:
-        var_string = str(var_string)
         fix_encoding_26 = True
+
+    # Also hedge against Click library giving non-string type
+    if fix_encoding_26 or not isinstance(var_string, str):
+        var_string = str(var_string)
 
     # Use shlex library to split string by quotes, whitespace, etc.
     for token in shlex.split(var_string):
