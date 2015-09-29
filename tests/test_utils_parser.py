@@ -86,6 +86,31 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(exc.TowerCLIError):
             parser.extra_vars_loader_wrapper(["a: b\nincorrect = =brackets"])
 
+    def test_handling_bad_data(self):
+        """Check robustness of the parser functions in how it handles
+        empty strings, null values, etc."""
+        # Verrify that all parts of the computational chain can handle None
+        return_dict = parser.parse_kv(None)
+        self.assertEqual(return_dict, {})
+        return_dict = parser.string_to_dict(None)
+        self.assertEqual(return_dict, {})
+        return_val = parser.file_or_yaml_split(None)
+        self.assertEqual(return_val, None)
+
+        # Verrify that all parts of computational chain can handle ""
+        return_dict = parser.parse_kv("")
+        self.assertEqual(return_dict, {})
+        return_dict = parser.string_to_dict("")
+        self.assertEqual(return_dict, {})
+        return_val = parser.file_or_yaml_split("")
+        self.assertEqual(return_val, "")
+
+        # Check that the behavior is what we want if feeding it an int
+        return_dict = parser.parse_kv(5)
+        self.assertEqual(return_dict, {"_raw_params": "5"})
+        return_dict = parser.parse_kv("foo=5")
+        self.assertEqual(return_dict, {"foo": 5})
+
 
 class TestSplitter_Gen(unittest.TestCase):
     """Set of strings paired with expected output is ran agains the parsing

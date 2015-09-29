@@ -29,11 +29,18 @@ def parse_kv(var_string):
     but not as fully featured as the corresponding Ansible code."""
     return_dict = {}
 
+    # Output updates dictionaries, so return empty one if no vals in
+    if var_string is None:
+        return {}
+
     # Python 2.6 / shlex has problems handling unicode, this is a fix
     fix_encoding_26 = False
     if sys.version_info < (2, 7) and '\x00' in shlex.split(u'a')[0]:
-        var_string = str(var_string)
         fix_encoding_26 = True
+
+    # Also hedge against Click library giving non-string type
+    if fix_encoding_26 or not isinstance(var_string, str):
+        var_string = str(var_string)
 
     # Use shlex library to split string by quotes, whitespace, etc.
     for token in shlex.split(var_string):
@@ -80,12 +87,12 @@ def string_to_dict(var_string):
         # Accept all valid "key":value types of json
         return_dict = json.loads(var_string)
         assert type(return_dict) is dict
-    except (AttributeError, ValueError, AssertionError):
+    except (TypeError, AttributeError, ValueError, AssertionError):
         try:
             # Accept all valid key: value types of yaml
             return_dict = yaml.load(var_string)
             assert type(return_dict) is dict
-        except (yaml.YAMLError, AssertionError):
+        except (AttributeError, yaml.YAMLError, AssertionError):
             # if these fail, parse by key=value syntax
             try:
                 return_dict = parse_kv(var_string)
