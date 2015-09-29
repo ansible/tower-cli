@@ -58,8 +58,7 @@ class Resource(models.Resource):
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     extra_vars = models.Field(required=False, display=False)
-    become_enabled = models.Field(type=bool, required=False, display=False,
-                                  show_default=True, default=False)
+    become_enabled = models.Field(type=bool, required=False, display=False)
 
     @resources.command
     @click.option('--extra-vars', required=False, multiple=True,
@@ -76,7 +75,7 @@ class Resource(models.Resource):
         return super(Resource, self).create(*args, **kwargs)
 
     @resources.command
-    def modify(self, *args, **kwargs):
+    def modify(self, pk=None, *args, **kwargs):
         """Modify a job template.
         You may only include one --extra-vars flag with this command, and
         whatever you provde will overwrite the existing field. Start this
@@ -85,4 +84,4 @@ class Resource(models.Resource):
             # read from file, if given
             kwargs['extra_vars'] = \
                 parser.file_or_yaml_split(kwargs['extra_vars'])
-        return super(Resource, self).modify(*args, **kwargs)
+        return super(Resource, self).modify(pk=pk, *args, **kwargs)

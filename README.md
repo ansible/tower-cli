@@ -136,7 +136,8 @@ $ tower-cli user get --username=guido
 
 # Create a new user.
 $ tower-cli user create --username=guido --first-name=Guido \
-                        --last-name="Van Rossum" --email=guido@python.org
+                        --last-name="Van Rossum" --email=guido@python.org \
+                        --password=password1234
 
 # Modify an existing user.
 # This would modify the first name of the user with the ID of "42" to "Guido".
@@ -213,7 +214,6 @@ $ tower-cli config verify_ssl false
 # Disable insecure connection warnings for just this command
 $ tower-cli job_template list --insecure
 ```
-
 
 ### License
 

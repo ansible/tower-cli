@@ -1,5 +1,5 @@
 # Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Alan Rominger <arominger@ansible.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 import tower_cli
 from tower_cli.api import client
 
-from tests.compat import unittest
+from tests.compat import unittest, mock
+from tower_cli.conf import settings
+
+import click
 
 
 class TemplateTests(unittest.TestCase):
@@ -40,6 +43,28 @@ class TemplateTests(unittest.TestCase):
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
+
+    def test_job_template_create_with_echo(self):
+        """Establish that a job template can be created
+        """
+        with client.test_mode as t:
+            endpoint = '/job_templates/'
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint,
+                            {'changed': True, 'id': 42,
+                                'name': 'bar', 'inventory': 1, 'project': 1,
+                                'playbook': 'foobar.yml', 'credential': 1},
+                            method='POST')
+            self.res.create(name='bar', job_type='run', inventory=1,
+                            project=1, playbook='foobar.yml', credential=1)
+
+            f = self.res.as_command()._echo_method(self.res.create)
+            with mock.patch.object(click, 'secho'):
+                with settings.runtime_values(format='human'):
+                    f(name='bar', job_type='run', inventory=1,
+                      project=1, playbook='foobar.yml', credential=1)
 
     def test_create_w_extra_vars(self):
         """Establish that a job template can be created

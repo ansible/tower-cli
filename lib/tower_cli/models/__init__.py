@@ -12,9 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# flake8: noqa
 
-from __future__ import absolute_import, unicode_literals  # NOQA
+from __future__ import absolute_import, unicode_literals
 
-from tower_cli.models.base import BaseResource, Resource, MonitorableResource  # NOQA
-from tower_cli.models.fields import Field  # NOQA
-from tower_cli.utils.types import File  # NOQA
+from tower_cli.models.base import Resource, MonitorableResource, ExeResource, \
+                                  BaseResource
+from tower_cli.models.fields import Field
+from tower_cli.utils.types import File

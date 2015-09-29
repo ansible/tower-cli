@@ -34,13 +34,14 @@ class Resource(models.Resource):
         required=False,
     )
     team = models.Field(
-        display=False,
+        display=True,
         type=types.Related('team'),
         required=False,
     )
 
     # What type of credential is this (machine, SCM, etc.)?
     kind = models.Field(
+        display=True,
         help_text='The type of credential being added. '
                   'Valid options are: ssh, scm, aws, rax, vmware,'
                   ' gce, azure, openstack.',
@@ -51,12 +52,12 @@ class Resource(models.Resource):
     # need host in order to use VMware
     host = models.Field(
         help_text='The hostname or IP address to use.',
-        required=False,
+        required=False, display=False
     )
     # need project to use openstack
     project = models.Field(
         help_text='The identifier for the project.',
-        required=False
+        required=False, display=False
     )
 
     # SSH and SCM fields.

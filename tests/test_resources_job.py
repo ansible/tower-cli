@@ -25,6 +25,40 @@ from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest, mock
+from tower_cli.conf import settings
+
+
+# Standard functions used for space and readability
+# these operate on the test client, t
+def register_get(t):
+    """ After starting job, the launch method may grab info about
+    the job just launched from this endpoint """
+    t.register_json('/jobs/42/',
+                    {
+                        'id': 42, 'job_template': 1, 'status': 'pending',
+                        'created': 1234, 'elapsed': 0.0,
+                    }, method='GET')
+
+
+def standard_registration(t):
+    """ Endpoints common to launching any job with template #1 and
+    is automatically assigned to job #42 """
+
+    # A GET to the template endpoint is made to find the extra_vars to combine
+    t.register_json('/job_templates/1/', {
+        'id': 1,
+        'name': 'frobnicate',
+        'related': {'launch': '/job_templates/1/launch/'},
+    })
+    register_get(t)
+
+    # A GET to the launch endpoint is needed to check if
+    # a password prompt is needed
+    t.register_json('/job_templates/1/launch/', {}, method='GET')
+
+    # A POST to the launch endpoint will launch a job, and we
+    # expect that the tower server will return the job number
+    t.register_json('/job_templates/1/launch/', {'job': 42}, method='POST')
 
 
 class LaunchTests(unittest.TestCase):
@@ -39,29 +73,29 @@ class LaunchTests(unittest.TestCase):
         any invocation-time input.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
+            standard_registration(t)
             result = self.res.launch(1)
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
+
+    def test_basic_launch_with_echo(self):
+        """Establish that we are able to create a job and echo the output
+        to the command line without it breaking.
+        """
+        with client.test_mode as t:
+            standard_registration(t)
+            result = self.res.launch(1)
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
+
+            f = self.res.as_command()._echo_method(self.res.launch)
+            with mock.patch.object(click, 'secho'):
+                with settings.runtime_values(format='human'):
+                    f(job_template=1)
 
     def test_launch_w_tags(self):
         """Establish that we are able to create a job and attach tags to it.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
+            standard_registration(t)
             self.res.launch(1, tags="a, b, c")
             self.assertEqual(
                 json.loads(t.requests[2].body)['job_tags'], 'a, b, c',
@@ -72,14 +106,7 @@ class LaunchTests(unittest.TestCase):
         any invocation-time input, and that monitor is called if requested.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
+            standard_registration(t)
             with mock.patch.object(type(self.res), 'monitor') as monitor:
                 self.res.launch(1, monitor=True)
                 monitor.assert_called_once_with(42, timeout=None)
@@ -96,6 +123,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/config/', {'version': '2.2.0'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
@@ -110,7 +138,7 @@ class LaunchTests(unittest.TestCase):
                 json.loads(t.requests[3].body)['extra_vars'],
                 'foo: bar',
             )
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_job_template_variables(self):
         """Establish that job template extra_vars are combined with local
@@ -124,6 +152,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/config/', {'version': '2.2.0'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
@@ -133,7 +162,7 @@ class LaunchTests(unittest.TestCase):
             ev_json = yaml.load(response_json['extra_vars'])
             self.assertTrue('foo' in ev_json)
             self.assertTrue('spam' in ev_json)
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
         # check that in recent versions, it does not include job template
         # variables along with the rest
@@ -145,6 +174,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/config/', {'version': '2.4'}, method='GET')
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
@@ -154,7 +184,7 @@ class LaunchTests(unittest.TestCase):
             ev_json = yaml.load(response_json['extra_vars'])
             self.assertTrue('foo' in ev_json)
             self.assertTrue('spam' not in ev_json)
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_extra_vars_at_runtime_tower_20(self):
         """Establish that if we should be asking for extra variables at
@@ -169,6 +199,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {},
             })
+            register_get(t)
             t.register_json('/config/', {'version': '2.0'}, method='GET')
             t.register_json('/jobs/', {'id': 42}, method='POST')
             t.register_json('/jobs/42/start/', {}, method='GET')
@@ -183,7 +214,7 @@ class LaunchTests(unittest.TestCase):
                 json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_extra_vars_at_call_time(self):
         """Establish that extra variables specified at call time are
@@ -195,6 +226,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
@@ -204,7 +236,7 @@ class LaunchTests(unittest.TestCase):
                 json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_extra_vars_file_at_call_time(self):
         """Establish that extra variables specified at call time as a file are
@@ -216,6 +248,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/job_templates/1/launch/', {}, method='GET')
             t.register_json('/job_templates/1/launch/', {'job': 42},
                             method='POST')
@@ -225,7 +258,7 @@ class LaunchTests(unittest.TestCase):
                 json.loads(t.requests[2].body)['extra_vars'],
                 'foo: bar',
             )
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_passwords_needed_at_start(self):
         """Establish that we are able to create a job that doesn't require
@@ -237,6 +270,7 @@ class LaunchTests(unittest.TestCase):
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
             })
+            register_get(t)
             t.register_json('/job_templates/1/launch/', {
                 'passwords_needed_to_start': ['foo'],
             }, method='GET')
@@ -247,7 +281,7 @@ class LaunchTests(unittest.TestCase):
                 getpass.return_value = 'bar'
                 result = self.res.launch(1)
                 getpass.assert_called_once_with('Password for foo: ')
-            self.assertEqual(result, {'changed': True, 'id': 42})
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
 
 class StatusTests(unittest.TestCase):
@@ -269,6 +303,26 @@ class StatusTests(unittest.TestCase):
                 'status': 'successful',
             })
             result = self.res.status(42)
+            self.assertEqual(result, {
+                'elapsed': 1335024000.0,
+                'failed': False,
+                'status': 'successful',
+            })
+            self.assertEqual(len(t.requests), 1)
+
+    def test_normal_with_lookup(self):
+        """Establish that the data about job specified by query is
+        returned correctly.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?name=bar', {"count": 1, "results": [
+                {"id": 42, "name": "bar",
+                    'elapsed': 1335024000.0,
+                    'extra': 'ignored',
+                    'failed': False,
+                    'status': 'successful', },
+            ], "next": None, "previous": None}, method='GET')
+            result = self.res.status(name="bar")
             self.assertEqual(result, {
                 'elapsed': 1335024000.0,
                 'failed': False,
@@ -447,6 +501,19 @@ class CancelTests(unittest.TestCase):
             t.register('/jobs/42/cancel/', '', method='POST')
             result = self.res.cancel(42)
             self.assertTrue(t.requests[0].url.endswith('/jobs/42/cancel/'))
+            self.assertTrue(result['changed'])
+
+    def test_cancelation_by_lookup(self):
+        """Establish that a job can be canceled by name or identity
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?name=bar', {"count": 1, "results": [
+                {"id": 42, "name": "bar"},
+            ], "next": None, "previous": None}, method='GET')
+            t.register('/jobs/42/cancel/', '', method='POST')
+            result = self.res.cancel(name="bar")
+            self.assertTrue(t.requests[0].url.endswith('/jobs/?name=bar'))
+            self.assertTrue(t.requests[1].url.endswith('/jobs/42/cancel/'))
             self.assertTrue(result['changed'])
 
     def test_cancelation_completed(self):
