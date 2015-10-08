@@ -215,6 +215,14 @@ $ tower-cli config verify_ssl false
 $ tower-cli job_template list --insecure
 ```
 
+#### Bash script example
+
+If you want an example for a particular case that this README does not cover,
+the development distribution of tower-cli includes a script that will
+populate the Tower server with fake data using tower-cli commands. These
+attempt to cover most of the available features. These can be found in
+the folder [/docs/examples/](/docs/examples).
+
 ### License
 
 While Tower is commercially licensed software, _tower-cli_ is an open source project,
