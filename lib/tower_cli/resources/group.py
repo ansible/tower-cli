@@ -34,12 +34,24 @@ class Resource(models.Resource):
     variables = models.Field(type=types.File('r'), required=False,
                              display=False)
 
+    # Basic options for the source
     @click.option('--credential', type=types.Related('credential'),
                   required=False,
                   help='The cloud credential to use.')
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
                   default='manual',
                   help='The source to use for this group.')
+    @click.option('--source-regions', help='Regions for your cloud provider.')
+    # Options may not be valid for certain types of cloud servers
+    @click.option('--source-vars', help='Override variables found on source '
+                  'with variables defined in this field.')
+    @click.option('--overwrite', type=bool,
+                  help='Delete child groups and hosts not found in source.')
+    @click.option('--overwrite-vars', type=bool,
+                  help='Override vars in child groups and hosts with those '
+                  'from the external source.')
+    @click.option('--update-on-launch', type=bool, help='Refresh inventory '
+                  'data from its source each time a job is run.')
     def create(self, credential=None, source=None, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
@@ -75,6 +87,17 @@ class Resource(models.Resource):
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
                   default='manual',
                   help='The source to use for this group.')
+    @click.option('--source-regions', help='Regions for your cloud provider.')
+    # Options may not be valid for certain types of cloud servers
+    @click.option('--source-vars', help='Override variables found on source '
+                  'with variables defined in this field.')
+    @click.option('--overwrite', type=bool,
+                  help='Delete child groups and hosts not found in source.')
+    @click.option('--overwrite-vars', type=bool,
+                  help='Override vars in child groups and hosts with those '
+                  'from the external source.')
+    @click.option('--update-on-launch', type=bool, help='Refersh inventory '
+                  'data from its source each time a job is run.')
     def modify(self, pk=None, credential=None, source=None, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
