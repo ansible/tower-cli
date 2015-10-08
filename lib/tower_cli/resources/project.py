@@ -17,7 +17,7 @@ import click
 
 from sdict import adict
 
-from tower_cli import models, resources
+from tower_cli import models, get_resource, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, exceptions as exc, types
 
@@ -53,35 +53,65 @@ class Resource(models.MonitorableResource):
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
 
+    @click.option('--monitor', is_flag=True, default=False,
+                  help='If sent, immediately calls `project monitor` on the '
+                       'project rather than exiting with a success.'
+                       'It polls for status until the SCM is updated.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided with --monitor, the SCM update'
+                       ' will time out after the given number of seconds. '
+                       'Does nothing if --monitor is not sent.')
     @resources.command
-    def create(self, *args, **kwargs):
-        """Create a project, with or w/o org.
-        Fix for issue #52, second method, replacing the /projects/
-        endpoint temporarily if the project has an organization specified
+    def create(self, organization=None, monitor=False, timeout=None,
+               *args, **kwargs):
+        """Create a new item of resource, with or w/o org.
+        This would be a shared class with user, but it needs the ability
+        to monitor if the flag is set.
         """
-        if "organization" in kwargs:
-            debug.log("using alternative endpoint for new project",
+        backup_endpoint = self.endpoint
+        if organization:
+            debug.log("using alternative endpoint specific to organization",
                       header='details')
-            org_pk = kwargs['organization']
-            self.endpoint = '/organizations/%s/projects/' % org_pk
-        to_return = super(Resource, self).create(*args, **kwargs)
-        self.endpoint = '/projects/'
-        return to_return
+
+            # Get the organization from Tower, will lookup name if needed
+            org_resource = get_resource('organization')
+            org_data = org_resource.get(organization)
+            org_pk = org_data['id']
+
+            self.endpoint = '/organizations/%s%s' % (org_pk, backup_endpoint)
+        answer = super(Resource, self).create(*args, **kwargs)
+        self.endpoint = backup_endpoint
+
+        # if the monitor flag is set, wait for the SCM to update
+        if monitor:
+            project_id = answer['id']
+            return self.monitor(project_id, timeout=timeout)
+
+        return answer
 
     @resources.command(use_fields_as_options=(
         'name', 'description', 'scm_type', 'scm_url', 'local_path',
         'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
         'scm_update_on_launch'
     ))
-    def modify(self, *args, **kwargs):
-        """Modify a project, see org help to modify org.
-        Also associated with issue #52, the organization can't be modified
-        with the 'modify' command. This would create confusion about whether
-        it served the role of an identifier versus a field to modify. This
-        method is used to set the allowed fields on the modify command,
-        removing the organization from available options.
+    def modify(self, pk=None, *args, **kwargs):
+        """Modify an already existing.
+
+        To edit the project's organizations, see help for organizations.
+
+        Fields in the resource's `identity` tuple can be used in lieu of a
+        primary key for a lookup; in such a case, only other fields are
+        written.
+
+        To modify unique fields, you must use the primary key for the lookup.
         """
-        return super(Resource, self).modify(*args, **kwargs)
+        # Associated with issue #52, the organization can't be modified
+        #    with the 'modify' command. This would create confusion about
+        #    whether its flag is an identifier versus a field to modify.
+        # Another role this method serves is to re-implement the modify
+        #    method as a command. If this method is deleted, the inheritance
+        #    chain for project should also be changed.
+        return super(Resource, self).modify(pk=pk, *args, **kwargs)
 
     @resources.command(use_fields_as_options=('name', 'organization'))
     @click.option('--monitor', is_flag=True, default=False,

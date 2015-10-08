@@ -20,25 +20,33 @@ from distutils.version import LooseVersion
 
 import click
 
-from sdict import adict
-
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
-from tower_cli.utils import debug, exceptions as exc, types
+from tower_cli.utils import debug, types
 from tower_cli.utils import parser
 
 
-class Resource(models.MonitorableResource):
+class Resource(models.ExeResource):
     """A resource for jobs.
 
-    As a base resource, this resource does *not* have the normal create, list,
-    etc. methods.
+    This resource has ordinary list and get methods,
+    but it does not have create or modify.
+    Instead of being created, a job is launched.
     """
     cli_help = 'Launch or monitor jobs.'
     endpoint = '/jobs/'
 
-    @resources.command
-    @click.option('--job-template', type=types.Related('job_template'))
+    job_template = models.Field(
+        type=types.Related('job_template'), required=False, display=True
+    )
+    job_explanation = models.Field(required=False, display=False)
+    created = models.Field(required=False, display=True)
+    status = models.Field(required=False, display=True)
+    elapsed = models.Field(required=False, display=True)
+
+    @resources.command(
+        use_fields_as_options=('job_template', 'job_explanation')
+    )
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
                        'launched job rather than exiting with a success.')
@@ -52,8 +60,8 @@ class Resource(models.MonitorableResource):
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
     @click.option('--tags', required=False)
-    def launch(self, job_template, tags=None, monitor=False, timeout=None,
-               no_input=True, extra_vars=None):
+    def launch(self, job_template=None, tags=None, monitor=False, timeout=None,
+               no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately starts it, and
@@ -75,7 +83,7 @@ class Resource(models.MonitorableResource):
         # Initialize an extra_vars list that starts with the job template
         # preferences first, if they exist
         extra_vars_list = []
-        if 'extra_vars' in data:
+        if 'extra_vars' in data and len(data['extra_vars']) > 0:
             # But only do this for versions before 2.3
             r = client.get('/config/')
             if LooseVersion(r.json()['version']) < LooseVersion('2.4'):
@@ -116,7 +124,7 @@ class Resource(models.MonitorableResource):
         start_data = {}
         if supports_job_template_launch:
             endpoint = '/job_templates/%d/launch/' % jt['id']
-            if 'extra_vars' in data:
+            if 'extra_vars' in data and len(data['extra_vars']) > 0:
                 start_data['extra_vars'] = data['extra_vars']
             if tags:
                 start_data['job_tags'] = data['job_tags']
@@ -131,7 +139,6 @@ class Resource(models.MonitorableResource):
         # rely on passwords entered at run-time.
         #
         # If there are any such passwords on this job, ask for them now.
-
         debug.log('Asking for information necessary to start the job.',
                   header='details')
         job_start_info = client.get(endpoint).json()
@@ -140,62 +147,22 @@ class Resource(models.MonitorableResource):
 
         # Actually start the job.
         debug.log('Launching the job.', header='details')
-        result = client.post(endpoint, start_data)
+        self._pop_none(kwargs)
+        kwargs.update(start_data)
+        job_started = client.post(endpoint, data=kwargs)
 
         # If this used the /job_template/N/launch/ route, get the job
         # ID from the result.
         if supports_job_template_launch:
-            job_id = result.json()['job']
+            job_id = job_started.json()['job']
+
+        # Get some information about the running job to print
+        result = self.status(pk=job_id, detail=True)
+        result['changed'] = True
 
         # If we were told to monitor the job once it started, then call
         # monitor from here.
         if monitor:
             return self.monitor(job_id, timeout=timeout)
 
-        # Return the job ID.
-        return {
-            'changed': True,
-            'id': job_id,
-        }
-
-    @resources.command
-    @click.option('--detail', is_flag=True, default=False,
-                  help='Print more detail.')
-    def status(self, pk, detail=False):
-        """Print the current job status."""
-        # Get the job from Ansible Tower.
-        debug.log('Asking for job status.', header='details')
-        job = client.get('/jobs/%d/' % pk).json()
-
-        # In most cases, we probably only want to know the status of the job
-        # and the amount of time elapsed. However, if we were asked for
-        # verbose information, provide it.
-        if detail:
-            return job
-
-        # Print just the information we need.
-        return adict({
-            'elapsed': job['elapsed'],
-            'failed': job['failed'],
-            'status': job['status'],
-        })
-
-    @resources.command
-    @click.option('--fail-if-not-running', is_flag=True, default=False,
-                  help='Fail loudly if the job is not currently running.')
-    def cancel(self, pk, fail_if_not_running=False):
-        """Cancel a currently running job.
-
-        Fails with a non-zero exit status if the job cannot be canceled.
-        """
-        # Attempt to cancel the job.
-        try:
-            client.post('/jobs/%d/cancel/' % pk)
-            changed = True
-        except exc.MethodNotAllowed:
-            changed = False
-            if fail_if_not_running:
-                raise exc.TowerCLIError('Job not running.')
-
-        # Return a success.
-        return adict({'status': 'canceled', 'changed': changed})
+        return result

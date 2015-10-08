@@ -20,8 +20,8 @@ from tower_cli.utils import exceptions as exc
 from tests.compat import unittest, mock
 
 
-class UpdateTests(unittest.TestCase):
-    """A set of tests for ensuring that the project resource's update command
+class CreateTests(unittest.TestCase):
+    """A set of tests for ensuring that the project resource's create command
     works in the way we expect.
     """
     def setUp(self):
@@ -37,13 +37,15 @@ class UpdateTests(unittest.TestCase):
             t.register_json(endpoint, {'count': 0, 'results': [],
                             'next': None, 'previous': None},
                             method='GET')
-            t.register_json(endpoint, {'changed': True, 'id': 42},
-                            method='POST')
-            self.res.create(name='bar', organization=1,
-                            scm_type="git")
+            t.register_json(endpoint, {'id': 42}, method='POST')
+            # The org endpoint can be used to lookup org pk given org name
+            t.register_json('/organizations/1/', {'id': 1}, method='GET')
+            result = self.res.create(
+                name='bar', organization=1, scm_type="git"
+            )
             self.assertEqual(t.requests[0].method, 'GET')
-            self.assertEqual(t.requests[1].method, 'POST')
-            self.assertEqual(len(t.requests), 2)
+            self.assertEqual(t.requests[-1].method, 'POST')
+            self.assertDictContainsSubset({'id': 42}, result)
 
     def test_create_without_organization(self):
         """Establish that a project can be created without giving an
@@ -61,6 +63,44 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
+
+    def test_create_monitor(self):
+        """Establish that a project can be created with the monitor flag
+        enabled and still sucessfully exit and complete.
+        """
+        with client.test_mode as t:
+
+            # Endpoints related to creating the resource
+            t.register_json('/projects/', {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json('/projects/', {'changed': True, 'id': 42},
+                            method='POST')
+            # Endpoints related to monitoring the resource
+            t.register_json(
+                '/projects/42/', {
+                    'status': 'successful',
+                    'related': {'last_update': '/api/v1/project_updates/21/'}
+                },
+                method='GET'
+            )
+            t.register_json(
+                '/project_updates/21/', {'id': 21, 'status': 'successful'},
+                method='GET'
+            )
+
+            result = self.res.create(name='bar', scm_type="git", monitor=True)
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[-1].method, 'GET')
+            self.assertDictContainsSubset({'changed': True}, result)
+
+
+class UpdateTests(unittest.TestCase):
+    """A set of tests for ensuring that the project resource's update command
+    works in the way we expect.
+    """
+    def setUp(self):
+        self.res = tower_cli.get_resource('project')
 
     def test_modify_project(self):
         """Test modifying project in order to cover the special case that

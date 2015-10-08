@@ -24,6 +24,7 @@ import re
 import sys
 import time
 from copy import copy
+from sdict import adict
 
 import six
 
@@ -320,6 +321,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
                 # Sanity check: If there is a "changed" key in our payload
                 # and little else, we print a short message and not a table.
+                # this specifically applies to deletion
                 if 'changed' in payload and 'id' not in payload:
                     return 'OK. (changed: {0})'.format(
                         six.text_type(payload['changed']).lower(),
@@ -328,6 +330,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 # Sanity check: If there is no ID and no results, then this
                 # is unusual output; keep our table formatting, but plow
                 # over the columns-as-keys stuff above.
+                # this originally applied to launch/status/update methods
+                # but it may become deprecated
                 if 'id' not in payload and 'results' not in payload:
                     columns = [i for i in payload.keys()]
 
@@ -404,10 +408,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         return Subcommand(resource=self)
 
 
-class Resource(BaseResource):
+class ResourceMethods(BaseResource):
     """Abstract subclass of BaseResource that adds the standard create,
     modify, list, get, and delete methods.
-    """
+
+    Some of these methods are not created as commands, but will be
+    implemented as commands inside of non-abstract child classes.
+    Particularly, create is not a command in this class, but will be for
+    some (but not all) child classes."""
     abstract = True  # Not inherited.
 
     # The basic methods for interacting with a resource are `read`, `write`,
@@ -417,6 +425,16 @@ class Resource(BaseResource):
     # Most likely, `read` and `write` won't see much direct use; rather,
     # `get` and `list` are wrappers around `read` and `create` and
     # `modify` are wrappers around `write`.
+
+    def _pop_none(self, kwargs):
+        """Remove default values (anything where the value is None).
+        click is unfortunately bad at the way it sends through unspecified
+        defaults."""
+        for key, value in copy(kwargs).items():
+            if value is None:
+                kwargs.pop(key)
+            if hasattr(value, 'read'):
+                kwargs[key] = value.read()
 
     def read(self, pk=None, fail_on_no_results=False,
              fail_on_multiple_results=False, **kwargs):
@@ -444,13 +462,7 @@ class Resource(BaseResource):
         queries = kwargs.pop('query', [])
 
         # Remove default values (anything where the value is None).
-        # click is unfortunately bad at the way it sends through unspecified
-        # defaults.
-        for key, value in copy(kwargs).items():
-            if value is None:
-                kwargs.pop(key)
-            if hasattr(value, 'read'):
-                kwargs[key] = value.read()
+        self._pop_none(kwargs)
 
         # If queries were provided, process them.
         for query in queries:
@@ -513,13 +525,7 @@ class Resource(BaseResource):
         existing_data = {}
 
         # Remove default values (anything where the value is None).
-        # click is unfortunately bad at the way it sends through unspecified
-        # defaults.
-        for key, value in copy(kwargs).items():
-            if value is None:
-                kwargs.pop(key)
-            if hasattr(value, 'read'):
-                kwargs[key] = value.read()
+        self._pop_none(kwargs)
 
         # Determine which record we are writing, if we weren't given a
         # primary key.
@@ -695,42 +701,17 @@ class Resource(BaseResource):
         # Done; return the response
         return response
 
-    @resources.command
-    @click.option('--fail-on-found', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, return an error if a matching record already '
-                       'exists.')
-    @click.option('--force-on-exists', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, if a match is found on unique fields, other '
-                       'fields will be updated to the provided values. If '
-                       'False, a match causes the request to be a no-op.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
-        """Create an object.
-
-        Fields in the resource's `identity` tuple are used for a lookup;
-        if a match is found, then no-op (unless `force_on_exists` is set) but
-        do not fail (unless `fail_on_found` is set).
-        """
+        """The code for the create method in a non-command implementation
+        here, so that the child classes can over-ride it as a command,
+        depending on circumstances."""
         return self.write(create_on_missing=True, fail_on_found=fail_on_found,
                           force_on_exists=force_on_exists, **kwargs)
 
-    @resources.command
-    @click.option('--create-on-missing', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, and if options rather than a primary key are '
-                       'used to attempt to match a record, will create the '
-                       'record if it does not exist. This is an alias to '
-                       '`create --force-on-exists`.')
     def modify(self, pk=None, create_on_missing=False, **kwargs):
-        """Modify an already existing object.
-
-        Fields in the resource's `identity` tuple can be used in lieu of a
-        primary key for a lookup; in such a case, only other fields are
-        written.
-
-        To modify unique fields, you must use the primary key for the lookup.
-        """
+        """The code for the modify method in a non-command implementation
+        here, so that the child classes can over-ride it as a command,
+        depending on circumstances."""
         force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
                           force_on_exists=force_on_exists, **kwargs)
@@ -806,7 +787,7 @@ class Resource(BaseResource):
             return {}
 
 
-class MonitorableResource(Resource):
+class MonitorableResource(ResourceMethods):
     """A resource that is able to be tied to a running task, such as a job
     or project, and thus able to be monitored.
     """
@@ -828,7 +809,7 @@ class MonitorableResource(Resource):
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
     def monitor(self, pk, min_interval=1, max_interval=30,
-                timeout=None, outfile=sys.stdout):
+                timeout=None, outfile=sys.stdout, **kwargs):
         """Monitor a running job.
 
         Blocks further input until the job completes (whether successfully or
@@ -847,7 +828,7 @@ class MonitorableResource(Resource):
         # and run in Python.  This seems fine; outfile can be set to /dev/null
         # and very much the normal use for this method should be CLI
         # monitoring.
-        result = self.status(pk)
+        result = self.status(pk, detail=True)
         last_poll = time.time()
         timeout_check = 0
         while result['status'] != 'successful':
@@ -899,7 +880,7 @@ class MonitorableResource(Resource):
             # to the next time that we intend to do a check, and once that
             # time hits, we do the status check as part of the normal cycle.
             if time.time() - last_poll > interval:
-                result = self.status(pk)
+                result = self.status(pk, detail=True)
                 last_poll = time.time()
                 interval = min(interval * 1.5, max_interval)
 
@@ -914,5 +895,123 @@ class MonitorableResource(Resource):
                 secho('\r' + ' ' * longest_string, file=outfile, nl=False)
                 secho('\r', file=outfile, nl=False)
 
-        # Done; return the result
-        return result
+        # Return the job ID and other response data
+        answer = OrderedDict((
+            ('changed', True),
+            ('id', pk),
+        ))
+        answer.update(result)
+        # Make sure to return ID of resource and not update number
+        # relevant for project creation and update
+        answer['id'] = pk
+        return answer
+
+
+class ExeResource(MonitorableResource):
+    """Executable resource - defines status and cancel methods"""
+    abstract = True
+
+    @resources.command
+    @click.option('--detail', is_flag=True, default=False,
+                  help='Print more detail.')
+    def status(self, pk=None, detail=False, **kwargs):
+        """Print the current job status. This is used to check a running job.
+        You can look up the job with the same parameters used for a get
+        request."""
+        # Remove default values (anything where the value is None).
+        self._pop_none(kwargs)
+
+        # Search for the record if pk not given
+        if not pk:
+            job = self.get(include_debug_header=True, **kwargs)
+        # Get the job from Ansible Tower if pk given
+        else:
+            debug.log('Asking for job status.', header='details')
+            finished_endpoint = '%s%d/' % (self.endpoint, pk)
+            job = client.get(finished_endpoint).json()
+
+        # In most cases, we probably only want to know the status of the job
+        # and the amount of time elapsed. However, if we were asked for
+        # verbose information, provide it.
+        if detail:
+            return job
+
+        # Print just the information we need.
+        return adict({
+            'elapsed': job['elapsed'],
+            'failed': job['failed'],
+            'status': job['status'],
+        })
+
+    @resources.command
+    @click.option('--fail-if-not-running', is_flag=True, default=False,
+                  help='Fail loudly if the job is not currently running.')
+    def cancel(self, pk=None, fail_if_not_running=False, **kwargs):
+        """Cancel a currently running job.
+
+        Fails with a non-zero exit status if the job cannot be canceled.
+        You must provide either a pk or parameters in the job's identity.
+        """
+        # Search for the record if pk not given
+        if not pk:
+            existing_data = self.get(**kwargs)
+            pk = existing_data['id']
+
+        cancel_endpoint = '%s%d/cancel/' % (self.endpoint, pk)
+        # Attempt to cancel the job.
+        try:
+            client.post(cancel_endpoint)
+            changed = True
+        except exc.MethodNotAllowed:
+            changed = False
+            if fail_if_not_running:
+                raise exc.TowerCLIError('Job not running.')
+
+        # Return a success.
+        return adict({'status': 'canceled', 'changed': changed})
+
+
+class Resource(ResourceMethods):
+    """This is the parent class for all standard resources."""
+    abstract = True
+
+    @resources.command
+    @click.option('--fail-on-found', default=False,
+                  show_default=True, type=bool, is_flag=True,
+                  help='If used, return an error if a matching record already '
+                       'exists.')
+    @click.option('--force-on-exists', default=False,
+                  show_default=True, type=bool, is_flag=True,
+                  help='If used, if a match is found on unique fields, other '
+                       'fields will be updated to the provided values. If '
+                       'False, a match causes the request to be a no-op.')
+    def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
+        """Create an object.
+
+        Fields in the resource's `identity` tuple are used for a lookup;
+        if a match is found, then no-op (unless `force_on_exists` is set) but
+        do not fail (unless `fail_on_found` is set).
+        """
+        return super(Resource, self).create(
+            fail_on_found=False, force_on_exists=False, **kwargs
+        )
+
+    @resources.command
+    @click.option('--create-on-missing', default=False,
+                  show_default=True, type=bool, is_flag=True,
+                  help='If used, and if options rather than a primary key are '
+                       'used to attempt to match a record, will create the '
+                       'record if it does not exist. This is an alias to '
+                       '`create --force-on-exists`.')
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
+        """Modify an already existing object.
+
+        Fields in the resource's `identity` tuple can be used in lieu of a
+        primary key for a lookup; in such a case, only other fields are
+        written.
+
+        To modify unique fields, you must use the primary key for the lookup.
+        """
+        force_on_exists = kwargs.pop('force_on_exists', True)
+        return self.write(pk, create_on_missing=create_on_missing,
+                          force_on_exists=force_on_exists, **kwargs)
