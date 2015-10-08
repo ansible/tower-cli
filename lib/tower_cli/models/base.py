@@ -701,41 +701,17 @@ class ResourceMethods(BaseResource):
         # Done; return the response
         return response
 
-    @click.option('--fail-on-found', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, return an error if a matching record already '
-                       'exists.')
-    @click.option('--force-on-exists', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, if a match is found on unique fields, other '
-                       'fields will be updated to the provided values. If '
-                       'False, a match causes the request to be a no-op.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
-        """Create an object.
-
-        Fields in the resource's `identity` tuple are used for a lookup;
-        if a match is found, then no-op (unless `force_on_exists` is set) but
-        do not fail (unless `fail_on_found` is set).
-        """
+        """The code for the create method in a non-command implementation
+        here, so that the child classes can over-ride it as a command,
+        depending on circumstances."""
         return self.write(create_on_missing=True, fail_on_found=fail_on_found,
                           force_on_exists=force_on_exists, **kwargs)
 
-    @resources.command
-    @click.option('--create-on-missing', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, and if options rather than a primary key are '
-                       'used to attempt to match a record, will create the '
-                       'record if it does not exist. This is an alias to '
-                       '`create --force-on-exists`.')
     def modify(self, pk=None, create_on_missing=False, **kwargs):
-        """Modify an already existing object.
-
-        Fields in the resource's `identity` tuple can be used in lieu of a
-        primary key for a lookup; in such a case, only other fields are
-        written.
-
-        To modify unique fields, you must use the primary key for the lookup.
-        """
+        """The code for the modify method in a non-command implementation
+        here, so that the child classes can over-ride it as a command,
+        depending on circumstances."""
         force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
                           force_on_exists=force_on_exists, **kwargs)
@@ -996,7 +972,7 @@ class ExeResource(MonitorableResource):
 
 
 class Resource(ResourceMethods):
-    """This is the parent class for all 'standard' resources."""
+    """This is the parent class for all standard resources."""
     abstract = True
 
     @resources.command
@@ -1010,8 +986,32 @@ class Resource(ResourceMethods):
                        'fields will be updated to the provided values. If '
                        'False, a match causes the request to be a no-op.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
-        """Create an object by implementing the super class version of create.
+        """Create an object.
+
+        Fields in the resource's `identity` tuple are used for a lookup;
+        if a match is found, then no-op (unless `force_on_exists` is set) but
+        do not fail (unless `fail_on_found` is set).
         """
         return super(Resource, self).create(
             fail_on_found=False, force_on_exists=False, **kwargs
         )
+
+    @resources.command
+    @click.option('--create-on-missing', default=False,
+                  show_default=True, type=bool, is_flag=True,
+                  help='If used, and if options rather than a primary key are '
+                       'used to attempt to match a record, will create the '
+                       'record if it does not exist. This is an alias to '
+                       '`create --force-on-exists`.')
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
+        """Modify an already existing object.
+
+        Fields in the resource's `identity` tuple can be used in lieu of a
+        primary key for a lookup; in such a case, only other fields are
+        written.
+
+        To modify unique fields, you must use the primary key for the lookup.
+        """
+        force_on_exists = kwargs.pop('force_on_exists', True)
+        return self.write(pk, create_on_missing=create_on_missing,
+                          force_on_exists=force_on_exists, **kwargs)

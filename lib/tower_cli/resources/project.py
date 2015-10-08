@@ -95,13 +95,22 @@ class Resource(models.MonitorableResource):
         'scm_update_on_launch'
     ))
     def modify(self, pk=None, *args, **kwargs):
-        """Modify a project, see org help to modify org.
-        Also associated with issue #52, the organization can't be modified
-        with the 'modify' command. This would create confusion about whether
-        it served the role of an identifier versus a field to modify. This
-        method is used to set the allowed fields on the modify command,
-        removing the organization from available options.
+        """Modify an already existing.
+
+        To edit the project's organizations, see help for organizations.
+
+        Fields in the resource's `identity` tuple can be used in lieu of a
+        primary key for a lookup; in such a case, only other fields are
+        written.
+
+        To modify unique fields, you must use the primary key for the lookup.
         """
+        # Associated with issue #52, the organization can't be modified
+        #    with the 'modify' command. This would create confusion about
+        #    whether its flag is an identifier versus a field to modify.
+        # Another role this method serves is to re-implement the modify
+        #    method as a command. If this method is deleted, the inheritance
+        #    chain for project should also be changed.
         return super(Resource, self).modify(pk=pk, *args, **kwargs)
 
     @resources.command(use_fields_as_options=('name', 'organization'))
