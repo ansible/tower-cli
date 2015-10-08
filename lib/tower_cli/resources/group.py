@@ -50,7 +50,7 @@ class Resource(models.Resource):
     @click.option('--overwrite-vars', type=bool,
                   help='Override vars in child groups and hosts with those '
                   'from the external source.')
-    @click.option('--update-on-launch', type=bool, help='Refersh inventory '
+    @click.option('--update-on-launch', type=bool, help='Refresh inventory '
                   'data from its source each time a job is run.')
     def create(self, credential=None, source=None, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
