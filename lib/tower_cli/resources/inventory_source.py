@@ -34,6 +34,16 @@ class Resource(models.MonitorableResource):
         type=click.Choice(['manual', 'ec2', 'rax', 'vmware',
                            'gce', 'azure', 'openstack']),
     )
+    source_regions = models.Field(required=False, display=False)
+    # Variables not shared by all cloud providers
+    source_vars = models.Field(required=False, display=False)
+    # Boolean variables
+    overwrite = models.Field(type=bool, required=False, display=False)
+    overwrite_vars = models.Field(type=bool, required=False, display=False)
+    update_on_launch = models.Field(type=bool, required=False, display=False)
+    # Only used if update_on_launch is used
+    update_cache_timeout = models.Field(type=int, required=False,
+                                        display=False)
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @click.option('--monitor', is_flag=True, default=False,
