@@ -88,7 +88,7 @@ class ParserTests(unittest.TestCase):
                                                parser.readfp)
                     read_file_method(StringIO('[general]\nfoo: bar\n'))
                     warn.assert_called_once_with(mock.ANY, RuntimeWarning)
-        # Also run with acceptable permissions, verrify that no warning issued
+        # Also run with acceptable permissions, verify that no warning issued
         with mock.patch.object(warnings, 'warn') as warn:
             with mock.patch.object(os.path, 'isfile') as isfile:
                 with mock.patch.object(os, 'stat') as os_stat:

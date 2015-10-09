@@ -18,8 +18,9 @@ import copy
 import functools
 import json
 import warnings
+import click
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, SSLError
 from requests.sessions import Session
 from requests.models import Response
 from requests.packages import urllib3
@@ -88,16 +89,34 @@ class Client(Session):
         if headers.get('Content-Type', '') == 'application/json':
             kwargs['data'] = json.dumps(kwargs.get('data', {}))
 
-        # Disable urllib3 warnings # still warn if verrify_ssl None
+        # Decide whether to require SSL verification
+        verify_ssl = True
         if (settings.verify_ssl is False) or hasattr(settings, 'insecure'):
-            urllib3.disable_warnings()
+            verify_ssl = False
 
         # Call the superclass method.
         try:
             with warnings.catch_warnings():
-                r = super(Client, self).request(method, url, *args,
-                                                verify=False, **kwargs)
+                warnings.simplefilter(
+                    "ignore", urllib3.exceptions.InsecureRequestWarning)
+                r = super(Client, self).request(
+                    method, url, *args, verify=verify_ssl, **kwargs)
+        except SSLError as ex:
+            # Throw error if verify_ssl not set to false and server
+            #  is not using verified certificate.
+            if settings.verbose:
+                debug.log('SSL connection failed:', fg='yellow', bold=True)
+                debug.log(str(ex), fg='yellow', bold=True, nl=2)
+            raise exc.ConnectionError(
+                'Could not establish a secure connection. '
+                'Please add the server to your certificate '
+                'authority.\nYou can run this command without verifying SSL '
+                'with the --insecure flag, or permanently disable '
+                'verification by the config setting:\n\n '
+                'tower-cli config verify_ssl false'
+            )
         except ConnectionError as ex:
+            # Throw error if server can not be reached.
             if settings.verbose:
                 debug.log('Cannot connect to Tower:', fg='yellow', bold=True)
                 debug.log(str(ex), fg='yellow', bold=True, nl=2)
