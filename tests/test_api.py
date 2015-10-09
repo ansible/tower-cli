@@ -175,5 +175,5 @@ class ClientTests(unittest.TestCase):
                     g.assert_called_once_with(
                         # The pont is to assure verify=False below
                         'GET', mock.ANY, allow_redirects=True,
-                        auth=('admin', 'password'), verify=False
+                        auth=(mock.ANY, mock.ANY), verify=False
                     )
