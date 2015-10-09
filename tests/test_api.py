@@ -160,7 +160,7 @@ class ClientTests(unittest.TestCase):
             with self.assertRaises(exc.BadRequest):
                 client.get('/ping/')
 
-    def test_insecure_connecction(self):
+    def test_insecure_connection(self):
         """Establish that the --insecure flag will cause the program to
         call request with verify=False.
         """

@@ -12,7 +12,7 @@
 
 ### 2.3.0 (2015-10-xx)
 
-* Fixed an issue with the settings file so that it could be world readable
+* Fixed an issue where the settings file could be world readable
 * Added the ability to associate a project with an organization
 * Added setting "verrify_ssl" to disallow insecure connections
 * Added support for additional cloud credentials

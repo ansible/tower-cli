@@ -204,7 +204,7 @@ as its value.
 
 By default tower-cli will raise an error if the SSL certificate of the Tower server
 cannot be verified. To allow unverified SSL connections, set the config
-variable `verify_ssl` to true. To allow it just for a single command, add the
+variable `verify_ssl` to true. To allow it for a single command, add the
 --insecure flag.
 
 ```bash
