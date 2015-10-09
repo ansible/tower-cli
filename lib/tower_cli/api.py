@@ -18,7 +18,6 @@ import copy
 import functools
 import json
 import warnings
-import click
 
 from requests.exceptions import ConnectionError, SSLError
 from requests.sessions import Session

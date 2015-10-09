@@ -160,13 +160,20 @@ class ClientTests(unittest.TestCase):
             with self.assertRaises(exc.BadRequest):
                 client.get('/ping/')
 
-    def test_disable_connection_warning(self):
+    def test_insecure_connecction(self):
         """Establish that the --insecure flag will cause the program to
-        call disable_warnings in the urllib3 package.
+        call request with verify=False.
         """
-        with mock.patch('requests.packages.urllib3.disable_warnings') as g:
+        with mock.patch('requests.sessions.Session.request') as g:
+            mock_response = type('statobj', (), {})()  # placeholder object
+            mock_response.status_code = 200
+            g.return_value = mock_response
             with client.test_mode as t:
                 t.register('/ping/', "I'm a teapot!", status_code=200)
-                with settings.runtime_values(insecure=False):
+                with settings.runtime_values(verify_ssl=False):
                     client.get('/ping/')
-                    assert g.called
+                    g.assert_called_once_with(
+                        # The pont is to assure verify=False below
+                        'GET', mock.ANY, allow_redirects=True,
+                        auth=('admin', 'password'), verify=False
+                    )
