@@ -69,7 +69,7 @@ $ tower-cli config key value
 By issuing `tower-cli config` with no arguments, you can see a full list
 of configuration options and where they are set.
 
-You will generally need to set at least three configuration options--`host`,
+In most cases, you must set at least three configuration options--`host`,
 `username`, and `password`--which correspond to the location of
 your Ansible Tower instance and your credentials to authenticate to Tower.
 
@@ -175,11 +175,11 @@ launching a job:
 * Pass data in a file using the flag `--extra-vars="@filename.yml"`
 * Include yaml data at runtime with the flag `--extra-vars="var: value"`
 * A command-line editor automatically pops up when the job template is marked to prompt on launch
-* If the job template has extra variables, these will not be over-ridden
+* If the job template has extra variables, these are not over-ridden
 
 These methods can also be combined. For instance, if you give the flag multiple
 times on the command line, specifying a file in addition to manually giving
-extra variables, these two sources will be combined and sent to the Tower
+extra variables, these two sources are combined and sent to the Tower
 server.
 
 ```bash
@@ -197,14 +197,14 @@ $ tower-cli job_template create --name=test_job_template --project=1 \
 You may not combine multiple sources when modifying a job template. Whitespace
 can be used in strings like `--extra-vars="a='white space'" `, and list-valued
 parameters can be sent as JSON or YAML, but not key=value pairs. For instance,
-`--extra-vars="a: [1, 2, 3, 4, 5]" ` will send the parameter "a" with that list
+`--extra-vars="a: [1, 2, 3, 4, 5]" ` sends the parameter "a" with that list
 as its value.
 
 #### SSL warnings
 
-By default tower-cli will warn if the SSL certificate of the Tower server
+By default tower-cli warns if the SSL certificate of the Tower server
 cannot be verified. To disable this warning, set the config variable
-`verify_ssl` to true. To disable it just for a single command, add the
+`verify_ssl` to true. To disable it for a single command, add the
 --insecure flag.
 
 ```bash
@@ -218,15 +218,15 @@ $ tower-cli job_template list --insecure
 #### Bash script example
 
 If you want an example for a particular case that this README does not cover,
-the development distribution of tower-cli includes a script that will
-populate the Tower server with fake data using tower-cli commands. These
-attempt to cover most of the available features. These can be found in
+the development distribution of tower-cli includes a script that
+populates the Tower server with fake data using tower-cli commands. These
+attempt to cover most of the available features and can be found in
 the folder [/docs/examples/](/docs/examples).
 
 ### License
 
 While Tower is commercially licensed software, _tower-cli_ is an open source project,
-and we encourage contributions.  Specifically, this CLI project is licensed
+and contributions are highly encouraged.  Specifically, this CLI project is licensed
 under the Apache 2.0 license.  Pull requests and tickets filed in GitHub are welcome.
 
 (C) 2015, Michael DeHaan, and others, Ansible, Inc.
