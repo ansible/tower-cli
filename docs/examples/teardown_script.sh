@@ -2,6 +2,9 @@
 # runs and ad hoc commands because there is no "name" identifier that
 # we can use to automatically look them up.
 
+echo "Tower-CLI DATA FAKER: displaying jobs that must be deleted manually using ID"
+tower-cli job list --job-template=hello_world
+
 echo "Tower-CLI DATA FAKER: deleting job templates"
 tower-cli job_template delete --name="hello_world"
 tower-cli job_template delete --name="ls_1_to_2"
@@ -51,6 +54,3 @@ tower-cli team delete --name Engineering
 tower-cli team delete --name "Tech Services"
 tower-cli organization delete --name="Hyrule Ventures"
 tower-cli organization delete --name="Bio Inc"
-
-echo "Tower-CLI DATA FAKER: displaying jobs that must be deleted manually using ID"
-tower-cli job list --job-template=hello_world

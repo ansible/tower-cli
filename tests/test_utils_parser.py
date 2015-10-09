@@ -89,7 +89,7 @@ class ParserTests(unittest.TestCase):
     def test_handling_bad_data(self):
         """Check robustness of the parser functions in how it handles
         empty strings, null values, etc."""
-        # Verrify that all parts of the computational chain can handle None
+        # Verify that all parts of the computational chain can handle None
         return_dict = parser.parse_kv(None)
         self.assertEqual(return_dict, {})
         return_dict = parser.string_to_dict(None)

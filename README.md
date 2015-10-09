@@ -202,9 +202,9 @@ as its value.
 
 #### SSL warnings
 
-By default tower-cli warns if the SSL certificate of the Tower server
-cannot be verified. To disable this warning, set the config variable
-`verify_ssl` to true. To disable it for a single command, add the
+By default tower-cli will raise an error if the SSL certificate of the Tower server
+cannot be verified. To allow unverified SSL connections, set the config
+variable `verify_ssl` to true. To allow it for a single command, add the
 --insecure flag.
 
 ```bash
