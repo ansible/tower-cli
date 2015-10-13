@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-# Copyright 2013-2014, Ansible, Inc.
+# Copyright 2013-2015, Ansible, Inc.
 # Michael DeHaan <michael@ansible.com>
 # Luke Sneeringer <lsneeringer@ansible.com>
+# and others
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -110,6 +111,7 @@ setup(
 
     # Additional information
     description='A CLI tool for Ansible Tower.',
+    long_description=open('README.rst'),
     license='Apache 2.0',
 
     # How to do the install
