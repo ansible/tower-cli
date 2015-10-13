@@ -2,7 +2,8 @@
 # -- Package Metadata --
 # ----------------------
 include LICENSE
-include README.md
+include README.rst
+include HISTORY.rst
 include VERSION
 include lib/tower_cli/VERSION
 include requirements.txt

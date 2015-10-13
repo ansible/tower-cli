@@ -4,7 +4,6 @@ dict.sorted==1.0.0
 requests>=2.3.0
 six>=1.7.2
 PyYAML>=3.11
-pypandoc>=1.0.4
 
 # === Python < 2.7 ===
 # importlib>=1.0.3
