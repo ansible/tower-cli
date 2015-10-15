@@ -43,6 +43,7 @@ tower-cli config verify_ssl false
 echo "Tower-CLI DATA FAKER: creating orgs and teams"
 # Data regarding Hyrule Ventures was taken from
 # https://github.com/jsmartin/tower_populator
+tower-cli organization create --name="Default"
 tower-cli organization create --name="Hyrule Ventures" --description="Mining Rupees Daily"
 tower-cli team create --name="Ops" --organization=Default --description="The Ops Team"
 tower-cli team create --name="QA" --organization=Default --description="Assures quality of software"

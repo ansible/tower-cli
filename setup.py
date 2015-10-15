@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-# Copyright 2013-2014, Ansible, Inc.
+# Copyright 2013-2015, Ansible, Inc.
 # Michael DeHaan <michael@ansible.com>
 # Luke Sneeringer <lsneeringer@ansible.com>
+# and others
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +100,14 @@ def parse_requirements(filename):
     # Okay, we should have an entire list of requirements now.
     return reqs
 
+def combine_files(*args):
+    """returns a string of all the strings in *args combined together,
+    with two line breaks between them"""
+    file_contents = []
+    for filename in args:
+        with open(filename, 'r') as f:
+            file_contents.append(f.read())
+    return "\n\n".join(file_contents)
 
 setup(
     # Basic metadata
@@ -110,6 +119,7 @@ setup(
 
     # Additional information
     description='A CLI tool for Ansible Tower.',
+    long_description=combine_files('README.rst', 'HISTORY.rst'),
     license='Apache 2.0',
 
     # How to do the install
