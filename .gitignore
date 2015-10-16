@@ -62,3 +62,6 @@ results.xml
 
 # ignore personal configs
 .tower_cli.cfg
+
+# ignore python egg
+*.egg-info/
