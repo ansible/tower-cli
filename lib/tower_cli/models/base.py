@@ -467,7 +467,8 @@ class ResourceMethods(BaseResource):
         # If queries were provided, process them.
         for query in queries:
             if query[0] in kwargs:
-                raise exc.BadRequest('Attempted to set %s twice.' % query[0])
+                raise exc.BadRequest('Attempted to set %s twice.'
+                                     % query[0].replace('_', '-'))
             kwargs[query[0]] = query[1]
 
         # Make the request to the Ansible Tower API.
@@ -552,7 +553,7 @@ class ResourceMethods(BaseResource):
         missing_fields = [i for i in required_fields if i not in kwargs]
         if missing_fields and not pk:
             raise exc.BadRequest('Missing required fields: %s' %
-                                 ', '.join(missing_fields))
+                                 ', '.join(missing_fields).replace('_', '-'))
 
         # Sanity check: Do we need to do a write at all?
         # If `force_on_exists` is False and the record was, in fact, found,
