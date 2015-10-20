@@ -26,7 +26,7 @@ hostval=$(tower-cli config host)
 userval=$(tower-cli config username)
 passwordval=$(tower-cli config password)
 
-if [[ $hostval == "host: 127.0.0.1" ]] || [[ $userval == "username: " ]] || [[ $passwordval == "password: " ]]
+if [[ $userval == "username: " ]] || [[ $passwordval == "password: " ]]
 then
   echo "WARNING: Configuration has not been fully set";
   echo "   You will want to run the $ tower-cli config ";
@@ -106,8 +106,8 @@ tower-cli credential create --name=user2 --username=user2 --password=pass1 --tea
 
 echo "Tower-CLI DATA FAKER: creating inventories and groups"
 # Basic localhost examples
-tower-cli inventory create --name=localhost --description="local machine" --organization=Default
-tower-cli host create --name="127.0.0.1" --description="the host in localhost" --inventory="localhost"
+tower-cli inventory create --name=localhost --description="local machine" --organization=Default --variables="variables.yml"
+tower-cli host create --name="127.0.0.1" --description="the host in localhost" --inventory="localhost" --variables="variables.yml"
 # Corporate example uses localhost with special vars for testing
 tower-cli inventory create --name=Production --description="Production Machines" --organization="Hyrule Ventures" --variables="variables.yml"
 tower-cli group create --name=EC2 --credential="AWS creds" --source=ec2 --description="EC2 hosts" --inventory=Production
@@ -135,28 +135,26 @@ tower-cli host associate --host="server.example2.com" --group="web servers"
 
 
 echo "Tower-CLI DATA FAKER: create job templates"
-# Hello world and privledge escalation demonstration
-# Assumes you have on your computer
-#  username     password
-#   user1       password
-#   user2       pass1
-tower-cli job_template create --name="hello_world" --description="needs no privileges" --inventory=localhost --machine-credential=user1 --project=sample_playbooks --playbook=helloworld.yml
-tower-cli job_template create --name="ls_1_to_2" --description="user2 file ls" --inventory=localhost --machine-credential=user1 --become-enabled=true --project=sample_playbooks --playbook=lsuser2.yml
-tower-cli job_template create --name="ls_2_to_1" --description="user1 file ls" --inventory=localhost --machine-credential=user2 --become-enabled=true --project=sample_playbooks --playbook=lsuser1.yml
-# Example from Hyrule
+# Hello world example, including different credentials
+#  note that since we have set "connection: local", the credentials do not matter.
+tower-cli job_template create --name="Hello World Debug" --description="debug statement" --inventory=localhost --machine-credential=user1 --project=sample_playbooks --playbook=debug.yml
+tower-cli job_template create --name="Hello World" --description="echo statement" --inventory=localhost --machine-credential=user1 --project=sample_playbooks --playbook=helloworld.yml
+tower-cli job_template create --name="Hello World as user2" --description="echo statement with user2 credentials" --inventory=localhost --machine-credential=user2 --project=sample_playbooks --playbook=helloworld.yml
+# Example from Hyrule data set
 tower-cli job_template create --name=Apache --description="Confgure Apache servers" --inventory=Testing --project="Hyrulian Playbooks" --playbook="site.yml" --machine-credential="Local SSH" --job-type=run --verbosity=verbose --forks=5
 
-echo "Tower-CLI DATA FAKER: run jobs and ad hoc commands"
-tower-cli ad_hoc launch --inventory=localhost --machine-credential=user1 --module-args="echo 'hi, world!!1'" --monitor
+echo "Tower-CLI DATA FAKER: run a job, check status, cancel, and run with monitoring"
 # Launch job without monitoring
-tower-cli job launch --job-template=hello_world
+tower-cli job launch --job-template="Hello World Debug" --job-explanation="launched by example script"
 # Note that these only work because there are no other completed jobs from that template
 # If that is not true, you need to run "job list" and then cancel with the ID
-tower-cli job status --job-template=hello_world
-tower-cli job cancel --job-template=hello_world
-# privledge escalation example
-tower-cli job launch --job-template=ls_1_to_2 --monitor
-# run an ad hoc command to echo
-tower-cli ad_hoc launch --inventory=localhost --machine-credential=user1 --module-args="echo 'hello world as an ad hoc command!'" --monitor
-# run an ad hoc commant with privledge escalation
-tower-cli ad_hoc launch --inventory=localhost --machine-credential=user1 --module-args="ls /home/user2/" --become --monitor
+tower-cli job status --job-template="Hello World Debug"
+tower-cli job cancel --job-template="Hello World Debug"
+# Note that delete is different from cancel.
+# With delete, we remove the record of this job's run. For instance:
+# tower-cli job delete {pk}
+# launch a job with monitoring turned on
+tower-cli job launch --job-template="Hello World Debug" --monitor --job-explanation="launched by example script"
+
+echo "Tower-CLI DATA FAKER: displaying jobs that have run via the fake data script"
+tower-cli job list --job-template="Hello World Debug"

@@ -82,7 +82,8 @@ Write to the config files directly.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The configuration file can also be edited directly. A configuration file
-is a simple file with keys and values, separated by ``:`` or ``=``:
+is a simple file with keys and values, separated by a colon (``:``) or by
+the equality sign (``=``):
 
 .. code:: yaml
 
@@ -115,7 +116,7 @@ CLI invocation generally follows this format:
 
 The "resource" is a type of object within Tower (a noun), such as
 ``user``, ``organization``, ``job_template``, etc.; resource names are
-always singular in Tower CLI (so: it's ``tower-cli user``, never
+always singular in Tower CLI (so it is ``tower-cli user``, never
 ``tower-cli users``).
 
 The "action" is the thing you want to do (a verb). Most Tower CLI
@@ -192,7 +193,7 @@ to the Tower server.
 .. code:: bash
 
     # Launch a job with extra variables from filename.yml, and also a=5
-    $ tower-cli job launch --job-template=1 --extra-vars="a=5 b=3" \   
+    $ tower-cli job launch --job-template=1 --extra-vars="a=5 b=3" \
                                             --extra-vars="@filename.yml"
 
     # Create a job template with that same set of extra variables
@@ -241,7 +242,7 @@ source project, and contributions are highly encouraged. Specifically,
 this CLI project is licensed under the Apache 2.0 license. Pull requests
 and tickets filed in GitHub are welcome.
 
-(C) 2015, Michael DeHaan, and others, Ansible, Inc.
+\(C) 2015, Michael DeHaan, and others, Ansible, Inc.
 
 .. |Build Status| image:: https://img.shields.io/travis/ansible/tower-cli.svg
    :target: https://travis-ci.org/ansible/tower-cli
