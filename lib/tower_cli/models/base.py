@@ -994,7 +994,8 @@ class Resource(ResourceMethods):
         do not fail (unless `fail_on_found` is set).
         """
         return super(Resource, self).create(
-            fail_on_found=False, force_on_exists=False, **kwargs
+            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
+            **kwargs
         )
 
     @resources.command

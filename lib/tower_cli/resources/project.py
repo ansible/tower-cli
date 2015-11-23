@@ -68,26 +68,27 @@ class Resource(models.Resource, models.MonitorableResource):
         This would be a shared class with user, but it needs the ability
         to monitor if the flag is set.
         """
-        backup_endpoint = self.endpoint
+        # First, run the create method, ignoring the organization given
+        answer = super(Resource, self).create(
+            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
+            **kwargs
+        )
+        project_id = answer['id']
+
+        # If an organization is given, associate it here
         if organization:
-            debug.log("using alternative endpoint specific to organization",
-                      header='details')
 
             # Get the organization from Tower, will lookup name if needed
             org_resource = get_resource('organization')
             org_data = org_resource.get(organization)
             org_pk = org_data['id']
 
-            self.endpoint = '/organizations/%s%s' % (org_pk, backup_endpoint)
-        answer = super(Resource, self).create(
-            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
-            **kwargs
-        )
-        self.endpoint = backup_endpoint
+            debug.log("associating the project with its organization",
+                      header='details', nl=1)
+            org_resource._assoc('projects', org_pk, project_id)
 
         # if the monitor flag is set, wait for the SCM to update
         if monitor:
-            project_id = answer['id']
             return self.monitor(project_id, timeout=timeout)
 
         return answer

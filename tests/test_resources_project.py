@@ -30,16 +30,21 @@ class CreateTests(unittest.TestCase):
     def test_create_with_organization(self):
         """Establish that a project can be created inside of an organization.
         This uses the --organization flag with the create command.
-        This action uses the /organizations/{id}/projects/ endpoint
         """
         with client.test_mode as t:
-            endpoint = '/organizations/1/projects/'
-            t.register_json(endpoint, {'count': 0, 'results': [],
+            t.register_json('/projects/', {'count': 0, 'results': [],
                             'next': None, 'previous': None},
                             method='GET')
-            t.register_json(endpoint, {'id': 42}, method='POST')
+            t.register_json('/projects/', {'id': 42}, method='POST')
             # The org endpoint can be used to lookup org pk given org name
             t.register_json('/organizations/1/', {'id': 1}, method='GET')
+            # This is an endpoint used for project-org association
+            t.register_json(
+                '/organizations/1/projects/', {'count': 0}, method='GET'
+            )
+            t.register_json(
+                '/organizations/1/projects/', {'changed': True}, method='POST'
+            )
             result = self.res.create(
                 name='bar', organization=1, scm_type="git"
             )
