@@ -22,7 +22,7 @@ from tower_cli.api import client
 from tower_cli.utils import debug, exceptions as exc, types
 
 
-class Resource(models.MonitorableResource):
+class Resource(models.Resource, models.MonitorableResource):
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
 
@@ -61,9 +61,9 @@ class Resource(models.MonitorableResource):
                   help='If provided with --monitor, the SCM update'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    @resources.command
     def create(self, organization=None, monitor=False, timeout=None,
-               *args, **kwargs):
+               fail_on_found=False, force_on_exists=False,
+               **kwargs):
         """Create a new item of resource, with or w/o org.
         This would be a shared class with user, but it needs the ability
         to monitor if the flag is set.
@@ -79,7 +79,10 @@ class Resource(models.MonitorableResource):
             org_pk = org_data['id']
 
             self.endpoint = '/organizations/%s%s' % (org_pk, backup_endpoint)
-        answer = super(Resource, self).create(*args, **kwargs)
+        answer = super(Resource, self).create(
+            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
+            **kwargs
+        )
         self.endpoint = backup_endpoint
 
         # if the monitor flag is set, wait for the SCM to update
@@ -94,7 +97,7 @@ class Resource(models.MonitorableResource):
         'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
         'scm_update_on_launch'
     ))
-    def modify(self, pk=None, *args, **kwargs):
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify an already existing.
 
         To edit the project's organizations, see help for organizations.
@@ -108,10 +111,9 @@ class Resource(models.MonitorableResource):
         # Associated with issue #52, the organization can't be modified
         #    with the 'modify' command. This would create confusion about
         #    whether its flag is an identifier versus a field to modify.
-        # Another role this method serves is to re-implement the modify
-        #    method as a command. If this method is deleted, the inheritance
-        #    chain for project should also be changed.
-        return super(Resource, self).modify(pk=pk, *args, **kwargs)
+        return super(Resource, self).modify(
+            pk=pk, create_on_missing=create_on_missing, **kwargs
+        )
 
     @resources.command(use_fields_as_options=('name', 'organization'))
     @click.option('--monitor', is_flag=True, default=False,
@@ -121,8 +123,8 @@ class Resource(models.MonitorableResource):
                   help='If provided with --monitor, this command (not the job)'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    def update(self, pk, monitor=False, timeout=None, name=None,
-               organization=None):
+    def update(self, pk=None, create_on_missing=False, monitor=False,
+               timeout=None, name=None, organization=None):
         """Trigger a project update job within Ansible Tower.
         Only meaningful on non-manual projects.
         """
@@ -156,7 +158,7 @@ class Resource(models.MonitorableResource):
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
-    def status(self, pk, detail=False):
+    def status(self, pk=None, detail=False, **kwargs):
         """Print the current job status."""
         # Get the job from Ansible Tower.
         debug.log('Asking for project update status.', header='details')
