@@ -1,6 +1,11 @@
 Release History
 ===============
 
+2.3.1 (2015-11-24)
+------------------
+
+- Fixed bug affecting force-on-exists and fail_on_found options
+
 2.3.0 (2015-10-20)
 ------------------
 
