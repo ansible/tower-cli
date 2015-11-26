@@ -141,14 +141,6 @@ def load_extra_vars(extra_vars_list):
 
 
 def extra_vars_loader_wrapper(extra_vars_list):
-    """Specific to tower-cli, this avoids altering the extra_vars list
-    if there is only one element in it. This keeps comments and formatting
-    in-tact when passing the information on to the Tower server."""
-    # If there is only one set of extra_vars, then pass it  to the API
-    # without alteration
+    """Dumps the parsed output into a string."""
     extra_vars_dict = load_extra_vars(extra_vars_list)
-    if len(extra_vars_list) == 1:
-        return file_or_yaml_split(extra_vars_list[0])
-    # For a single string of extra_vars, combine them into a single input
-    else:
-        return json.dumps(extra_vars_dict)
+    return json.dumps(extra_vars_dict)
