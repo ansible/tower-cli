@@ -82,10 +82,10 @@ class Resource(models.Resource):
         You may only include one --extra-vars flag with this command, and
         whatever you provde will overwrite the existing field. Start this
         with @ in order to indicate a filename."""
-        if 'extra_vars' in kwargs:
+        if kwargs.get('extra_vars'):
             # read from file, if given
             kwargs['extra_vars'] = \
-                parser.file_or_yaml_split(kwargs['extra_vars'])
+                parser.extra_vars_loader_wrapper([kwargs['extra_vars']])
         return super(Resource, self).modify(
             pk=pk, create_on_missing=create_on_missing, **kwargs
         )

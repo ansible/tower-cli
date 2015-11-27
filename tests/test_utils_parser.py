@@ -25,11 +25,6 @@ class ParserTests(unittest.TestCase):
     """A set of tests to establish that the parser methods read files and
     combine variables in the intended way.
     """
-    def test_returns_input_text(self):
-        """Give it only one file, and it should give it right back."""
-        mock_text = "\n\nfoo:   baar\n\n\n"
-        self.assertEqual(mock_text,
-                         parser.extra_vars_loader_wrapper([mock_text]))
 
     def test_many_combinations(self):
         """Combine yaml with json with bare values, check that key:value

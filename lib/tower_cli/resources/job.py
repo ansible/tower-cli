@@ -102,16 +102,19 @@ class Resource(models.ExeResource):
         # do so (unless --no-input is set).
         if data.pop('ask_variables_on_launch', False) and not no_input \
                 and not extra_vars:
-            initial = data['extra_vars']
+            initial = data['extra_vars']  # TODO: convert into key=value pairs
             initial = '\n'.join((
                 '# Specify extra variables (if any) here.',
                 '# Lines beginning with "#" are ignored.',
                 initial,
             ))
             extra_vars = click.edit(initial) or ''
-            extra_vars = '\n'.join([i for i in extra_vars.split('\n')
-                                    if not i.startswith('#')])
-            data['extra_vars'] = extra_vars
+            data['extra_vars'] = parser.extra_vars_loader_wrapper(
+                [i for i in extra_vars.split('\n') if not i.startswith('#')]
+            )
+            # extra_vars = '\n'.join([i for i in extra_vars.split('\n')
+            #                         if not i.startswith('#')])
+            # data['extra_vars'] = extra_vars
 
         # In Tower 2.1 and later, we create the new job with
         # /job_templates/N/launch/; in Tower 2.0 and before, there is a two

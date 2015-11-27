@@ -118,7 +118,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/job_templates/1/', {
                 'ask_variables_on_launch': True,
-                'extra_vars': 'spam: eggs',
+                'extra_vars': '{"spam": "eggs"}',
                 'id': 1,
                 'name': 'frobnicate',
                 'related': {'launch': '/job_templates/1/launch/'},
@@ -132,11 +132,11 @@ class LaunchTests(unittest.TestCase):
                 edit.return_value = '# Nothing.\nfoo: bar'
                 result = self.res.launch(1, no_input=False)
                 self.assertTrue(
-                    edit.mock_calls[0][1][0].endswith('spam: eggs'),
+                    edit.mock_calls[0][1][0].endswith('{"spam": "eggs"}'),
                 )
-            self.assertEqual(
-                json.loads(t.requests[3].body)['extra_vars'],
-                'foo: bar',
+            self.assertDictContainsSubset(
+                {'foo': 'bar'},
+                json.loads(json.loads(t.requests[3].body)['extra_vars'])
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
@@ -208,11 +208,11 @@ class LaunchTests(unittest.TestCase):
                 edit.return_value = '# Nothing.\nfoo: bar'
                 result = self.res.launch(1, no_input=False)
                 self.assertTrue(
-                    edit.mock_calls[0][1][0].endswith('spam: eggs'),
+                    edit.mock_calls[0][1][0].endswith('{"spam": "eggs"}'),
                 )
-            self.assertEqual(
-                json.loads(t.requests[2].body)['extra_vars'],
-                'foo: bar',
+            self.assertDictContainsSubset(
+                {'foo': 'bar'},
+                json.loads(json.loads(t.requests[2].body)['extra_vars'])
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
@@ -232,9 +232,9 @@ class LaunchTests(unittest.TestCase):
                             method='POST')
             result = self.res.launch(1, extra_vars=['foo: bar'])
 
-            self.assertEqual(
-                json.loads(t.requests[2].body)['extra_vars'],
-                'foo: bar',
+            self.assertDictContainsSubset(
+                {'foo': 'bar'},
+                json.loads(json.loads(t.requests[2].body)['extra_vars'])
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
@@ -254,9 +254,9 @@ class LaunchTests(unittest.TestCase):
                             method='POST')
             result = self.res.launch(1, extra_vars=['foo: bar'])
 
-            self.assertEqual(
-                json.loads(t.requests[2].body)['extra_vars'],
-                'foo: bar',
+            self.assertDictContainsSubset(
+                {'foo': 'bar'},
+                json.loads(json.loads(t.requests[2].body)['extra_vars'])
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
