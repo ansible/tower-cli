@@ -52,6 +52,17 @@ class ParserTests(unittest.TestCase):
                 [yaml_w_comment, json_text], force_json=False
             ))
         )
+        # Test that it correctly combines a diverse set of YAML
+        yml1 = "a: 1\n# a comment on second line \nb: 2"
+        yml2 = "c: 3"
+        self.assertEqual(
+            yaml.load(parser.process_extra_vars(
+                [yml1, yml2], force_json=False)),
+            {'a': 1, 'b': 2, 'c': 3}
+        )
+        # make sure it combined them into valid yaml
+        self.assertFalse("{" in parser.process_extra_vars(
+            [yml1, yml2], force_json=False))
 
     def test_combine_raw_params(self):
         """Given multiple files which all have raw parameters, make sure

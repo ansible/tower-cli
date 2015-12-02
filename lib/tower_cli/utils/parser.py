@@ -138,9 +138,10 @@ def process_extra_vars(extra_vars_list, force_json=True):
             opt_dict = string_to_dict(extra_vars_opt, allow_kv=True)
         # Rolling YAML-based string combination
         if any(line.startswith("#") for line in extra_vars_opt.split('\n')):
-            extra_vars_yaml += extra_vars_opt
+            extra_vars_yaml += extra_vars_opt + "\n"
         elif extra_vars_opt != "":
-            extra_vars_yaml += yaml.dump(opt_dict, default_flow_style=False)
+            extra_vars_yaml += yaml.dump(
+                opt_dict, default_flow_style=False) + "\n"
         # Combine dictionary with cumulative dictionary
         revised_update(extra_vars, opt_dict)
 
@@ -151,7 +152,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
             try_dict = yaml.load(extra_vars_yaml)
             assert type(try_dict) is dict
             debug.log('Using unprocessed YAML', header='decision', nl=2)
-            return extra_vars_yaml
+            return extra_vars_yaml.rstrip()
         except:
             debug.log('Failed YAML parsing, defaulting to JSON',
                       header='decison', nl=2)
