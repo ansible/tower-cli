@@ -59,7 +59,8 @@ class Resource(models.ExeResource):
     @click.option('--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
-    @click.option('--tags', required=False)
+    @click.option('--tags', required=False,
+                  help='Specify tagged actions in the playbook to run.')
     def launch(self, job_template=None, tags=None, monitor=False, timeout=None,
                no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
@@ -85,6 +86,7 @@ class Resource(models.ExeResource):
         extra_vars_list = []
         if 'extra_vars' in data and len(data['extra_vars']) > 0:
             # But only do this for versions before 2.3
+            debug.log('Getting version of Tower.', header='details')
             r = client.get('/config/')
             if LooseVersion(r.json()['version']) < LooseVersion('2.4'):
                 extra_vars_list = [data['extra_vars']]
@@ -93,28 +95,27 @@ class Resource(models.ExeResource):
         if extra_vars:
             extra_vars_list += extra_vars
 
-        # Call parser utility to process extra_vars, if any are present
-        if len(extra_vars_list) > 0:
-            data['extra_vars'] = parser. \
-                extra_vars_loader_wrapper(extra_vars_list)
-
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
         if data.pop('ask_variables_on_launch', False) and not no_input \
                 and not extra_vars:
-            initial = data['extra_vars']  # TODO: convert into key=value pairs
+            # If JT extra_vars are JSON, echo them to user as YAML
+            initial = parser.process_extra_vars(
+                [data['extra_vars']], force_json=False
+            )
             initial = '\n'.join((
-                '# Specify extra variables (if any) here.',
-                '# Lines beginning with "#" are ignored.',
+                '# Specify extra variables (if any) here as YAML.',
+                '# Lines beginning with "#" denote comments.',
                 initial,
             ))
             extra_vars = click.edit(initial) or ''
-            data['extra_vars'] = parser.extra_vars_loader_wrapper(
-                [i for i in extra_vars.split('\n') if not i.startswith('#')]
+            extra_vars_list = [extra_vars]
+
+        # Dump extra_vars into JSON string for launching job
+        if len(extra_vars_list) > 0:
+            data['extra_vars'] = parser.process_extra_vars(
+                extra_vars_list, force_json=True
             )
-            # extra_vars = '\n'.join([i for i in extra_vars.split('\n')
-            #                         if not i.startswith('#')])
-            # data['extra_vars'] = extra_vars
 
         # In Tower 2.1 and later, we create the new job with
         # /job_templates/N/launch/; in Tower 2.0 and before, there is a two

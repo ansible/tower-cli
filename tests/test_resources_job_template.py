@@ -111,7 +111,7 @@ class TemplateTests(unittest.TestCase):
             t.register_json('/job_templates/1/', {'name': 'bar', 'id': 1,
                             'job_type': 'run'},
                             method='PATCH')
-            self.res.modify(name='bar', extra_vars="a: 5")
+            self.res.modify(name='bar', extra_vars=["a: 5"])
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'PATCH')
             self.assertEqual(len(t.requests), 2)
