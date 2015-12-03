@@ -99,6 +99,25 @@ class GroupTests(unittest.TestCase):
             self.assertEqual(len(t.requests), 2)
         self.assertTrue(answer['changed'])
 
+    def test_create_with_manual(self):
+        """Try to change group to manual, find that it already is.
+        """
+        with client.test_mode as t:
+            t.register_json('/groups/?name=Foo', {
+                'count': 0,
+                'next': None,
+                'previous': None,
+                'results': [],
+            }, method='GET')
+            t.register_json('/groups/', {
+                'id': 1,
+                'name': 'Foo',
+                'inventory': 1,
+            }, method='POST')
+            answer = self.gr.create(name='Foo', inventory=1, source="manual")
+            self.assertEqual(len(t.requests), 2)
+        self.assertTrue(answer['changed'])
+
     def test_create_change_with_isource_modify(self):
         """Establish that if we make a new group and provide inventory source
         arguments, that a modify request is made for the inventory source.
@@ -168,6 +187,23 @@ class GroupTests(unittest.TestCase):
                 r = self.gr.modify(1, name='foo', description='rax servers')
                 self.assertEqual(len(t.requests), 2)
                 self.assertEqual(r['changed'], True)
+
+    def test_modify_with_change_manual(self):
+        """Establish that if we modify a group, changing its source to
+        manual, then the inventory_source is called with empty string.
+        """
+        isrc = tower_cli.get_resource('inventory_source')
+        with mock.patch.object(type(isrc), 'write') as isrc_modify:
+            with client.test_mode as t:
+                t.register_json('/groups/1/', {
+                    'id': 1, 'name': 'foo', 'inventory': 1,
+                    'related': {'inventory_source': '/inventory_sources/42/'},
+                }, method='GET')
+                self.gr.modify(1, name='foo', source='manual')
+                self.assertEqual(len(t.requests), 1)
+            isrc_modify.assert_called_once_with(
+                pk=42, source='', credential=None, force_on_exists=True,
+            )
 
     def test_sync(self):
         """Establish that the sync method correctly forwards to the

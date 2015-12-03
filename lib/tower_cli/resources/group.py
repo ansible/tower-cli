@@ -56,6 +56,10 @@ class Resource(models.Resource):
         """Create a group and, if necessary, modify the inventory source within
         the group.
         """
+        # Handle alias for "manual" source
+        if source == 'manual':
+            source = ''
+
         # First, create the group.
         answer = super(Resource, self).create(**kwargs)
 
@@ -68,7 +72,7 @@ class Resource(models.Resource):
         # with the inventory source at all? If no credential or source
         # was specified, then we'd just be updating the inventory source
         # with an effective no-op.
-        if not credential and source in ('manual', None):
+        if not credential and source in ('', None):
             return answer
 
         # Get the inventory source ID ("isid").
@@ -101,6 +105,10 @@ class Resource(models.Resource):
         """Modify a group and, if necessary, the inventory source within
         the group.
         """
+        # Handle alias for "manual" source
+        if source == 'manual':
+            source = ''
+
         # First, modify the group.
         answer = super(Resource, self).modify(pk=pk, **kwargs)
 
