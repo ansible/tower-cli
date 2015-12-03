@@ -79,13 +79,12 @@ class Resource(models.Resource):
         # We now have our inventory source ID; modify it according to the
         # provided parameters.
         isrc = get_resource('inventory_source')
-        return isrc.modify(isid, credential=credential, source=source,
-                           force_on_exists=True, **kwargs)
+        return isrc.write(pk=isid, force_on_exists=True,
+                          credential=credential, source=source, **kwargs)
 
     @click.option('--credential', type=types.Related('credential'),
                   required=False)
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
-                  default='manual',
                   help='The source to use for this group.')
     @click.option('--source-regions', help='Regions for your cloud provider.')
     # Options may not be valid for certain types of cloud servers
@@ -123,8 +122,15 @@ class Resource(models.Resource):
         isrc = get_resource('inventory_source')
         for field in self.fields:
             kwargs.pop(field.name, None)
-        return isrc.modify(isid, credential=credential, source=source,
-                           force_on_exists=True, **kwargs)
+        is_answer = isrc.write(pk=isid, force_on_exists=True,
+                               credential=credential, source=source, **kwargs)
+
+        # If either the inventory_source or the group objects were modified
+        # then refelect this in the output to avoid confusing the user.
+        if answer['changed']:
+            return answer
+        else:
+            return is_answer
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
     @click.option('--root', is_flag=True, default=False,

@@ -29,9 +29,7 @@ class Resource(models.Resource):
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
     job_type = models.Field(
-        default='run',
         display=False,
-        show_default=True,
         type=click.Choice(['run', 'check']),
     )
     inventory = models.Field(type=types.Related('inventory'))
@@ -77,6 +75,9 @@ class Resource(models.Resource):
             kwargs['extra_vars'] = parser.process_extra_vars(
                 extra_vars, force_json=False
             )
+        # Provide a default value for job_type, but only in creation of JT
+        if 'job_type' not in kwargs:
+            kwargs['job_type'] = 'run'
         return super(Resource, self).create(
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs

@@ -141,7 +141,7 @@ class GroupTests(unittest.TestCase):
         source module is sent the modification command.
         """
         isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'modify') as isrc_modify:
+        with mock.patch.object(type(isrc), 'write') as isrc_modify:
             with client.test_mode as t:
                 t.register_json('/groups/1/', {
                     'id': 1, 'name': 'foo', 'inventory': 1,
@@ -150,8 +150,24 @@ class GroupTests(unittest.TestCase):
                 self.gr.modify(1, name='foo', source='rax')
                 self.assertEqual(len(t.requests), 1)
             isrc_modify.assert_called_once_with(
-                42, source='rax', credential=None, force_on_exists=True,
+                pk=42, source='rax', credential=None, force_on_exists=True,
             )
+
+        # Test than when the group description is changed, we hit the
+        # endpoint for the group as opposed to the inventory_source.
+        with mock.patch.object(type(isrc), 'write') as isrc_modify:
+            with client.test_mode as t:
+                t.register_json('/groups/1/', {
+                    'id': 1, 'name': 'foo', 'inventory': 1,
+                    'related': {'inventory_source': '/inventory_sources/42/'},
+                }, method='GET')
+                t.register_json('/groups/1/', {
+                    'id': 1, 'changed': True,
+                    'related': {'inventory_source': '/inventory_sources/42/'},
+                }, method='PATCH')
+                r = self.gr.modify(1, name='foo', description='rax servers')
+                self.assertEqual(len(t.requests), 2)
+                self.assertEqual(r['changed'], True)
 
     def test_sync(self):
         """Establish that the sync method correctly forwards to the
