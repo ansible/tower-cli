@@ -32,6 +32,13 @@ class Resource(models.Resource):
     def associate(self, organization, user):
         """Associate a user with this organization."""
         return self._assoc('users', organization, user)
+        
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'))
+    @click.option('--user', type=types.Related('user'))
+    def associate_admin(self, organization, user):
+        """Associate an admin with this organization."""
+        return self._assoc('admins', organization, user)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--organization', type=types.Related('organization'))
@@ -39,6 +46,13 @@ class Resource(models.Resource):
     def disassociate(self, organization, user):
         """Disassociate a user from this organization."""
         return self._disassoc('users', organization, user)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'))
+    @click.option('--user', type=types.Related('user'))
+    def disassociate_admin(self, organization, user):
+        """Disassociate an admin from this organization."""
+        return self._disassoc('admins', organization, user)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--organization', type=types.Related('organization'))
