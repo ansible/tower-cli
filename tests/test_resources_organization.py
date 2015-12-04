@@ -40,6 +40,16 @@ class OrganizationTests(unittest.TestCase):
             self.assertEqual(t.requests[1].body,
                              json.dumps({'associate': True, 'id': 84}))
 
+    def test_associate_admin(self):
+        """Same associate test, but for creating an admin"""
+        with client.test_mode as t:
+            t.register_json('/organizations/42/admins/?id=84',
+                            {'count': 0, 'results': []})
+            t.register_json('/organizations/42/admins/', {}, method='POST')
+            self.org_resource.associate_admin(42, 84)
+            self.assertEqual(t.requests[1].body,
+                             json.dumps({'associate': True, 'id': 84}))
+
     def test_disassociate(self):
         """Establish that the associate method makes the HTTP requests
         that we expect.
@@ -50,6 +60,17 @@ class OrganizationTests(unittest.TestCase):
                              'next': None, 'previous': None})
             t.register_json('/organizations/42/users/', {}, method='POST')
             self.org_resource.disassociate(42, 84)
+            self.assertEqual(t.requests[1].body,
+                             json.dumps({'disassociate': True, 'id': 84}))
+
+    def test_disassociate_admin(self):
+        """Same disassociate test, but for creating an admin"""
+        with client.test_mode as t:
+            t.register_json('/organizations/42/admins/?id=84',
+                            {'count': 1, 'results': [{'id': 84}],
+                             'next': None, 'previous': None})
+            t.register_json('/organizations/42/admins/', {}, method='POST')
+            self.org_resource.disassociate_admin(42, 84)
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 84}))
 
