@@ -32,7 +32,7 @@ class Resource(models.Resource):
     def associate(self, organization, user):
         """Associate a user with this organization."""
         return self._assoc('users', organization, user)
-        
+
     @resources.command(use_fields_as_options=False)
     @click.option('--organization', type=types.Related('organization'))
     @click.option('--user', type=types.Related('user'))
