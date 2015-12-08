@@ -33,7 +33,7 @@ class ParserTests(unittest.TestCase):
         bdict = {"b": 2}
         ayml = yaml.dump(adict)
         bjson = yaml.dump(bdict, default_flow_style=True)
-        cyml = "5"
+        cyml = "c: 5"
         result = parser.process_extra_vars([ayml, bjson, cyml])
         rdict = yaml.load(result)
         self.assertEqual(rdict['a'], 1)
@@ -63,15 +63,6 @@ class ParserTests(unittest.TestCase):
         # make sure it combined them into valid yaml
         self.assertFalse("{" in parser.process_extra_vars(
             [yml1, yml2], force_json=False))
-
-    def test_combine_raw_params(self):
-        """Given multiple files which all have raw parameters, make sure
-        they are combined in the '_raw_params' key entry"""
-        a_kv = "foo=bar\na"
-        b_kv = "baz=fam\nb"
-        result = parser.process_extra_vars([a_kv, b_kv])
-        rdict = yaml.load(result)
-        self.assertEqual(rdict['_raw_params'], "a b")
 
     def test_precedence(self):
         """Test that last value is the one that overwrites the others"""
@@ -106,8 +97,19 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(exc.TowerCLIError):
             parser.process_extra_vars(["incorrect == brackets"])
 
+        # but accept data if there are just two equals
+        res = parser.process_extra_vars(['password==pa#exp&U=!9Rop'])
+        self.assertEqual(yaml.load(res)['password'], '=pa#exp&U=!9Rop')
+
+        with self.assertRaises(exc.TowerCLIError):
+            parser.process_extra_vars(["left_param="])
+
         with self.assertRaises(exc.TowerCLIError):
             parser.process_extra_vars(["incorrect = =brackets"])
+
+        # Do not accept _raw_params
+        with self.assertRaises(exc.TowerCLIError):
+            parser.process_extra_vars(["42"])
 
     def test_handling_bad_data(self):
         """Check robustness of the parser functions in how it handles
@@ -125,8 +127,6 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(return_dict, {})
 
         # Check that the behavior is what we want if feeding it an int
-        return_dict = parser.parse_kv(5)
-        self.assertEqual(return_dict, {"_raw_params": "5"})
         return_dict = parser.parse_kv("foo=5")
         self.assertEqual(return_dict, {"foo": 5})
 
@@ -146,21 +146,12 @@ class TestSplitter_Gen(unittest.TestCase):
     within the ansible project source.
     """
     SPLIT_DATA = (
-        (u'a',
-            [u'a'],
-            {u'_raw_params': u'a'}),
         (u'a=b',
             [u'a=b'],
             {u'a': u'b'}),
         (u'a="foo bar"',
             [u'a="foo bar"'],
             {u'a': u'foo bar'}),
-        (u'"foo bar baz"',
-            [u'"foo bar baz"'],
-            {u'_raw_params': '"foo bar baz"'}),
-        (u'foo bar baz',
-            [u'foo', u'bar', u'baz'],
-            {u'_raw_params': u'foo bar baz'}),
         (u'a=b c="foo bar"',
             [u'a=b', u'c="foo bar"'],
             {u'a': u'b', u'c': u'foo bar'}),
@@ -208,8 +199,6 @@ class TestSplitter_Gen(unittest.TestCase):
 
     CUSTOM_DATA = [
         ("test=23 site=example.com", {"test": 23, "site": "example.com"}),
-        ("2 site=example.com", {"_raw_params": '2', "site": "example.com"}),
-        ('a=b\na', {'a': 'b', '_raw_params': 'a'}),
         ('var: value', {"var": "value"}),
         # key=value
         ('test=23 key="white space"', {"test": 23, "key": "white space"}),

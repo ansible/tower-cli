@@ -50,7 +50,7 @@ def parse_kv(var_string):
             token = unicode(token)
         # Look for key=value pattern, if not, process as raw parameter
         if '=' in token:
-            (k, v) = token.split('=')
+            (k, v) = token.split('=', 1)
             # If '=' are unbalanced, then stop and warn user
             if len(k) == 0 or len(v) == 0:
                 raise Exception
@@ -60,20 +60,8 @@ def parse_kv(var_string):
             except:
                 return_dict[k] = v
         else:
-
-            # If there are spaces in the statement, there would be no way
-            # split it from the rest of the text later, so check for that here
-            if " " in token:
-                token = '"' + token + '"'
-            # If token is clearly a failed JSON or YAML string, don't advance
-            if token.endswith(":"):
-                raise Exception
-            # Append the value onto the special key entry _raw_params
-            # this uses a space delimiter
-            if '_raw_params' in return_dict:
-                return_dict['_raw_params'] += " " + token
-            else:
-                return_dict['_raw_params'] = token
+            # scenario where --extra-vars=42, will throw error
+            raise Exception
 
     return return_dict
 
@@ -108,13 +96,6 @@ def string_to_dict(var_string, allow_kv=True):
     return return_dict
 
 
-def revised_update(dict1, dict2):
-    """Updates dict1 with dict2 while appending the elements in _raw_params"""
-    if '_raw_params' in dict2 and '_raw_params' in dict1:
-        dict1['_raw_params'] += " " + str(dict2.pop('_raw_params'))
-    return dict1.update(dict2)
-
-
 def process_extra_vars(extra_vars_list, force_json=True):
     """Returns a string that is valid JSON or YAML and contains all the
     variables in every extra_vars_opt inside of extra_vars_list.
@@ -143,7 +124,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
             extra_vars_yaml += yaml.dump(
                 opt_dict, default_flow_style=False) + "\n"
         # Combine dictionary with cumulative dictionary
-        revised_update(extra_vars, opt_dict)
+        extra_vars.update(opt_dict)
 
     # Return contents in form of a string
     if not force_json:
