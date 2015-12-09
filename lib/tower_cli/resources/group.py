@@ -52,27 +52,35 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refresh inventory '
                   'data from its source each time a job is run.')
-    def create(self, credential=None, source=None, **kwargs):
+    def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
         """
+        # Break out the options for the group vs its inventory_source
+        group_fields = [f.name for f in self.fields]
+        inv_kwargs = {}
+        for field in kwargs.copy():
+            if field not in group_fields:
+                inv_kwargs[field] = kwargs.pop(field)
+
         # Handle alias for "manual" source
-        if source == 'manual':
-            source = ''
+        if 'source' in inv_kwargs and inv_kwargs['source'] == 'manual':
+            inv_kwargs.pop('source')
 
         # First, create the group.
-        answer = super(Resource, self).create(**kwargs)
+        answer = super(Resource, self).create(
+            fail_on_found=False, force_on_exists=False, **kwargs)
 
         # If the group already exists and we aren't supposed to make changes,
         # then we're done.
-        if not kwargs.pop('force_on_exists', False) and not answer['changed']:
+        if not force_on_exists and not answer['changed']:
             return answer
 
         # Sanity check: A group was created, but do we need to do anything
         # with the inventory source at all? If no credential or source
         # was specified, then we'd just be updating the inventory source
         # with an effective no-op.
-        if not credential and source in ('', None):
+        if len(inv_kwargs) == 0:
             return answer
 
         # Get the inventory source ID ("isid").
@@ -83,8 +91,13 @@ class Resource(models.Resource):
         # We now have our inventory source ID; modify it according to the
         # provided parameters.
         isrc = get_resource('inventory_source')
-        return isrc.write(pk=isid, force_on_exists=True,
-                          credential=credential, source=source, **kwargs)
+        inv_answer = isrc.write(pk=isid, force_on_exists=True, **inv_kwargs)
+
+        # If either the inventory_source or the group objects were modified
+        # then refelect this in the output to avoid confusing the user.
+        if inv_answer['changed']:
+            answer['changed'] = True
+        return answer
 
     @click.option('--credential', type=types.Related('credential'),
                   required=False)
@@ -101,20 +114,28 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refersh inventory '
                   'data from its source each time a job is run.')
-    def modify(self, pk=None, credential=None, source=None, **kwargs):
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
         """
+        # Break out the options for the group vs its inventory_source
+        group_fields = [f.name for f in self.fields]
+        inv_kwargs = {}
+        for field in kwargs.copy():
+            if field not in group_fields:
+                inv_kwargs[field] = kwargs.pop(field)
+
         # Handle alias for "manual" source
-        if source == 'manual':
-            source = ''
+        if 'source' in inv_kwargs and inv_kwargs['source'] == 'manual':
+            inv_kwargs['source'] = ''
 
         # First, modify the group.
-        answer = super(Resource, self).modify(pk=pk, **kwargs)
+        answer = super(Resource, self).modify(
+            pk=pk, create_on_missing=False, **kwargs)
 
         # If the group already exists and we aren't supposed to make changes,
         # then we're done.
-        if not kwargs.pop('force_on_exists', True) and not answer['changed']:
+        if len(inv_kwargs) == 0:
             return answer
 
         # Get the inventory source ID ("isid").
@@ -128,17 +149,13 @@ class Resource(models.Resource):
         # Note: Any fields that were part of the group modification need
         # to be expunged from kwargs before making this call.
         isrc = get_resource('inventory_source')
-        for field in self.fields:
-            kwargs.pop(field.name, None)
-        is_answer = isrc.write(pk=isid, force_on_exists=True,
-                               credential=credential, source=source, **kwargs)
+        inv_answer = isrc.write(pk=isid, force_on_exists=True, **inv_kwargs)
 
         # If either the inventory_source or the group objects were modified
         # then refelect this in the output to avoid confusing the user.
-        if answer['changed']:
-            return answer
-        else:
-            return is_answer
+        if inv_answer['changed']:
+            answer['changed'] = True
+        return answer
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
     @click.option('--root', is_flag=True, default=False,
@@ -186,5 +203,5 @@ class Resource(models.Resource):
         if isinstance(group, int):
             group = self.get(group)
 
-        # Return the inventory soruce ID.
+        # Return the inventory source ID.
         return int(group['related']['inventory_source'].split('/')[-2])

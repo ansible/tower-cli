@@ -70,12 +70,13 @@ class GroupTests(unittest.TestCase):
         with mock.patch.object(models.Resource, 'create') as super_create:
             super_create.return_value = {'changed': False, 'id': 1}
             with client.test_mode as t:
-                answer = self.gr.create(name='Foo', inventory=1,
-                                        credential=None)
+                answer = self.gr.create(name='Foo', inventory=1)
                 self.assertEqual(len(t.requests), 0)
             # This also establishes that the "credential" argument above
             # was dropped at the superclass method (as it should be).
-            super_create.assert_called_once_with(name='Foo', inventory=1)
+            super_create.assert_called_once_with(
+                fail_on_found=False, force_on_exists=False,
+                name='Foo', inventory=1)
             self.assertFalse(answer['changed'])
 
     def test_create_change_but_no_isource_request_needed(self):
@@ -150,10 +151,10 @@ class GroupTests(unittest.TestCase):
         with mock.patch.object(models.Resource, 'modify') as super_modify:
             super_modify.return_value = {'changed': False}
             with client.test_mode as t:
-                self.gr.modify(42, source='rax',
-                               force_on_exists=False)
+                self.gr.modify(42, description='rax')
                 self.assertEqual(len(t.requests), 0)
-            super_modify.assert_called_once_with(pk=42, force_on_exists=False)
+            super_modify.assert_called_once_with(
+                pk=42, create_on_missing=False, description='rax')
 
     def test_modify_with_change(self):
         """Establish that if we attempt to modify a group, that the inventory
@@ -169,7 +170,7 @@ class GroupTests(unittest.TestCase):
                 self.gr.modify(1, name='foo', source='rax')
                 self.assertEqual(len(t.requests), 1)
             isrc_modify.assert_called_once_with(
-                pk=42, source='rax', credential=None, force_on_exists=True,
+                pk=42, source='rax', force_on_exists=True,
             )
 
         # Test than when the group description is changed, we hit the
@@ -202,7 +203,7 @@ class GroupTests(unittest.TestCase):
                 self.gr.modify(1, name='foo', source='manual')
                 self.assertEqual(len(t.requests), 1)
             isrc_modify.assert_called_once_with(
-                pk=42, source='', credential=None, force_on_exists=True,
+                pk=42, source='', force_on_exists=True,
             )
 
     def test_sync(self):
