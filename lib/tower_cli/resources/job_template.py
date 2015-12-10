@@ -58,11 +58,14 @@ class Resource(models.Resource):
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     extra_vars = models.Field(required=False, display=False)
+    ask_variables_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for extra_vars on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
 
     @click.option('--extra-vars', required=False, multiple=True,
-                  help='yaml format text that contains extra variables '
-                       'to pass on. Use @ to get these from a file.')
+                  help='Extra variables used by Ansible in YAML or key=value '
+                       'format. Use @ to get YAML from a file.')
     def create(self, fail_on_found=False, force_on_exists=False,
                extra_vars=None, **kwargs):
         """Create a job template.
@@ -71,21 +74,28 @@ class Resource(models.Resource):
         with @ in order to indicate a filename."""
         if extra_vars:
             # combine sources of extra variables, if given
-            kwargs['extra_vars'] = parser.extra_vars_loader_wrapper(extra_vars)
+            kwargs['extra_vars'] = parser.process_extra_vars(
+                extra_vars, force_json=False
+            )
         return super(Resource, self).create(
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs
         )
 
-    def modify(self, pk=None, create_on_missing=False, **kwargs):
+    @click.option('--extra-vars', required=False, multiple=True,
+                  help='Extra variables used by Ansible in YAML or key=value '
+                       'format. Use @ to get YAML from a file.')
+    def modify(self, pk=None, create_on_missing=False,
+               extra_vars=None, **kwargs):
         """Modify a job template.
-        You may only include one --extra-vars flag with this command, and
-        whatever you provde will overwrite the existing field. Start this
+        You may include multiple --extra-vars flags in order to combine
+        different sources of extra variables. Start this
         with @ in order to indicate a filename."""
-        if 'extra_vars' in kwargs:
-            # read from file, if given
-            kwargs['extra_vars'] = \
-                parser.file_or_yaml_split(kwargs['extra_vars'])
+        if extra_vars:
+            # combine sources of extra variables, if given
+            kwargs['extra_vars'] = parser.process_extra_vars(
+                extra_vars, force_json=False
+            )
         return super(Resource, self).modify(
             pk=pk, create_on_missing=create_on_missing, **kwargs
         )

@@ -20,7 +20,7 @@ import ast
 import shlex
 import sys
 
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import exceptions as exc, debug
 
 
 def parse_kv(var_string):
@@ -50,7 +50,7 @@ def parse_kv(var_string):
             token = unicode(token)
         # Look for key=value pattern, if not, process as raw parameter
         if '=' in token:
-            (k, v) = token.split('=')
+            (k, v) = token.split('=', 1)
             # If '=' are unbalanced, then stop and warn user
             if len(k) == 0 or len(v) == 0:
                 raise Exception
@@ -60,22 +60,13 @@ def parse_kv(var_string):
             except:
                 return_dict[k] = v
         else:
-
-            # If there are spaces in the statement, there would be no way
-            # split it from the rest of the text later, so check for that here
-            if " " in token:
-                token = '"' + token + '"'
-            # Append the value onto the special key entry _raw_params
-            # this uses a space delimiter
-            if '_raw_params' in return_dict:
-                return_dict['_raw_params'] += " " + token
-            else:
-                return_dict['_raw_params'] = token
+            # scenario where --extra-vars=42, will throw error
+            raise Exception
 
     return return_dict
 
 
-def string_to_dict(var_string):
+def string_to_dict(var_string, allow_kv=True):
     """Returns a dictionary given a string with yaml or json syntax.
     If data is not present in a key: value format, then it return
     an empty dictionary.
@@ -83,72 +74,69 @@ def string_to_dict(var_string):
     Attempts processing string by 3 different methods in order:
         1. as JSON      2. as YAML      3. as custom key=value syntax
     Throws an error if all of these fail in the standard ways."""
+    # try:
+    #     # Accept all valid "key":value types of json
+    #     return_dict = json.loads(var_string)
+    #     assert type(return_dict) is dict
+    # except (TypeError, AttributeError, ValueError, AssertionError):
     try:
-        # Accept all valid "key":value types of json
-        return_dict = json.loads(var_string)
+        # Accept all JSON and YAML
+        return_dict = yaml.load(var_string)
         assert type(return_dict) is dict
-    except (TypeError, AttributeError, ValueError, AssertionError):
+    except (AttributeError, yaml.YAMLError, AssertionError):
+        # if these fail, parse by key=value syntax
         try:
-            # Accept all valid key: value types of yaml
-            return_dict = yaml.load(var_string)
-            assert type(return_dict) is dict
-        except (AttributeError, yaml.YAMLError, AssertionError):
-            # if these fail, parse by key=value syntax
-            try:
-                return_dict = parse_kv(var_string)
-            except:
-                raise exc.TowerCLIError(
-                    'failed to parse some of the extra '
-                    'variables.\nvariables: \n%s' % var_string
-                )
+            assert allow_kv
+            return_dict = parse_kv(var_string)
+        except:
+            raise exc.TowerCLIError(
+                'failed to parse some of the extra '
+                'variables.\nvariables: \n%s' % var_string
+            )
     return return_dict
 
 
-def file_or_yaml_split(extra_vars_opt):
-    """If the input text starts with @, then it is treated as a file name
-    and the contents of the file are returned."""
-    if extra_vars_opt and extra_vars_opt.startswith("@"):
-        # Argument is a file with variables in it, so return its content
-        with open(extra_vars_opt[1:], 'r') as f:
-            filetext = f.read()
-        return filetext
-    else:
-        # Argument is a list of definitions by itself
-        return extra_vars_opt
+def process_extra_vars(extra_vars_list, force_json=True):
+    """Returns a string that is valid JSON or YAML and contains all the
+    variables in every extra_vars_opt inside of extra_vars_list.
 
-
-def revised_update(dict1, dict2):
-    """Updates dict1 with dict2 while appending the elements in _raw_params"""
-    if '_raw_params' in dict2 and '_raw_params' in dict1:
-        dict1['_raw_params'] += " " + str(dict2.pop('_raw_params'))
-    return dict1.update(dict2)
-
-
-def load_extra_vars(extra_vars_list):
-    """Similar to the Ansible core function by the same name, this returns
-    a dictionary with variables defined in all yaml, json, or file references
-    given in the input list. Also handles precedence order."""
-    # Initialize cumulative dictionary
+    Args:
+       parse_kv (bool): whether to allow key=value syntax.
+       force_json (bool): if True, always output json.
+    """
+    # Read from all the different sources and put into dictionary
     extra_vars = {}
+    extra_vars_yaml = ""
     for extra_vars_opt in extra_vars_list:
         # Load file content if necessary
-        cleaned_text = file_or_yaml_split(extra_vars_opt)
-        # Convert text markup to a dictionary
-        data = string_to_dict(cleaned_text)
+        if extra_vars_opt.startswith("@"):
+            with open(extra_vars_opt[1:], 'r') as f:
+                extra_vars_opt = f.read()
+            # Convert text markup to a dictionary conservatively
+            opt_dict = string_to_dict(extra_vars_opt, allow_kv=False)
+        else:
+            # Convert text markup to a dictionary liberally
+            opt_dict = string_to_dict(extra_vars_opt, allow_kv=True)
+        # Rolling YAML-based string combination
+        if any(line.startswith("#") for line in extra_vars_opt.split('\n')):
+            extra_vars_yaml += extra_vars_opt + "\n"
+        elif extra_vars_opt != "":
+            extra_vars_yaml += yaml.dump(
+                opt_dict, default_flow_style=False) + "\n"
         # Combine dictionary with cumulative dictionary
-        revised_update(extra_vars, data)
-    return extra_vars
+        extra_vars.update(opt_dict)
 
-
-def extra_vars_loader_wrapper(extra_vars_list):
-    """Specific to tower-cli, this avoids altering the extra_vars list
-    if there is only one element in it. This keeps comments and formatting
-    in-tact when passing the information on to the Tower server."""
-    # If there is only one set of extra_vars, then pass it  to the API
-    # without alteration
-    extra_vars_dict = load_extra_vars(extra_vars_list)
-    if len(extra_vars_list) == 1:
-        return file_or_yaml_split(extra_vars_list[0])
-    # For a single string of extra_vars, combine them into a single input
-    else:
-        return json.dumps(extra_vars_dict)
+    # Return contents in form of a string
+    if not force_json:
+        try:
+            # Conditions to verify it is safe to return rolling YAML string
+            try_dict = yaml.load(extra_vars_yaml)
+            assert type(try_dict) is dict
+            debug.log('Using unprocessed YAML', header='decision', nl=2)
+            return extra_vars_yaml.rstrip()
+        except:
+            debug.log('Failed YAML parsing, defaulting to JSON',
+                      header='decison', nl=2)
+    if extra_vars == {}:
+        return ""
+    return json.dumps(extra_vars)

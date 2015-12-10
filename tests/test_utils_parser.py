@@ -25,11 +25,6 @@ class ParserTests(unittest.TestCase):
     """A set of tests to establish that the parser methods read files and
     combine variables in the intended way.
     """
-    def test_returns_input_text(self):
-        """Give it only one file, and it should give it right back."""
-        mock_text = "\n\nfoo:   baar\n\n\n"
-        self.assertEqual(mock_text,
-                         parser.extra_vars_loader_wrapper([mock_text]))
 
     def test_many_combinations(self):
         """Combine yaml with json with bare values, check that key:value
@@ -38,20 +33,36 @@ class ParserTests(unittest.TestCase):
         bdict = {"b": 2}
         ayml = yaml.dump(adict)
         bjson = yaml.dump(bdict, default_flow_style=True)
-        cyml = "5"
-        result = parser.extra_vars_loader_wrapper([ayml, bjson, cyml])
+        cyml = "c: 5"
+        result = parser.process_extra_vars([ayml, bjson, cyml])
         rdict = yaml.load(result)
         self.assertEqual(rdict['a'], 1)
         self.assertEqual(rdict['b'], 2)
 
-    def test_combine_raw_params(self):
-        """Given multiple files which all have raw parameters, make sure
-        they are combined in the '_raw_params' key entry"""
-        a_kv = "foo=bar\na"
-        b_kv = "baz=fam\nb"
-        result = parser.extra_vars_loader_wrapper([a_kv, b_kv])
-        rdict = yaml.load(result)
-        self.assertEqual(rdict['_raw_params'], "a b")
+        yaml_w_comment = "a: b\n# comment\nc: d"
+        self.assertEqual(
+            parser.process_extra_vars([yaml_w_comment], force_json=False),
+            yaml_w_comment
+        )
+        yaml_w_comment = '{a: b,\n# comment\nc: d}'
+        json_text = '{"z":"p"}'
+        self.assertDictContainsSubset(
+            yaml.load(yaml_w_comment),
+            yaml.load(parser.process_extra_vars(
+                [yaml_w_comment, json_text], force_json=False
+            ))
+        )
+        # Test that it correctly combines a diverse set of YAML
+        yml1 = "a: 1\n# a comment on second line \nb: 2"
+        yml2 = "c: 3"
+        self.assertEqual(
+            yaml.load(parser.process_extra_vars(
+                [yml1, yml2], force_json=False)),
+            {'a': 1, 'b': 2, 'c': 3}
+        )
+        # make sure it combined them into valid yaml
+        self.assertFalse("{" in parser.process_extra_vars(
+            [yml1, yml2], force_json=False))
 
     def test_precedence(self):
         """Test that last value is the one that overwrites the others"""
@@ -59,7 +70,7 @@ class ParserTests(unittest.TestCase):
         ayml = yaml.dump(adict)
         a2dict = {"a": 2}
         a2yml = yaml.dump(a2dict)
-        result = parser.extra_vars_loader_wrapper([ayml, a2yml])
+        result = parser.process_extra_vars([ayml, a2yml])
         rdict = yaml.load(result)
         self.assertEqual(rdict['a'], 2)
 
@@ -69,9 +80,9 @@ class ParserTests(unittest.TestCase):
         with mock.patch('tower_cli.utils.parser.open', mock_open, create=True):
             manager = mock_open.return_value.__enter__.return_value
             manager.read.return_value = 'foo: bar'
-            parser.extra_vars_loader_wrapper(["@fake_file1.yml"])
-            parser.extra_vars_loader_wrapper(["@fake_file2.yml",
-                                              "@fake_file3.yml"])
+            parser.process_extra_vars(["@fake_file1.yml"])
+            parser.process_extra_vars(["@fake_file2.yml",
+                                       "@fake_file3.yml"])
 
         # Ensure that "open" was triggered in test
         self.assertIn(mock.call("fake_file1.yml", 'r'), mock_open.mock_calls)
@@ -81,10 +92,24 @@ class ParserTests(unittest.TestCase):
     def test_parse_error(self):
         """Given a yaml file with incorrect syntax, throw a warning"""
         with self.assertRaises(exc.TowerCLIError):
-            parser.extra_vars_loader_wrapper(["a: b\nincorrect == brackets"])
+            parser.process_extra_vars(["mixing: yaml\nwith=keyval"])
 
         with self.assertRaises(exc.TowerCLIError):
-            parser.extra_vars_loader_wrapper(["a: b\nincorrect = =brackets"])
+            parser.process_extra_vars(["incorrect == brackets"])
+
+        # but accept data if there are just two equals
+        res = parser.process_extra_vars(['password==pa#exp&U=!9Rop'])
+        self.assertEqual(yaml.load(res)['password'], '=pa#exp&U=!9Rop')
+
+        with self.assertRaises(exc.TowerCLIError):
+            parser.process_extra_vars(["left_param="])
+
+        with self.assertRaises(exc.TowerCLIError):
+            parser.process_extra_vars(["incorrect = =brackets"])
+
+        # Do not accept _raw_params
+        with self.assertRaises(exc.TowerCLIError):
+            parser.process_extra_vars(["42"])
 
     def test_handling_bad_data(self):
         """Check robustness of the parser functions in how it handles
@@ -94,22 +119,22 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(return_dict, {})
         return_dict = parser.string_to_dict(None)
         self.assertEqual(return_dict, {})
-        return_val = parser.file_or_yaml_split(None)
-        self.assertEqual(return_val, None)
 
         # Verrify that all parts of computational chain can handle ""
         return_dict = parser.parse_kv("")
         self.assertEqual(return_dict, {})
         return_dict = parser.string_to_dict("")
         self.assertEqual(return_dict, {})
-        return_val = parser.file_or_yaml_split("")
-        self.assertEqual(return_val, "")
 
         # Check that the behavior is what we want if feeding it an int
-        return_dict = parser.parse_kv(5)
-        self.assertEqual(return_dict, {"_raw_params": "5"})
         return_dict = parser.parse_kv("foo=5")
         self.assertEqual(return_dict, {"foo": 5})
+
+        # Check that an empty extra_vars list doesn't blow up
+        return_str = parser.process_extra_vars([])
+        self.assertEqual(return_str, "")
+        return_str = parser.process_extra_vars([""], force_json=False)
+        self.assertEqual(return_str, "")
 
 
 class TestSplitter_Gen(unittest.TestCase):
@@ -121,21 +146,12 @@ class TestSplitter_Gen(unittest.TestCase):
     within the ansible project source.
     """
     SPLIT_DATA = (
-        (u'a',
-            [u'a'],
-            {u'_raw_params': u'a'}),
         (u'a=b',
             [u'a=b'],
             {u'a': u'b'}),
         (u'a="foo bar"',
             [u'a="foo bar"'],
             {u'a': u'foo bar'}),
-        (u'"foo bar baz"',
-            [u'"foo bar baz"'],
-            {u'_raw_params': '"foo bar baz"'}),
-        (u'foo bar baz',
-            [u'foo', u'bar', u'baz'],
-            {u'_raw_params': u'foo bar baz'}),
         (u'a=b c="foo bar"',
             [u'a=b', u'c="foo bar"'],
             {u'a': u'b', u'c': u'foo bar'}),
@@ -183,8 +199,6 @@ class TestSplitter_Gen(unittest.TestCase):
 
     CUSTOM_DATA = [
         ("test=23 site=example.com", {"test": 23, "site": "example.com"}),
-        ("2 site=example.com", {"_raw_params": '2', "site": "example.com"}),
-        ('a=b\na', {'a': 'b', '_raw_params': 'a'}),
         ('var: value', {"var": "value"}),
         # key=value
         ('test=23 key="white space"', {"test": 23, "key": "white space"}),
@@ -212,22 +226,27 @@ class TestSplitter_Gen(unittest.TestCase):
     def test_parse_list(self):
         """Run tests on the data from Ansible core project."""
         for data in self.SPLIT_DATA:
-            self.assertEqual(parser.string_to_dict(data[0]), data[2])
+            self.assertEqual(
+                parser.string_to_dict(data[0], allow_kv=True), data[2])
 
     def test_custom_parse_list(self):
         """Custom input-output scenario tests."""
         for data in self.CUSTOM_DATA:
-            self.assertEqual(parser.string_to_dict(data[0]), data[1])
+            self.assertEqual(
+                parser.string_to_dict(data[0], allow_kv=True), data[1])
 
     def test_combination_parse_list(self):
         """Custom input-output scenario tests for 2 sources into one."""
         for data in self.COMBINATION_DATA:
-            self.assertEqual(parser.load_extra_vars(data[0]), data[1])
+            self.assertEqual(
+                yaml.load(parser.process_extra_vars(data[0])),
+                data[1]
+            )
 
     def test_unicode_dump(self):
         """Test that data is dumped without unicode character marking."""
         for data in self.COMBINATION_DATA:
-            string_rep = parser.extra_vars_loader_wrapper(data[0])
+            string_rep = parser.process_extra_vars(data[0])
             self.assertEqual(yaml.load(string_rep), data[1])
             assert "python/unicode" not in string_rep
             assert "\\n" not in string_rep

@@ -5,6 +5,8 @@ Release History
 ------------------
 
 - Fixed bug affecting force-on-exists and fail_on_found options
+- Changed extra_vars behavior to be more compliant by re-parsing vars,
+  even when only one source exists
 
 2.3.0 (2015-10-20)
 ------------------
