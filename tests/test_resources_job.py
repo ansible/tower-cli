@@ -121,6 +121,15 @@ class LaunchTests(unittest.TestCase):
                 json.loads(t.requests[2].body)['job_tags'], 'a, b, c',
             )
 
+    def test_launch_w_tuple_extra_vars(self):
+        """Establish that if the click library gives a tuple, than the job
+        will run normally.
+        """
+        with client.test_mode as t:
+            standard_registration(t)
+            result = self.res.launch(1, extra_vars=())
+            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
+
     def test_basic_launch_monitor_option(self):
         """Establish that we are able to create a job that doesn't require
         any invocation-time input, and that monitor is called if requested.
