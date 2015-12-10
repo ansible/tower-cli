@@ -58,18 +58,19 @@ class Resource(models.Resource):
         """
         # Break out the options for the group vs its inventory_source
         group_fields = [f.name for f in self.fields]
-        inv_kwargs = {}
+        is_kwargs = {}
         for field in kwargs.copy():
             if field not in group_fields:
-                inv_kwargs[field] = kwargs.pop(field)
+                is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
-        if 'source' in inv_kwargs and inv_kwargs['source'] == 'manual':
-            inv_kwargs.pop('source')
+        if 'source' in is_kwargs and is_kwargs['source'] == 'manual':
+            is_kwargs.pop('source')
 
         # First, create the group.
         answer = super(Resource, self).create(
-            fail_on_found=False, force_on_exists=False, **kwargs)
+            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
+            **kwargs)
 
         # If the group already exists and we aren't supposed to make changes,
         # then we're done.
@@ -80,7 +81,7 @@ class Resource(models.Resource):
         # with the inventory source at all? If no credential or source
         # was specified, then we'd just be updating the inventory source
         # with an effective no-op.
-        if len(inv_kwargs) == 0:
+        if len(is_kwargs) == 0:
             return answer
 
         # Get the inventory source ID ("isid").
@@ -91,11 +92,11 @@ class Resource(models.Resource):
         # We now have our inventory source ID; modify it according to the
         # provided parameters.
         isrc = get_resource('inventory_source')
-        inv_answer = isrc.write(pk=isid, force_on_exists=True, **inv_kwargs)
+        is_answer = isrc.write(pk=isid, force_on_exists=True, **is_kwargs)
 
         # If either the inventory_source or the group objects were modified
         # then refelect this in the output to avoid confusing the user.
-        if inv_answer['changed']:
+        if is_answer['changed']:
             answer['changed'] = True
         return answer
 
@@ -120,22 +121,22 @@ class Resource(models.Resource):
         """
         # Break out the options for the group vs its inventory_source
         group_fields = [f.name for f in self.fields]
-        inv_kwargs = {}
+        is_kwargs = {}
         for field in kwargs.copy():
             if field not in group_fields:
-                inv_kwargs[field] = kwargs.pop(field)
+                is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
-        if 'source' in inv_kwargs and inv_kwargs['source'] == 'manual':
-            inv_kwargs['source'] = ''
+        if 'source' in is_kwargs and is_kwargs['source'] == 'manual':
+            is_kwargs['source'] = ''
 
         # First, modify the group.
         answer = super(Resource, self).modify(
-            pk=pk, create_on_missing=False, **kwargs)
+            pk=pk, create_on_missing=create_on_missing, **kwargs)
 
         # If the group already exists and we aren't supposed to make changes,
         # then we're done.
-        if len(inv_kwargs) == 0:
+        if len(is_kwargs) == 0:
             return answer
 
         # Get the inventory source ID ("isid").
@@ -149,11 +150,11 @@ class Resource(models.Resource):
         # Note: Any fields that were part of the group modification need
         # to be expunged from kwargs before making this call.
         isrc = get_resource('inventory_source')
-        inv_answer = isrc.write(pk=isid, force_on_exists=True, **inv_kwargs)
+        is_answer = isrc.write(pk=isid, force_on_exists=True, **is_kwargs)
 
         # If either the inventory_source or the group objects were modified
         # then refelect this in the output to avoid confusing the user.
-        if inv_answer['changed']:
+        if is_answer['changed']:
             answer['changed'] = True
         return answer
 

@@ -1,12 +1,13 @@
 Release History
 ===============
 
-2.3.1 (2015-11-24)
+2.3.1 (2015-12-10)
 ------------------
 
 - Fixed bug affecting force-on-exists and fail_on_found options
 - Changed extra_vars behavior to be more compliant by re-parsing vars,
   even when only one source exists
+- Fixed group modify bug, avoid sending unwanted fields in modify requests
 
 2.3.0 (2015-10-20)
 ------------------

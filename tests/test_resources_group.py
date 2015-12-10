@@ -144,6 +144,26 @@ class GroupTests(unittest.TestCase):
             self.assertEqual(len(t.requests), 4)
         self.assertTrue(answer['changed'])
 
+    def test_create_FOE_with_isource_modify(self):
+        """Establish that if we create a group, setting force_on_exists,
+        and both the group and inventory_source are unchanged, that
+        is correctly proceeds and echos that there was no change.
+        """
+        Foo_data = {'id': 1, 'name': 'Foo', 'inventory': 1,
+                    'related': {'inventory_source': '/inventory_sources/42/'}}
+        with client.test_mode as t:
+            t.register_json('/groups/?name=Foo', {
+                'count': 1, 'results': [Foo_data],
+                'next': None, 'previous': None,
+            }, method='GET')
+            t.register_json('/inventory_sources/42/', {
+                'id': 42, 'source': 'rax', 'credential': None,
+            }, method='GET')
+            answer = self.gr.create(name='Foo', inventory=1, source='rax',
+                                    force_on_exists=True)
+            self.assertEqual(len(t.requests), 2)
+        self.assertFalse(answer['changed'])
+
     def test_modify_no_change(self):
         """Establish that if we attempt to modify a group and the group itself
         exists, that we do not attempt to hit the inventory source at all.
@@ -156,26 +176,33 @@ class GroupTests(unittest.TestCase):
             super_modify.assert_called_once_with(
                 pk=42, create_on_missing=False, description='rax')
 
-    def test_modify_with_change(self):
-        """Establish that if we attempt to modify a group, that the inventory
-        source module is sent the modification command.
+    def test_modify_with_source_attr_change(self):
+        """Establish that if we attempt to modify a field in a group's
+        inventory_source, that the inventory source module is sent the
+        modification command.
         """
         isrc = tower_cli.get_resource('inventory_source')
         with mock.patch.object(type(isrc), 'write') as isrc_modify:
+            isrc_modify.return_value = {'changed': True}
             with client.test_mode as t:
                 t.register_json('/groups/1/', {
                     'id': 1, 'name': 'foo', 'inventory': 1,
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='GET')
-                self.gr.modify(1, name='foo', source='rax')
+                r = self.gr.modify(1, name='foo', source='rax')
                 self.assertEqual(len(t.requests), 1)
+                # make sure that the module says it was changed
+                self.assertEqual(r['changed'], True)
             isrc_modify.assert_called_once_with(
                 pk=42, source='rax', force_on_exists=True,
             )
 
-        # Test than when the group description is changed, we hit the
-        # endpoint for the group as opposed to the inventory_source.
+    def test_modify_with_group_attr_change(self):
+        """ Test than when the group description is changed, we hit the
+        endpoint for the group and not the inventory_source. """
+        isrc = tower_cli.get_resource('inventory_source')
         with mock.patch.object(type(isrc), 'write') as isrc_modify:
+            isrc_modify.return_value = {'changed': False}
             with client.test_mode as t:
                 t.register_json('/groups/1/', {
                     'id': 1, 'name': 'foo', 'inventory': 1,
@@ -185,8 +212,10 @@ class GroupTests(unittest.TestCase):
                     'id': 1, 'changed': True,
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='PATCH')
-                r = self.gr.modify(1, name='foo', description='rax servers')
+                r = self.gr.modify(
+                    1, name='foo', description='rax servers', source='rax')
                 self.assertEqual(len(t.requests), 2)
+                # make sure that the module says it was changed
                 self.assertEqual(r['changed'], True)
 
     def test_modify_with_change_manual(self):
