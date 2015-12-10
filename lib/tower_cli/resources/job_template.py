@@ -76,7 +76,7 @@ class Resource(models.Resource):
                 extra_vars, force_json=False
             )
         # Provide a default value for job_type, but only in creation of JT
-        if 'job_type' not in kwargs:
+        if not kwargs.get('job_type', False):
             kwargs['job_type'] = 'run'
         return super(Resource, self).create(
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,

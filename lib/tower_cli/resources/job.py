@@ -93,7 +93,7 @@ class Resource(models.ExeResource):
 
         # Add the runtime extra_vars to this list
         if extra_vars:
-            extra_vars_list += extra_vars
+            extra_vars_list += list(extra_vars)  # accept tuples
 
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
@@ -109,7 +109,12 @@ class Resource(models.ExeResource):
                 initial,
             ))
             extra_vars = click.edit(initial) or ''
-            extra_vars_list = [extra_vars]
+            if extra_vars != initial:
+                extra_vars_list = [extra_vars]
+
+        # Data is starting out with JT variables, and we only want to
+        # include extra_vars that come from the algorithm here.
+        data.pop('extra_vars', None)
 
         # Dump extra_vars into JSON string for launching job
         if len(extra_vars_list) > 0:
