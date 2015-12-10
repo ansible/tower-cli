@@ -31,7 +31,7 @@ class Resource(models.MonitorableResource):
     source = models.Field(
         default='manual',
         help_text='The type of inventory source in use.',
-        type=click.Choice(['manual', 'ec2', 'rax', 'vmware',
+        type=click.Choice(['', 'ec2', 'rax', 'vmware',
                            'gce', 'azure', 'openstack']),
     )
     source_regions = models.Field(required=False, display=False)

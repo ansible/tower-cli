@@ -702,21 +702,6 @@ class ResourceMethods(BaseResource):
         # Done; return the response
         return response
 
-    def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
-        """The code for the create method in a non-command implementation
-        here, so that the child classes can over-ride it as a command,
-        depending on circumstances."""
-        return self.write(create_on_missing=True, fail_on_found=fail_on_found,
-                          force_on_exists=force_on_exists, **kwargs)
-
-    def modify(self, pk=None, create_on_missing=False, **kwargs):
-        """The code for the modify method in a non-command implementation
-        here, so that the child classes can over-ride it as a command,
-        depending on circumstances."""
-        force_on_exists = kwargs.pop('force_on_exists', True)
-        return self.write(pk, create_on_missing=create_on_missing,
-                          force_on_exists=force_on_exists, **kwargs)
-
     def _assoc(self, url_fragment, me, other):
         """Associate the `other` record with the `me` record."""
 
@@ -993,7 +978,8 @@ class Resource(ResourceMethods):
         if a match is found, then no-op (unless `force_on_exists` is set) but
         do not fail (unless `fail_on_found` is set).
         """
-        return super(Resource, self).create(
+        return super(Resource, self).write(
+            create_on_missing=True,
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs
         )
@@ -1014,6 +1000,5 @@ class Resource(ResourceMethods):
 
         To modify unique fields, you must use the primary key for the lookup.
         """
-        force_on_exists = kwargs.pop('force_on_exists', True)
         return self.write(pk, create_on_missing=create_on_missing,
-                          force_on_exists=force_on_exists, **kwargs)
+                          force_on_exists=True, **kwargs)

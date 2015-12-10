@@ -69,7 +69,8 @@ class Resource(models.Resource, models.MonitorableResource):
         to monitor if the flag is set.
         """
         # First, run the create method, ignoring the organization given
-        answer = super(Resource, self).create(
+        answer = super(Resource, self).write(
+            create_on_missing=True,
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs
         )
@@ -112,8 +113,9 @@ class Resource(models.Resource, models.MonitorableResource):
         # Associated with issue #52, the organization can't be modified
         #    with the 'modify' command. This would create confusion about
         #    whether its flag is an identifier versus a field to modify.
-        return super(Resource, self).modify(
-            pk=pk, create_on_missing=create_on_missing, **kwargs
+        return super(Resource, self).write(
+            pk, create_on_missing=create_on_missing,
+            force_on_exists=True, **kwargs
         )
 
     @resources.command(use_fields_as_options=('name', 'organization'))

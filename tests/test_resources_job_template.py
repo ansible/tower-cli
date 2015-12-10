@@ -20,6 +20,7 @@ from tests.compat import unittest, mock
 from tower_cli.conf import settings
 
 import click
+import json
 
 
 class TemplateTests(unittest.TestCase):
@@ -43,6 +44,20 @@ class TemplateTests(unittest.TestCase):
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
+
+        # Check that default job_type will get added when needed
+        with client.test_mode as t:
+            endpoint = '/job_templates/'
+            t.register_json(endpoint, {'count': 0, 'results': [],
+                            'next': None, 'previous': None},
+                            method='GET')
+            t.register_json(endpoint, {'changed': True, 'id': 42},
+                            method='POST')
+            self.res.create(name='bar', inventory=1, project=1,
+                            playbook='foobar.yml', credential=1)
+            req_body = json.loads(t.requests[1].body)
+            self.assertIn('job_type', req_body)
+            self.assertEqual(req_body['job_type'], 'run')
 
     def test_job_template_create_with_echo(self):
         """Establish that a job template can be created
