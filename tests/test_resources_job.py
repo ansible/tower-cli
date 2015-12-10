@@ -61,6 +61,26 @@ def standard_registration(t):
     t.register_json('/job_templates/1/launch/', {'job': 42}, method='POST')
 
 
+def jt_vars_registration(t, extra_vars):
+    """ Endpoints that are needed to get information from job template.
+    This particular combination also entails
+    1) version of Tower - 2.2.0
+    2) sucessful job launch, id=42
+    3) prompts user for variables on launch """
+    t.register_json('/job_templates/1/', {
+        'ask_variables_on_launch': True,
+        'extra_vars': extra_vars,
+        'id': 1,
+        'name': 'frobnicate',
+        'related': {'launch': '/job_templates/1/launch/'},
+    })
+    register_get(t)
+    t.register_json('/config/', {'version': '2.2.0'}, method='GET')
+    t.register_json('/job_templates/1/launch/', {}, method='GET')
+    t.register_json('/job_templates/1/launch/', {'job': 42},
+                    method='POST')
+
+
 class LaunchTests(unittest.TestCase):
     """A set of tests for ensuring that the job resource's launch command
     works in the way we expect.
@@ -117,18 +137,7 @@ class LaunchTests(unittest.TestCase):
         """
         with client.test_mode as t:
             # test with JSON job template extra_vars
-            t.register_json('/job_templates/1/', {
-                'ask_variables_on_launch': True,
-                'extra_vars': '{"spam": "eggs"}',
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            register_get(t)
-            t.register_json('/config/', {'version': '2.2.0'}, method='GET')
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
+            jt_vars_registration(t, '{"spam": "eggs"}')
             with mock.patch.object(click, 'edit') as edit:
                 edit.return_value = '# Nothing.\nfoo: bar'
                 result = self.res.launch(1, no_input=False)
@@ -142,42 +151,47 @@ class LaunchTests(unittest.TestCase):
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
+    def test_extra_vars_at_runtime_YAML_JT(self):
+        """Establish that if we should be asking for extra variables at
+        runtime, that we do.
+        """
+        with client.test_mode as t:
             # test with YAML and comments
-            t.register_json('/job_templates/1/', {
-                'ask_variables_on_launch': True,
-                'extra_vars': 'spam: eggs\n# comment',
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
+            jt_vars_registration(t, 'spam: eggs\n# comment')
             with mock.patch.object(click, 'edit') as edit:
                 edit.return_value = '# Nothing.\nfoo: bar'
-                result = self.res.launch(
-                    1, no_input=False
-                )
+                self.res.launch(1, no_input=False)
                 self.assertIn('# comment', edit.mock_calls[0][1][0])
                 self.assertDictContainsSubset(
                     {"spam": "eggs"},
                     yaml.load(edit.mock_calls[0][1][0])
                 )
 
+    def test_extra_vars_at_runtime_no_user_data(self):
+        """User launches a job that prompts for variables. User closes
+        editor without adding any text.
+        Establish that we launch the job as-is.
+        """
+        with client.test_mode as t:
+            # No job template variables
+            jt_vars_registration(t, '')
+            initial = '\n'.join((
+                '# Specify extra variables (if any) here as YAML.',
+                '# Lines beginning with "#" denote comments.',
+                '',
+            ))
+            with mock.patch.object(click, 'edit') as edit:
+                edit.return_value = initial
+                self.res.launch(1, no_input=False)
+                self.assertEqual(t.requests[2].method, 'POST')
+                self.assertEqual(t.requests[2].body, '{}')
+
     def test_job_template_variables(self):
         """Establish that job template extra_vars are combined with local
         extra vars, but only for older versions
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'ask_variables_on_launch': True,
-                'extra_vars': 'spam: eggs',
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            register_get(t)
-            t.register_json('/config/', {'version': '2.2.0'}, method='GET')
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
+            jt_vars_registration(t, 'spam: eggs')
             result = self.res.launch(1, extra_vars=['foo: bar'])
             response_json = yaml.load(t.requests[3].body)
             ev_json = yaml.load(response_json['extra_vars'])
@@ -185,21 +199,12 @@ class LaunchTests(unittest.TestCase):
             self.assertTrue('spam' in ev_json)
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
-        # check that in recent versions, it does not include job template
-        # variables along with the rest
+    def test_job_template_variables_post_24(self):
+        """ Check that in recent versions, it does not include job template
+         variables along with the rest """
         with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'ask_variables_on_launch': True,
-                'extra_vars': 'spam: eggs',
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {'launch': '/job_templates/1/launch/'},
-            })
-            register_get(t)
+            jt_vars_registration(t, 'spam: eggs')
             t.register_json('/config/', {'version': '2.4'}, method='GET')
-            t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
-                            method='POST')
             result = self.res.launch(1, extra_vars=['foo: bar'])
             response_json = yaml.load(t.requests[3].body)
             ev_json = yaml.load(response_json['extra_vars'])
