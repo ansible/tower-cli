@@ -64,7 +64,7 @@ class Resource(models.Resource):
                 is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
-        if 'source' in is_kwargs and is_kwargs['source'] == 'manual':
+        if is_kwargs.get('source', None) == 'manual':
             is_kwargs.pop('source')
 
         # First, create the group.
@@ -127,7 +127,7 @@ class Resource(models.Resource):
                 is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
-        if 'source' in is_kwargs and is_kwargs['source'] == 'manual':
+        if is_kwargs.get('source', None) == 'manual':
             is_kwargs['source'] = ''
 
         # First, modify the group.
