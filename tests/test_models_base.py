@@ -175,7 +175,7 @@ class SubcommandTests(unittest.TestCase):
         # Ensure that this command has an option corresponding to the
         # "name" unique field.
         self.assertEqual(list_command.params[0].name, 'name')
-        self.assertEqual(list_command.params[0].opts, ['--name'])
+        self.assertIn('--name', list_command.params[0].opts)
 
     def test_get_command_error(self):
         """Establish that if `get_command` is called against a command that

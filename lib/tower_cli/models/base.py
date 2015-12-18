@@ -225,6 +225,16 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         if field.key:
                             args.insert(0, field.key)
 
+                        # short name aliases for common flags
+                        short_fields = {
+                            'name': 'n',
+                            'description': 'd',
+                            'inventory': 'i',
+                            'extra_vars': 'e'
+                        }
+                        if field.name in short_fields:
+                            args.append('-'+short_fields[field.name])
+
                         # Apply the option to the method.
                         click.option(
                             *args,
