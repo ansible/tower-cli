@@ -53,7 +53,10 @@ class Resource(models.Resource):
 
     def get_base_url(self, user, team):
         """Return a string that specifies the endpoint to use"""
-        if not user and not team:
+        if 'user' in self.endpoint or 'team' in self.endpoint:
+            # This function has already been ran, so take no action
+            return self.endpoint
+        elif not user and not team:
             raise exc.TowerCLIError('Specify either a user or a team.')
         elif user:
             return '/users/%d/permissions/' % user
@@ -64,7 +67,7 @@ class Resource(models.Resource):
         """Return the pk with a search method specific to permissions."""
         if not pk:
             self.endpoint = self.get_base_url(user, team)
-            debug.log('Checking for an existing record.', header='details')
+            debug.log('Checking for existing permission.', header='details')
             existing_data = self._lookup(
                 fail_on_found=False, fail_on_missing=True,
                 include_debug_header=False, **kwargs)
