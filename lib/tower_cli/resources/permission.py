@@ -51,22 +51,19 @@ class Resource(models.Resource):
         type=bool, required=False, display=False,
         help_text='If "true", includes permission to run ad hoc commands')
 
-    def get_base_url(self, user, team):
-        """Return a string that specifies the endpoint to use"""
-        if 'user' in self.endpoint or 'team' in self.endpoint:
-            # This function has already been ran, so take no action
-            return self.endpoint
-        elif not user and not team:
+    def set_base_url(self, user, team):
+        """Assure that endpoint is nested under a user or team"""
+        if user:
+            self.endpoint = '/users/%d/permissions/' % user
+        elif team:
+            self.endpoint = '/teams/%d/permissions/' % team
+        elif 'user' not in self.endpoint and 'team' not in self.endpoint:
             raise exc.TowerCLIError('Specify either a user or a team.')
-        elif user:
-            return '/users/%d/permissions/' % user
-        else:
-            return '/teams/%d/permissions/' % team
 
     def get_permission_pk(self, pk, user, team, **kwargs):
         """Return the pk with a search method specific to permissions."""
         if not pk:
-            self.endpoint = self.get_base_url(user, team)
+            self.set_base_url(user, team)
             debug.log('Checking for existing permission.', header='details')
             existing_data = self._lookup(
                 fail_on_found=False, fail_on_missing=True,
@@ -79,7 +76,7 @@ class Resource(models.Resource):
         """Create a permission. Provide one of each:
               Permission granted to: user or team.
               Permission to: inventory or project."""
-        self.endpoint = self.get_base_url(user, team)
+        self.set_base_url(user, team)
         # Apply default specific to creation
         if not kwargs.get('permission_type', None):
             kwargs['permission_type'] = 'read'
@@ -121,7 +118,7 @@ class Resource(models.Resource):
         Provide pk for permission. Alternatively, provide name and the
         parent user/team.
         """
-        self.endpoint = self.get_base_url(user, team)
+        self.set_base_url(user, team)
         return super(Resource, self).get(pk=pk, **kwargs)
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
@@ -134,5 +131,5 @@ class Resource(models.Resource):
         If no filters are provided, return all results. But you still must
         give a user or team because a global listing is not allowed.
         """
-        self.endpoint = self.get_base_url(user, team)
+        self.set_base_url(user, team)
         return super(Resource, self).list(all_pages=all_pages, **kwargs)
