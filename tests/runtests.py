@@ -16,12 +16,11 @@
 
 import os
 import sys
+from tests.compat import unittest
 
 # Ensure that the tests directory is part of our Python path.
 APP_ROOT = os.path.realpath(os.path.dirname(__file__) + '/../')
 sys.path.append(APP_ROOT)
-
-from tests.compat import unittest
 
 
 # Find tests.
