@@ -1,5 +1,5 @@
-# Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2016, Red Hat
+# Alan Rominger <arominge@redhat.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
