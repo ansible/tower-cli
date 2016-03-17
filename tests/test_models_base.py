@@ -513,6 +513,22 @@ class ResourceTests(unittest.TestCase):
             self.assertEqual(len(t.requests), 3)
             self.assertEqual(len(result['results']), 3)
 
+    def test_list_with_page_1_special_case(self):
+        """Establish that the list function works even if the server gives
+        /foo/ as the relative link for page 1.
+        """
+        with client.test_mode as t:
+            # Register the 2nd page in order to test this.
+            t.register_json('/foo/?page=2', {'count': 2, 'results': [
+                {'id': 2, 'name': 'spam', 'description': 'eggs'},
+            ], 'next': None, 'previous': '/foo/'})
+
+            # Get the list
+            result = self.res.list(page=2)
+
+            # Check that the function knows that /foo/ is page 1
+            self.assertEqual(result['previous'], 1)
+
     def test_list_custom_kwargs(self):
         """Establish that if we pass custom keyword arguments to list, that
         they are included in the final request.

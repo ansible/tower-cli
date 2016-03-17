@@ -689,6 +689,9 @@ class ResourceMethods(BaseResource):
             if not response[key]:
                 continue
             match = re.search(r'page=(?P<num>[\d]+)', response[key])
+            if match is None and key == 'previous':
+                response[key] = 1
+                continue
             response[key] = int(match.groupdict()['num'])
 
         # If we were asked for all pages, keep retrieving pages until we
