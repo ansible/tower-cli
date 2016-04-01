@@ -52,12 +52,25 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refresh inventory '
                   'data from its source each time a job is run.')
+    @click.option('--parent-group', type=types.Related('group'),
+                  help='Parent group to nest this one inside of.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
         """
-        # Break out the options for the group vs its inventory_source
         group_fields = [f.name for f in self.fields]
+        if kwargs.get('parent_group', None):
+            parent_id = kwargs.pop('parent_group')
+            group_res = get_resource('group')
+            parent_data = group_res.get(parent_id)
+            kwargs['inventory'] = parent_data['inventory']
+            self.endpoint = '/groups/' + str(parent_id) + '/children/'
+            group_fields.append('group')
+        elif 'inventory' not in kwargs:
+            raise exc.UsageError('To create a group, you must provide a '
+                                 'parent inventory or parent group.')
+
+        # Break out the options for the group vs its inventory_source
         is_kwargs = {}
         for field in kwargs.copy():
             if field not in group_fields:

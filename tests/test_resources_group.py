@@ -79,6 +79,22 @@ class GroupTests(unittest.TestCase):
                 name='Foo', inventory=1)
             self.assertFalse(answer['changed'])
 
+    def test_create_as_child(self):
+        """Establish that if we start the creation process of a child group
+        """
+        with mock.patch.object(models.Resource, 'create') as super_create:
+            super_create.return_value = {'changed': False, 'id': 1}
+            with mock.patch.object(models.Resource, 'get') as super_get:
+                super_get.return_value = {'id': 2, 'inventory': 1}
+                with client.test_mode as t:
+                    answer = self.gr.create(name='Foo', parent_group=2)
+                    self.assertEqual(len(t.requests), 0)
+                super_get.assert_called_once_with(2)
+            super_create.assert_called_once_with(
+                fail_on_found=False, force_on_exists=False,
+                name='Foo', inventory=1)
+            self.assertFalse(answer['changed'])
+
     def test_create_change_but_no_isource_request_needed(self):
         """Establish that if we make a new group but don't have any interesting
         inventory source arguments, that the group creation stands with no
