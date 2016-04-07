@@ -75,20 +75,27 @@ class PermissionTests(unittest.TestCase):
             existing_registrations(t)
             t.register_json('/permissions/4/', {}, method='DELETE')
             result = self.res.delete(name='bar', user=3)
+            self.assertTrue(result['changed'])
 
     def test_modify_permission(self):
         with client.test_mode as t:
             existing_registrations(t)
-            t.register_json('/permissions/4/', {'id': 4, 'name': 'bar'}, method='PATCH')
-            result = self.res.modify(name='bar', user=3, permission_type='admin')
+            t.register_json('/permissions/4/', {'id': 4, 'name': 'bar'},
+                            method='PATCH')
+            result = self.res.modify(name='bar', user=3,
+                                     permission_type='admin')
+            self.assertTrue(result['changed'])
 
     def test_modify_permission_by_pk(self):
         with client.test_mode as t:
             existing_registrations(t)
-            t.register_json('/permissions/4/', {'id': 4, 'name': 'bar'}, method='PATCH')
+            t.register_json('/permissions/4/', {'id': 4, 'name': 'bar'},
+                            method='PATCH')
             result = self.res.modify(4, permission_type='admin')
+            self.assertTrue(result['changed'])
 
     def test_list_permissions(self):
         with client.test_mode as t:
             existing_registrations(t)
             result = self.res.list(user=3)
+            self.assertEqual(result['count'], 1)
