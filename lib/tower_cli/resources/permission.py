@@ -23,6 +23,7 @@ class Resource(models.Resource):
     cli_help = 'Manage permissions within Ansible Tower.'
     endpoint = '/permissions/'
     identity = ('name', )
+    no_lookup_flag = False
 
     # Permissions must be created for either a user or a team
     name = models.Field(unique=True, required=False, display=True)
@@ -53,12 +54,15 @@ class Resource(models.Resource):
 
     def set_base_url(self, user, team):
         """Assure that endpoint is nested under a user or team"""
+        if self.no_lookup_flag:
+            return
         if user:
             self.endpoint = '/users/%d/permissions/' % user
         elif team:
             self.endpoint = '/teams/%d/permissions/' % team
-        elif 'user' not in self.endpoint and 'team' not in self.endpoint:
+        else:
             raise exc.TowerCLIError('Specify either a user or a team.')
+        self.no_lookup_flag = True
 
     def get_permission_pk(self, pk, user, team, **kwargs):
         """Return the pk with a search method specific to permissions."""
@@ -70,8 +74,10 @@ class Resource(models.Resource):
                 include_debug_header=False, **kwargs)
             return existing_data['id']
         else:
+            self.no_lookup_flag = True
             return pk
 
+    @resources.command
     def create(self, user=None, team=None, **kwargs):
         """Create a permission. Provide one of each:
               Permission granted to: user or team.
@@ -82,6 +88,7 @@ class Resource(models.Resource):
             kwargs['permission_type'] = 'read'
         return super(Resource, self).create(**kwargs)
 
+    @resources.command
     def modify(self, pk=None, user=None, team=None, **kwargs):
         """Modify an already existing permission.
 
@@ -96,6 +103,7 @@ class Resource(models.Resource):
         self.endpoint = '/permissions/'
         return super(Resource, self).modify(pk=pk, **kwargs)
 
+    @resources.command
     def delete(self, pk=None, user=None, team=None, **kwargs):
         """Remove the given permission.
 
