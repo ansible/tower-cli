@@ -34,6 +34,15 @@ class Resource(models.Resource):
     variables = models.Field(type=types.File('r'), required=False,
                              display=False)
 
+    def set_child_endpoint(self, parent, inventory=None):
+        group_res = get_resource('group')
+        if isinstance(parent, int) or parent.isdigit():
+            parent_data = group_res.get(int(parent))
+        else:
+            parent_data = group_res.get(name=parent, inventory=inventory)
+        self.endpoint = '/groups/' + str(parent_data['id']) + '/children/'
+        return parent_data
+
     # Basic options for the source
     @click.option('--credential', type=types.Related('credential'),
                   required=False,
@@ -52,7 +61,7 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refresh inventory '
                   'data from its source each time a job is run.')
-    @click.option('--parent-group', type=types.Related('group'),
+    @click.option('--parent-group',
                   help='Parent group to nest this one inside of.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
@@ -60,11 +69,10 @@ class Resource(models.Resource):
         """
         group_fields = [f.name for f in self.fields]
         if kwargs.get('parent_group', None):
-            parent_id = kwargs.pop('parent_group')
-            group_res = get_resource('group')
-            parent_data = group_res.get(parent_id)
+            parent_data = self.set_child_endpoint(
+                parent=kwargs['parent_group'],
+                inventory=kwargs.get('inventory', None))
             kwargs['inventory'] = parent_data['inventory']
-            self.endpoint = '/groups/' + str(parent_id) + '/children/'
             group_fields.append('group')
         elif 'inventory' not in kwargs:
             raise exc.UsageError('To create a group, you must provide a '
@@ -175,8 +183,17 @@ class Resource(models.Resource):
     @click.option('--root', is_flag=True, default=False,
                   help='Show only root groups (groups with no parent groups) '
                        'within the given inventory.')
+    @click.option('--parent-group',
+                  help='Parent group to nest this one inside of.')
     def list(self, root=False, **kwargs):
         """Return a list of groups."""
+
+        # Option to list children of a parent group
+        if kwargs.get('parent_group', None):
+            self.set_child_endpoint(
+                parent=kwargs['parent_group'],
+                inventory=kwargs.get('inventory', None)
+            )
 
         # Sanity check: If we got `--root` and no inventory, that's an
         # error.

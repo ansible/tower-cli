@@ -266,3 +266,28 @@ class GroupTests(unittest.TestCase):
                 isrc_sync.assert_called_once_with(42, monitor=False,
                                                   timeout=None)
                 self.assertEqual(len(t.requests), 1)
+
+    def test_set_child_endpoint_id(self):
+        """Test that we can change the endpoint to list children of another
+        group - given the id of parent.
+        """
+        with client.test_mode as t:
+            t.register_json('/groups/1/', {
+                'id': 1, 'inventory': 1, 'name': 'Foo',
+            }, method='GET')
+            self.gr.set_child_endpoint(1)
+            self.assertEqual(self.gr.endpoint, '/groups/1/children/')
+
+    def test_set_child_endpoint_name(self):
+        """Test that we can change the endpoint to list children of another
+        group - given the name of parent.
+        """
+        with client.test_mode as t:
+            t.register_json('/groups/?name=Foo', {
+                'count': 1, 'results': [{
+                    'id': 1, 'inventory': 1, 'name': 'Foo',
+                }],
+                'next': None, 'previous': None,
+            }, method='GET')
+            self.gr.set_child_endpoint("Foo")
+            self.assertEqual(self.gr.endpoint, '/groups/1/children/')
