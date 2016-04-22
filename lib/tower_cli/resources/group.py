@@ -226,6 +226,20 @@ class Resource(models.Resource):
         isid = self._get_inventory_source_id(group)
         return isrc.update(isid, monitor=monitor, timeout=timeout, **kwargs)
 
+    @resources.command(use_fields_as_options=False)
+    @click.option('--group', type=types.Related('group'))
+    @click.option('--parent', type=types.Related('group'))
+    def associate(self, group, parent):
+        """Associate this group with the specified group."""
+        return self._assoc('children', parent, group)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--group', type=types.Related('group'))
+    @click.option('--parent', type=types.Related('group'))
+    def disassociate(self, group, parent):
+        """Disassociate this group from the specified group."""
+        return self._disassoc('children', parent, group)
+
     def _get_inventory_source_id(self, group):
         """Return the inventory source ID given a group dictionary returned
         from the Tower API.
