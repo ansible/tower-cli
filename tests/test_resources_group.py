@@ -87,7 +87,7 @@ class GroupTests(unittest.TestCase):
             with mock.patch.object(models.Resource, 'get') as super_get:
                 super_get.return_value = {'id': 2, 'inventory': 1}
                 with client.test_mode as t:
-                    answer = self.gr.create(name='Foo', parent_group=2)
+                    answer = self.gr.create(name='Foo', parent=2)
                     self.assertEqual(len(t.requests), 0)
                 super_get.assert_called_once_with(2)
             super_create.assert_called_once_with(
@@ -291,3 +291,41 @@ class GroupTests(unittest.TestCase):
             }, method='GET')
             self.gr.set_child_endpoint("Foo")
             self.assertEqual(self.gr.endpoint, '/groups/1/children/')
+
+    def test_create_no_inventory_error(self):
+        """Establish that error is thrown when no group/inventory given."""
+        with self.assertRaises(exc.UsageError):
+            self.gr.create(1)
+
+    def test_list_under_parent(self):
+        """Establish that listing with a parent specified works."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ):
+                self.gr.list(parent="foo_group")
+                mock_list.assert_called_once_with()
+
+    def test_associate(self):
+        """Establish that associate commands work."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods._assoc') as mock_assoc:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ) as mock_lookup:
+                mock_lookup.return_value = {'id': 1}
+                self.gr.associate(group=1, parent=2)
+                mock_assoc.assert_called_once_with('children', 1, 1)
+
+    def test_disassociate(self):
+        """Establish that associate commands work."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods._disassoc'
+                ) as mock_assoc:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ) as mock_lookup:
+                mock_lookup.return_value = {'id': 1}
+                self.gr.disassociate(group=1, parent=2)
+                mock_assoc.assert_called_once_with('children', 1, 1)

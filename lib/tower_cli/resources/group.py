@@ -34,12 +34,15 @@ class Resource(models.Resource):
     variables = models.Field(type=types.File('r'), required=False,
                              display=False)
 
-    def set_child_endpoint(self, parent, inventory=None):
+    def lookup_with_inventory(self, group, inventory=None):
         group_res = get_resource('group')
-        if isinstance(parent, int) or parent.isdigit():
-            parent_data = group_res.get(int(parent))
+        if isinstance(group, int) or group.isdigit():
+            return group_res.get(int(group))
         else:
-            parent_data = group_res.get(name=parent, inventory=inventory)
+            return group_res.get(name=group, inventory=inventory)
+
+    def set_child_endpoint(self, parent, inventory=None):
+        parent_data = self.lookup_with_inventory(parent, inventory)
         self.endpoint = '/groups/' + str(parent_data['id']) + '/children/'
         return parent_data
 
@@ -61,16 +64,16 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refresh inventory '
                   'data from its source each time a job is run.')
-    @click.option('--parent-group',
+    @click.option('--parent',
                   help='Parent group to nest this one inside of.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
         """
         group_fields = [f.name for f in self.fields]
-        if kwargs.get('parent_group', None):
+        if kwargs.get('parent', None):
             parent_data = self.set_child_endpoint(
-                parent=kwargs['parent_group'],
+                parent=kwargs['parent'],
                 inventory=kwargs.get('inventory', None))
             kwargs['inventory'] = parent_data['inventory']
             group_fields.append('group')
@@ -183,17 +186,18 @@ class Resource(models.Resource):
     @click.option('--root', is_flag=True, default=False,
                   help='Show only root groups (groups with no parent groups) '
                        'within the given inventory.')
-    @click.option('--parent-group',
+    @click.option('--parent',
                   help='Parent group to nest this one inside of.')
     def list(self, root=False, **kwargs):
         """Return a list of groups."""
 
         # Option to list children of a parent group
-        if kwargs.get('parent_group', None):
+        if kwargs.get('parent', None):
             self.set_child_endpoint(
-                parent=kwargs['parent_group'],
+                parent=kwargs['parent'],
                 inventory=kwargs.get('inventory', None)
             )
+            kwargs.pop('parent')
 
         # Sanity check: If we got `--root` and no inventory, that's an
         # error.
@@ -227,18 +231,28 @@ class Resource(models.Resource):
         return isrc.update(isid, monitor=monitor, timeout=timeout, **kwargs)
 
     @resources.command(use_fields_as_options=False)
-    @click.option('--group', type=types.Related('group'))
-    @click.option('--parent', type=types.Related('group'))
-    def associate(self, group, parent):
+    @click.option('--group', help='The group to move.')
+    @click.option('--parent', help='Destination group to move into.')
+    @click.option('--inventory', type=types.Related('inventory'))
+    def associate(self, group, parent, **kwargs):
         """Associate this group with the specified group."""
-        return self._assoc('children', parent, group)
+        parent_id = self.lookup_with_inventory(
+            parent, kwargs.get('inventory', None))['id']
+        group_id = self.lookup_with_inventory(
+            group, kwargs.get('inventory', None))['id']
+        return self._assoc('children', parent_id, group_id)
 
     @resources.command(use_fields_as_options=False)
-    @click.option('--group', type=types.Related('group'))
-    @click.option('--parent', type=types.Related('group'))
-    def disassociate(self, group, parent):
+    @click.option('--group', help='The group to move.')
+    @click.option('--parent', help='Destination group to move into.')
+    @click.option('--inventory', type=types.Related('inventory'))
+    def disassociate(self, group, parent, **kwargs):
         """Disassociate this group from the specified group."""
-        return self._disassoc('children', parent, group)
+        parent_id = self.lookup_with_inventory(
+            parent, kwargs.get('inventory', None))['id']
+        group_id = self.lookup_with_inventory(
+            group, kwargs.get('inventory', None))['id']
+        return self._disassoc('children', parent_id, group_id)
 
     def _get_inventory_source_id(self, group):
         """Return the inventory source ID given a group dictionary returned
