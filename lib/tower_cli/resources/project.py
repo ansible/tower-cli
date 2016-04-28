@@ -68,6 +68,17 @@ class Resource(models.Resource, models.MonitorableResource):
         This would be a shared class with user, but it needs the ability
         to monitor if the flag is set.
         """
+
+        post_associate = False
+        if organization:
+            # Processing the organization flag depends on version
+            debug.log('Checking Organization Relationship.', header='details')
+            r = client.options('/projects/')
+            if 'organization' in r.json()['actions']['POST']:
+                kwargs['organization'] = organization
+            else:
+                post_associate = True
+
         # First, run the create method, ignoring the organization given
         answer = super(Resource, self).write(
             create_on_missing=True,
@@ -77,7 +88,7 @@ class Resource(models.Resource, models.MonitorableResource):
         project_id = answer['id']
 
         # If an organization is given, associate it here
-        if organization:
+        if post_associate:
 
             # Get the organization from Tower, will lookup name if needed
             org_resource = get_resource('organization')

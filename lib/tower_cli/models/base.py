@@ -464,6 +464,11 @@ class ResourceMethods(BaseResource):
         # Remove default values (anything where the value is None).
         self._pop_none(kwargs)
 
+        # Remove fields that are specifically excluded from lookup
+        for field in self.fields:
+            if field.no_lookup and field.name in kwargs:
+                kwargs.pop(field.name)
+
         # If queries were provided, process them.
         for query in queries:
             if query[0] in kwargs:

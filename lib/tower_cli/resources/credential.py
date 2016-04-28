@@ -16,13 +16,14 @@
 import click
 
 from tower_cli import models
-from tower_cli.utils import types
+from tower_cli.utils import types, debug
+from tower_cli.api import client
 
 
 class Resource(models.Resource):
     cli_help = 'Manage credentials within Ansible Tower.'
     endpoint = '/credentials/'
-    identity = ('user', 'team', 'kind', 'name')
+    identity = ('username', 'user', 'team', 'kind', 'name')
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -34,8 +35,13 @@ class Resource(models.Resource):
         required=False,
     )
     team = models.Field(
-        display=True,
+        display=False,
         type=types.Related('team'),
+        required=False,
+    )
+    organization = models.Field(
+        display=False,
+        type=types.Related('organization'),
         required=False,
     )
 
@@ -84,6 +90,7 @@ class Resource(models.Resource):
 
     # Method with which to esclate
     become_method = models.Field(
+        display=False,
         help_text='Privledge escalation method. ',
         type=types.MappedChoice([
             ('', 'None'),
@@ -99,3 +106,14 @@ class Resource(models.Resource):
     become_username = models.Field(required=False, display=False)
     become_password = models.Field(password=True, required=False)
     vault_password = models.Field(password=True, required=False)
+
+    def create(self, **kwargs):
+        if (kwargs.get('user', False) or kwargs.get('team', False) or
+                kwargs.get('organization', False)):
+            debug.log('Checking Project API Details.', header='details')
+            r = client.options('/credentials/')
+            if 'organization' in r.json()['actions']['POST']:
+                for i in range(len(self.fields)):
+                    if self.fields[i].name in ('user', 'team', 'credential'):
+                        self.fields[i].no_lookup = True
+        return super(Resource, self).create(**kwargs)
