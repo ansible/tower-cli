@@ -36,6 +36,28 @@ class File(click.File):
         return super(File, self).convert(value, param, ctx)
 
 
+class Variables(click.types.ParamType):
+    """Allows reading from a file optionally with '@' prefix,
+    otherwise passes through string as-is
+    """
+    name = 'variables'
+
+    def convert(self, value, param, ctx):
+        """Return file content if file, else, return value as-is
+        """
+        # Protect against corner cases of invalid inputs
+        if not isinstance(value, str):
+            return value
+
+        # Read from a file under these cases
+        if value.startswith('@'):
+            with open(value[1:], 'r') as f:
+                return f.read().strip('\n')
+
+        # No file, use given string
+        return value
+
+
 class MappedChoice(click.Choice):
     """A subclass of click.Choice that allows a distinction between the
     choice sent to the method and the choice typed on the CLI.

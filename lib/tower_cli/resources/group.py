@@ -32,7 +32,7 @@ class Resource(models.Resource):
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
     inventory = models.Field(type=types.Related('inventory'))
-    variables = models.Field(type=types.File('r'), required=False,
+    variables = models.Field(type=types.Variables(), required=False,
                              display=False)
 
     def lookup_with_inventory(self, group, inventory=None):

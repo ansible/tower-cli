@@ -28,7 +28,7 @@ class Resource(models.Resource):
     description = models.Field(required=False, display=False)
     inventory = models.Field(type=types.Related('inventory'))
     enabled = models.Field(type=bool, required=False)
-    variables = models.Field(type=types.File('r'), required=False,
+    variables = models.Field(type=types.Variables(), required=False,
                              display=False)
 
     @resources.command(use_fields_as_options=False)
