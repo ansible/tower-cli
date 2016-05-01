@@ -581,6 +581,11 @@ class ResourceMethods(BaseResource):
             answer.update(existing_data)
             return answer
 
+        # Reinsert None for special case of null association
+        for key in kwargs:
+            if kwargs[key] == 'null':
+                kwargs[key] = None
+
         # Get the URL and method to use for the write.
         url = self.endpoint
         method = 'POST'
