@@ -25,7 +25,7 @@ from requests.models import Response
 from requests.packages import urllib3
 
 from tower_cli.conf import settings
-from tower_cli.utils import data_structures, debug, exceptions as exc
+from tower_cli.utils import data_structures, debug, secho, exceptions as exc
 
 
 class Client(Session):
@@ -52,6 +52,11 @@ class Client(Session):
         host = settings.host
         if '://' not in host:
             host = 'https://%s' % host.strip('/')
+        elif host.startswith('http://') and settings.verify_ssl:
+            raise exc.TowerCLIError(
+                'Can not verify ssl with non-https protocol. Change the '
+                'verify_ssl configuration setting to continue.'
+            )
         return '%s/api/v1/' % host.rstrip('/')
 
     @functools.wraps(Session.request)
@@ -106,6 +111,10 @@ class Client(Session):
             if settings.verbose:
                 debug.log('SSL connection failed:', fg='yellow', bold=True)
                 debug.log(str(ex), fg='yellow', bold=True, nl=2)
+            if not settings.host.startswith('http'):
+                secho('Suggestion: add the correct http:// or '
+                      'https:// prefix to the host configuration.',
+                      fg='blue', bold=True)
             raise exc.ConnectionError(
                 'Could not establish a secure connection. '
                 'Please add the server to your certificate '

@@ -86,7 +86,7 @@ class ClientTests(unittest.TestCase):
         back from requests, that we deal with it nicely.
         """
         for ErrorType in REQUESTS_ERRORS:
-            with settings.runtime_values(verbose=False):
+            with settings.runtime_values(verbose=False, host='https://foo.co'):
                 with mock.patch.object(Session, 'request') as req:
                     req.side_effect = ErrorType
                     with self.assertRaises(exc.ConnectionError):
@@ -98,7 +98,7 @@ class ClientTests(unittest.TestCase):
         additionally print the internal error if verbose is True.
         """
         for ErrorType in REQUESTS_ERRORS:
-            with settings.runtime_values(verbose=True):
+            with settings.runtime_values(verbose=True, host='https://foo.co'):
                 with mock.patch.object(Session, 'request') as req:
                     req.side_effect = ErrorType
                     with mock.patch.object(debug, 'log') as dlog:
