@@ -44,3 +44,10 @@ class Resource(models.Resource):
     def disassociate(self, host, group):
         """Disassociate a group from this host."""
         return self._disassoc('groups', host, group)
+
+    @resources.command(ignore_defaults=True, no_args_is_help=False)
+    @click.option('--group', type=types.Related('group'))
+    def list(self, group=None, **kwargs):
+        if group:
+            kwargs['query'] += (('groups__in', group),)
+        return super(Resource, self).list(**kwargs)
