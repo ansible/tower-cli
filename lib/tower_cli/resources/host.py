@@ -50,5 +50,6 @@ class Resource(models.Resource):
                   help='List hosts that are children of this group.')
     def list(self, group=None, **kwargs):
         if group:
-            kwargs['query'] += (('groups__in', group),)
+            kwargs['query'] = (kwargs.get('query', ()) +
+                               (('groups__in', group),))
         return super(Resource, self).list(**kwargs)
