@@ -24,6 +24,7 @@ from tower_cli.utils import exceptions as exc, types
 from tower_cli import get_resource
 
 from tests.compat import unittest, mock
+# from tests.compat import mock.mock_open
 
 
 class FileTests(unittest.TestCase):
@@ -47,6 +48,31 @@ class FileTests(unittest.TestCase):
             f.convert('~/my_file.txt', 'myfile', None)
             convert.assert_called_with(os.path.expanduser('~/my_file.txt'),
                                        'myfile', None)
+
+    def test_variables_file(self):
+        """Establish that file with variables is opened in this type."""
+        f = types.Variables()
+        mock_var = mock.MagicMock()
+        with mock.patch('__builtin__.open', mock_var) as mock_foo:
+            manager = mock_var.return_value.__enter__.return_value
+            manager.read.return_value = "foo: bar"
+
+            foo_converted = f.convert('@foobar.yml', 'myfile', None)
+
+            mock_foo.assert_called_once_with("foobar.yml", 'r')
+            self.assertEqual(foo_converted, 'foo: bar')
+
+    def test_variables_no_file(self):
+        """Establish that plain variables are passed as-is."""
+        f = types.Variables()
+        foo_converted = f.convert('foo: barz', 'myfile', None)
+        self.assertEqual(foo_converted, 'foo: barz')
+
+    def test_variables_backup_option(self):
+        """Establish that non-string input is protected against."""
+        f = types.Variables()
+        foo_converted = f.convert(54, 'myfile', None)
+        self.assertEqual(foo_converted, 54)
 
 
 class MappedChoiceTests(unittest.TestCase):

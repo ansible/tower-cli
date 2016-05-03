@@ -51,7 +51,8 @@ class Variables(click.types.ParamType):
 
         # Read from a file under these cases
         if value.startswith('@'):
-            with open(value[1:], 'r') as f:
+            filename = os.path.expanduser(value[1:])
+            with open(filename, 'r') as f:
                 return f.read().strip('\n')
 
         # No file, use given string
