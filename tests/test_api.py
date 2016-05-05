@@ -22,6 +22,7 @@ from tower_cli.utils import debug, exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest, mock
+import click
 
 REQUESTS_ERRORS = [requests.exceptions.ConnectionError,
                    requests.exceptions.SSLError]
@@ -177,3 +178,22 @@ class ClientTests(unittest.TestCase):
                         'GET', mock.ANY, allow_redirects=True,
                         auth=(mock.ANY, mock.ANY), verify=False
                     )
+
+    def test_http_contradiction_error(self):
+        """Establish that commands can not be ran with verify_ssl set
+        to false and an http connection."""
+        with settings.runtime_values(
+                host='http://33.33.33.33', verify_ssl=True):
+            with self.assertRaises(exc.TowerCLIError):
+                client.prefix
+
+    def test_failed_suggestion_protocol(self):
+        """Establish that if connection fails and protocol not given,
+        tower-cli suggests that to the user."""
+        with settings.runtime_values(verbose=False, host='foo.co'):
+            with mock.patch.object(Session, 'request') as req:
+                req.side_effect = requests.exceptions.SSLError
+                with mock.patch.object(click, 'secho') as secho:
+                    with self.assertRaises(exc.ConnectionError):
+                        client.get('/ping/')
+                    secho.assert_called()
