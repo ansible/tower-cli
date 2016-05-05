@@ -36,11 +36,12 @@ class File(click.File):
         return super(File, self).convert(value, param, ctx)
 
 
-class Variables(click.types.ParamType):
+class Variables(click.File):
     """Allows reading from a file optionally with '@' prefix,
     otherwise passes through string as-is
     """
     name = 'variables'
+    __name__ = 'variables'
 
     def convert(self, value, param, ctx):
         """Return file content if file, else, return value as-is
@@ -52,8 +53,7 @@ class Variables(click.types.ParamType):
         # Read from a file under these cases
         if value.startswith('@'):
             filename = os.path.expanduser(value[1:])
-            with open(filename, 'r') as f:
-                return f.read().strip('\n')
+            return super(Variables, self).convert(filename, param, ctx)
 
         # No file, use given string
         return value

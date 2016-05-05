@@ -52,14 +52,12 @@ class FileTests(unittest.TestCase):
     def test_variables_file(self):
         """Establish that file with variables is opened in this type."""
         f = types.Variables()
-        mock_var = mock.MagicMock()
-        with mock.patch('__builtin__.open', mock_var) as mock_foo:
-            manager = mock_var.return_value.__enter__.return_value
-            manager.read.return_value = "foo: bar"
+        with mock.patch.object(click.File, 'convert') as convert:
+            convert.return_value = "foo: bar"
 
             foo_converted = f.convert('@foobar.yml', 'myfile', None)
 
-            mock_foo.assert_called_once_with("foobar.yml", 'r')
+            convert.assert_called_once_with("foobar.yml", 'myfile', None)
             self.assertEqual(foo_converted, 'foo: bar')
 
     def test_variables_no_file(self):
