@@ -75,6 +75,10 @@ class RelatedTests(unittest.TestCase):
         """
         self.assertEqual(self.related.convert(None, 'mything', None), None)
 
+    def test_convert_null_no_record(self):
+        """Establish 'null' passes through as-is"""
+        self.assertEqual(self.related.convert('null', 'mything', None), 'null')
+
     def test_convert_int(self):
         """Establish that if we get an integer sent to the convert method,
         that it's passed through with no action taken on it (idempotency).

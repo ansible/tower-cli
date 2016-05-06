@@ -92,6 +92,10 @@ class Related(click.types.ParamType):
         if re.match(r'^[\d]+$', value):
             return int(value)
 
+        # Special case to allow disassociations
+        if value == 'null':
+            return value
+
         # Okay, we have a string. Try to do a name-based lookup on the
         # resource, and return back the ID that we get from that.
         #
