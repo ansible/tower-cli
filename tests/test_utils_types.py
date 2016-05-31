@@ -22,7 +22,10 @@ import click
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc, types
 
-from tests.compat import unittest, mock
+try:
+    from tests.compat import unittest, mock
+except ImportError:
+    from compat import unittest, mock
 
 
 class FileTests(unittest.TestCase):
@@ -133,3 +136,22 @@ class RelatedTests(unittest.TestCase):
         which is the resource name, but in uppercase.
         """
         self.assertEqual(self.related.get_metavar(None), 'USER')
+
+class GeneralTests(unittest.TestCase):
+    """A set of tests that are not specific to any type.
+    """
+    def test_type_name(self):
+        """Establish that custom types are equipped with __name__ field and the
+        upstream click.Choice's issue of having no __name__ field is properly
+        dealt with.
+        """
+        from os import walk
+        from tower_cli import get_resource
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        res_dir = os.path.join(base_dir, 'lib', 'tower_cli', 'resources')
+        for root, dirs, files in walk(res_dir):
+            for name in files:
+                res_name = name[:-3]
+                if res_name != '__init__':
+                    res = get_resource(res_name)
+                    self.assertEqual(type(res.fields), type([]))
