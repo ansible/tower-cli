@@ -152,7 +152,7 @@ class GeneralTests(unittest.TestCase):
         res_dir = os.path.join(base_dir, 'lib', 'tower_cli', 'resources')
         for root, dirs, files in walk(res_dir):
             for name in files:
-                res_name = name[:-3]
+                res_name = name[:name.index('.')]
                 if res_name != '__init__':
                     res = get_resource(res_name)
                     self.assertEqual(type(res.fields), type([]))
