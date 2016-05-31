@@ -137,6 +137,7 @@ class RelatedTests(unittest.TestCase):
         """
         self.assertEqual(self.related.get_metavar(None), 'USER')
 
+
 class GeneralTests(unittest.TestCase):
     """A set of tests that are not specific to any type.
     """
