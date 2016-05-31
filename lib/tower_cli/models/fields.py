@@ -68,7 +68,11 @@ class Field(object):
 
     @property
     def flags(self):
-        flags_list = [self.type.__name__.replace('unicode', 'str')]
+        # fix issue that click.Choice has no __name__ attribute.
+        try:
+            flags_list = [self.type.__name__.replace('unicode', 'str')]
+        except AttributeError:
+            flags_list = [type(self.type).__name__.replace('unicode', 'str')]
         if self.read_only:
             flags_list.append('read-only')
         if self.unique:
