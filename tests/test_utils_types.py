@@ -161,3 +161,4 @@ class GeneralTests(unittest.TestCase):
         for res_name in names:
             res = get_resource(res_name)
             self.assertEqual(type(res.fields), type([]))
+            self.assertEqual(str(res.fields).startswith('[<Field:'), True)

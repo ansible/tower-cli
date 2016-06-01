@@ -68,7 +68,6 @@ class Field(object):
 
     @property
     def flags(self):
-        flags_list = [self.type.__name__.replace('unicode', 'str')]
         try:
             flags_list = [self.type.__name__.replace('unicode', 'str')]
         except AttributeError:
