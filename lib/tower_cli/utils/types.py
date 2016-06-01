@@ -40,6 +40,8 @@ class MappedChoice(click.Choice):
     """A subclass of click.Choice that allows a distinction between the
     choice sent to the method and the choice typed on the CLI.
     """
+    __name__ = 'mapped_choice'
+
     def __init__(self, choices):
         # Call the superclass constructor and send it the **values**.
         # This will make the `click.Choice` things work as expected, since
