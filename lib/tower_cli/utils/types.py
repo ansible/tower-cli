@@ -65,6 +65,7 @@ class Related(click.types.ParamType):
     """A subclass of click.types.ParamType that represents a value
     related to another resource.
     """
+    __name__ = 'related'
     name = 'related'
 
     def __init__(self, resource_name):

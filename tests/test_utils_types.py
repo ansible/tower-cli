@@ -21,6 +21,7 @@ import click
 
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc, types
+from tower_cli import get_resource
 
 from tests.compat import unittest, mock
 
@@ -133,3 +134,30 @@ class RelatedTests(unittest.TestCase):
         which is the resource name, but in uppercase.
         """
         self.assertEqual(self.related.get_metavar(None), 'USER')
+
+
+class GeneralTests(unittest.TestCase):
+    """A set of tests that are not specific to any type.
+    """
+    def test_type_name(self):
+        """Establish that custom types are equipped with __name__ field and the
+        upstream click.Choice's issue of having no __name__ field is properly
+        dealt with.
+        """
+        names = [
+            'ad_hoc',
+            'credential',
+            'group',
+            'host',
+            'inventory',
+            'inventory_source',
+            'job',
+            'job_template',
+            'organization',
+            'project',
+            'team',
+            'user'
+        ]
+        for res_name in names:
+            res = get_resource(res_name)
+            self.assertEqual(type(res.fields), type([]))
