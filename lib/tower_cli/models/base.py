@@ -19,6 +19,7 @@ import functools
 import inspect
 import itertools
 import json
+import yaml
 import math
 import re
 import sys
@@ -306,6 +307,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 indentation and return it.
                 """
                 return json.dumps(payload, indent=2)
+
+            def _format_yaml(self, payload):
+                """Convert the payload into a YAML string with proper
+                indentation and return it.
+                """
+                payload = json.loads(json.dumps(payload))
+                return yaml.safe_dump(payload, indent=2, allow_unicode=True,
+                                      default_flow_style=False)
 
             def _format_human(self, payload):
                 """Convert the payload into an ASCII table suitable for

@@ -96,10 +96,9 @@ def with_global_options(method):
     method = click.option(
         '-f', '--format',
         help='Output format. The "human" format is intended for humans '
-             'reading output on the CLI; the "json" format is intended for '
-             'scripts that wish to parse output. Note that the "json" format '
-             'provides more data.',
-        type=click.Choice(['human', 'json']),
+             'reading output on the CLI; the "json" and "yaml" formats '
+             'provide more data.',
+        type=click.Choice(['human', 'json', 'yaml']),
         required=False,
     )(method)
     method = click.option(
