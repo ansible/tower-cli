@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import yaml
 
 from six.moves import StringIO
 
@@ -347,6 +348,19 @@ class SubcommandTests(unittest.TestCase):
                 func()
             answer = json.dumps({'changed': True}, indent=2)
             secho.assert_called_once_with(answer, fg='yellow')
+
+    def test_echo_method_yaml_formatted(self):
+        """Establish that the `_echo_method` properly returns YAML formatting
+        when it gets back a list of objects.
+        """
+        func = self.command._echo_method(lambda: {'foo': 'bar'})
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(format='yaml'):
+                func()
+            secho.assert_called_once_with(yaml.safe_dump({'foo': 'bar'},
+                                          indent=2,
+                                          allow_unicode=True,
+                                          default_flow_style=False))
 
     def test_echo_method_human_formatted(self):
         """Establish that the `_echo_method` properly returns human formatting

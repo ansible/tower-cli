@@ -45,6 +45,9 @@ class Resource(models.Resource):
     # Options may not be valid for certain types of cloud servers
     @click.option('--source-vars', help='Override variables found on source '
                   'with variables defined in this field.')
+    @click.option('--instance-filters', help='A comma-separated list of '
+                  'filter expressions for matching hosts to be imported to '
+                  'Tower.')
     @click.option('--overwrite', type=bool,
                   help='Delete child groups and hosts not found in source.')
     @click.option('--overwrite-vars', type=bool,
@@ -108,6 +111,9 @@ class Resource(models.Resource):
     # Options may not be valid for certain types of cloud servers
     @click.option('--source-vars', help='Override variables found on source '
                   'with variables defined in this field.')
+    @click.option('--instance-filters', help='A comma-separated list of '
+                  'filter expressions for matching hosts to be imported to '
+                  'Tower.')
     @click.option('--overwrite', type=bool,
                   help='Delete child groups and hosts not found in source.')
     @click.option('--overwrite-vars', type=bool,
