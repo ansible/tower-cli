@@ -47,6 +47,7 @@ class Field(object):
         self.required = required
         self.show_default = show_default
         self.unique = unique
+        self.no_lookup = False
 
         # If this is a password, display is always off.
         if self.password:
