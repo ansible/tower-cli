@@ -61,6 +61,21 @@ class Resource(models.Resource):
     ask_variables_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for extra_vars on launch.')
+    ask_limit_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for host limits on launch.')
+    ask_tags_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job tags on launch.')
+    ask_job_type_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job type on launch.')
+    ask_inventory_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for inventory on launch.')
+    ask_credential_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for machine credential on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
 
     @click.option('--extra-vars', required=False, multiple=True,

@@ -17,6 +17,7 @@ from __future__ import absolute_import, unicode_literals
 from copy import copy
 from getpass import getpass
 from distutils.version import LooseVersion
+from ast import literal_eval
 
 import click
 
@@ -24,6 +25,9 @@ from tower_cli import models, get_resource, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, types
 from tower_cli.utils import parser
+
+
+PROMPT_LIST = ['limit', 'tags', 'job_type', 'inventory', 'credential']
 
 
 class Resource(models.ExeResource):
@@ -59,10 +63,24 @@ class Resource(models.ExeResource):
     @click.option('--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
+    @click.option('--limit', required=False,
+                  help='Specify host limit for job template to run.')
     @click.option('--tags', required=False,
                   help='Specify tagged actions in the playbook to run.')
+    @click.option('--job-type', required=False, type=click.Choice(['run',
+                  'check', 'scan']), help='Specify job type for job template'
+                  ' to run.')
+    @click.option(
+        '--inventory', required=False, type=types.Related('inventory'),
+        help='Specify inventory for job template to run.'
+    )
+    @click.option(
+        '--credential', required=False, type=types.Related('credential'),
+        help='Specify machine credential for job template to run.'
+    )
     def launch(self, job_template=None, tags=None, monitor=False, timeout=None,
-               no_input=True, extra_vars=None, **kwargs):
+               no_input=True, extra_vars=None, limit=None, job_type=None,
+               inventory=None, credential=None, **kwargs):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately starts it, and
@@ -70,6 +88,7 @@ class Resource(models.ExeResource):
         """
         # Get the job template from Ansible Tower.
         # This is used as the baseline for starting the job.
+
         jt_resource = get_resource('job_template')
         jt = jt_resource.get(job_template)
 
@@ -116,6 +135,23 @@ class Resource(models.ExeResource):
         # include extra_vars that come from the algorithm here.
         data.pop('extra_vars', None)
 
+        # Replace/populate data fields if prompted.
+        modified = set()
+        for resource in PROMPT_LIST:
+            if data.pop('ask_' + resource + '_on_launch', False) \
+               and not no_input:
+                resource_object = literal_eval(resource)
+                if type(resource_object) == types.Related:
+                    resource_class = get_resource(resource)
+                    resource_object = resource_class.get(resource).\
+                        pop('id', None)
+                if resource_object is None:
+                    debug.log('{0} is asked at launch but not provided'.
+                              format(resource), header='warning')
+                elif resource != 'tags':
+                    data[resource] = resource_object
+                    modified.add(resource)
+
         # Dump extra_vars into JSON string for launching job
         if len(extra_vars_list) > 0:
             data['extra_vars'] = parser.process_extra_vars(
@@ -137,6 +173,9 @@ class Resource(models.ExeResource):
                 start_data['extra_vars'] = data['extra_vars']
             if tags:
                 start_data['job_tags'] = data['job_tags']
+            for resource in PROMPT_LIST:
+                if resource in modified:
+                    start_data[resource] = data[resource]
         else:
             debug.log('Creating the job.', header='details')
             job = client.post('/jobs/', data=data).json()
