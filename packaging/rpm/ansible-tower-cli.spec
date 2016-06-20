@@ -13,7 +13,7 @@ BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 BuildArch:      noarch
 Requires:	python-six >= 1.7.2
-Requires:	PyYAML >= 3.11
+Requires:	PyYAML >= 3.10
 Requires: 	python-requests >= 2.3.0
 Requires:	python-click >= 2.1
 Requires:	python-colorama >= 0.3.1
