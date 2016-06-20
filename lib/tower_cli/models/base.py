@@ -41,6 +41,7 @@ from tower_cli.utils.command import Command
 from tower_cli.utils import debug, secho
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.decorators import command
+from tower_cli.utils.parser import ordered_dump
 
 
 class ResourceMeta(type):
@@ -312,17 +313,6 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 """Convert the payload into a YAML string with proper
                 indentation and return it.
                 """
-                def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kws):
-                    class OrderedDumper(Dumper):
-                        pass
-
-                    def _dict_representer(dumper, data):
-                        return dumper.represent_mapping(
-                            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-                            data.items())
-                    OrderedDumper.add_representer(OrderedDict,
-                                                  _dict_representer)
-                    return yaml.dump(data, stream, OrderedDumper, **kws)
                 return ordered_dump(payload, Dumper=yaml.SafeDumper,
                                     default_flow_style=False)
 
