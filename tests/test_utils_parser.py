@@ -17,6 +17,7 @@ import yaml
 
 from tower_cli.utils import parser
 from tower_cli.utils import exceptions as exc
+from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest, mock
 
@@ -250,3 +251,35 @@ class TestSplitter_Gen(unittest.TestCase):
             self.assertEqual(yaml.load(string_rep), data[1])
             assert "python/unicode" not in string_rep
             assert "\\n" not in string_rep
+
+
+class TestOrderedDump(unittest.TestCase):
+    """Set of tests for testing function ordered_dump."""
+
+    CORRECT_OUTPUT = "g: 6\nf: 5\ne: 4\nd: 3\nc: 2\nb: 1\na: 0\n"
+
+    def test_output_order(self):
+        """Test that ordered_dump perserves the order of OrderedDict."""
+        ordered_dict = OrderedDict()
+        for i in reversed('abcdefg'):
+            ordered_dict[i] = ord(i) - ord('a')
+        self.assertEqual(parser.ordered_dump(ordered_dict,
+                                             Dumper=yaml.SafeDumper,
+                                             default_flow_style=False),
+                         self.CORRECT_OUTPUT)
+
+    def test_mixture(self):
+        """Test to ensure that both dict and OrderedDict can be parsed
+        by ordered_dump."""
+        ordered_dict = OrderedDict()
+        ordered_dict['a'] = {}
+        ordered_dict['b'] = OrderedDict()
+        for item in ordered_dict.values():
+            for i in reversed('abcdefg'):
+                item[i] = ord(i) - ord('a')
+        try:
+            parser.ordered_dump(ordered_dict,
+                                Dumper=yaml.SafeDumper,
+                                default_flow_style=False)
+        except Exception:
+            self.fail("No exceptions should be raised here.")
