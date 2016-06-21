@@ -23,7 +23,7 @@ from tower_cli.api import client
 class Resource(models.Resource):
     cli_help = 'Manage credentials within Ansible Tower.'
     endpoint = '/credentials/'
-    identity = ('username', 'user', 'team', 'kind', 'name')
+    identity = ('organization', 'user', 'team', 'kind', 'name')
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -114,6 +114,6 @@ class Resource(models.Resource):
             r = client.options('/credentials/')
             if 'organization' in r.json()['actions']['POST']:
                 for i in range(len(self.fields)):
-                    if self.fields[i].name in ('user', 'team', 'credential'):
+                    if self.fields[i].name in ('user', 'team'):
                         self.fields[i].no_lookup = True
         return super(Resource, self).create(**kwargs)

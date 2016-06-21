@@ -78,6 +78,7 @@ class CredentialTests(unittest.TestCase):
             cred_res = tower_cli.get_resource('credential')
             cred_res.create(name="foobar", user=1, kind="ssh")
             self.assertTrue(cred_res.fields[2].no_lookup)
+            self.assertTrue(cred_res.fields[3].no_lookup)
 
             # Verify request data is correct
             self.assertEqual(len(t.requests), 3)
