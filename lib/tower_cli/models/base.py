@@ -368,7 +368,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 for col in columns:
                     widths[col] = max(
                         len(col),
-                        *[len(six.text_type(i[col])) for i in raw_rows]
+                        *[len(six.text_type(i.get(col, 'N/A')))
+                          for i in raw_rows]
                     )
 
                 # It's possible that the column widths will exceed our terminal
@@ -397,8 +398,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     data_row = ''
                     for col in columns:
                         template = '{0:%d}' % widths[col]
-                        value = raw_row[col]
-                        if isinstance(raw_row[col], bool):
+                        value = raw_row.get(col, 'N/A')
+                        if isinstance(raw_row.get(col, 'N/A'), bool):
                             template = template.replace('{0:', '{0:>')
                             value = six.text_type(value).lower()
                         data_row += template.format(value or '') + ' '

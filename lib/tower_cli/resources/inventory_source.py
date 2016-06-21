@@ -73,7 +73,12 @@ class Resource(models.MonitorableResource):
 
         # If we were told to monitor the project update's status, do so.
         if monitor:
-            return self.monitor(inventory_source, timeout=timeout)
+            result = self.monitor(inventory_source, timeout=timeout)
+            inventory = client.get('/inventory_sources/%d/' %
+                                   result['inventory_source'])\
+                              .json()['inventory']
+            result['inventory'] = int(inventory)
+            return result
 
         # Done.
         return {'status': 'ok'}
