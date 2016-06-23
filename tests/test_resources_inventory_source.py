@@ -58,6 +58,8 @@ class UpdateTests(unittest.TestCase):
                             {'can_update': True}, method='GET')
             t.register_json('/inventory_sources/1/update/',
                             {}, method='POST')
+            t.register_json('/inventory_sources/1/', {'inventory': 1},
+                            method='GET')
             with mock.patch.object(type(self.isr), 'monitor') as monitor:
                 self.isr.update(1, monitor=True)
                 monitor.assert_called_once_with(1, timeout=None)
