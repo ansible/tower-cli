@@ -15,8 +15,6 @@
 
 import click
 
-from sdict import adict
-
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, exceptions as exc, types
@@ -197,8 +195,8 @@ class Resource(models.Resource, models.MonitorableResource):
             return job
 
         # Print just the information we need.
-        return adict({
+        return {
             'elapsed': job['elapsed'],
             'failed': job['failed'],
             'status': job['status'],
-        })
+        }
