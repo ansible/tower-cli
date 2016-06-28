@@ -30,7 +30,7 @@ class Resource(models.Resource):
     description = models.Field(required=False, display=False)
     job_type = models.Field(
         display=False,
-        type=click.Choice(['run', 'check']),
+        type=click.Choice(['run', 'check', 'scan']),
     )
     inventory = models.Field(type=types.Related('inventory'))
     project = models.Field(type=types.Related('project'))
