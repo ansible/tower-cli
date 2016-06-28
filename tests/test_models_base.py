@@ -18,8 +18,6 @@ import yaml
 
 from six.moves import StringIO
 
-from sdict import adict
-
 import click
 
 from tower_cli import models, resources
@@ -456,13 +454,16 @@ class SubcommandTests(unittest.TestCase):
         """Establish that a custom dictionary with no ID is made into a
         table and printed as expected.
         """
-        func = self.command._echo_method(lambda: adict(foo='bar', spam='eggs'))
+        func = self.command._echo_method(lambda:
+                                         {'foo': 'bar', 'spam': 'eggs'})
         with mock.patch.object(click, 'secho') as secho:
             with settings.runtime_values(format='human'):
                 func()
             output = secho.mock_calls[-1][1][0]
-        self.assertIn('foo spam', output)
-        self.assertIn('bar eggs', output)
+        self.assertIn('foo', output)
+        self.assertIn('spam', output)
+        self.assertIn('bar', output)
+        self.assertIn('eggs', output)
 
 
 class ResourceTests(unittest.TestCase):

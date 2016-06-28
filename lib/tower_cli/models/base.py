@@ -25,7 +25,6 @@ import re
 import sys
 import time
 from copy import copy
-from sdict import adict
 
 import six
 
@@ -946,11 +945,11 @@ class ExeResource(MonitorableResource):
             return job
 
         # Print just the information we need.
-        return adict({
+        return {
             'elapsed': job['elapsed'],
             'failed': job['failed'],
             'status': job['status'],
-        })
+        }
 
     @resources.command
     @click.option('--fail-if-not-running', is_flag=True, default=False,
@@ -977,7 +976,7 @@ class ExeResource(MonitorableResource):
                 raise exc.TowerCLIError('Job not running.')
 
         # Return a success.
-        return adict({'status': 'canceled', 'changed': changed})
+        return {'status': 'canceled', 'changed': changed}
 
 
 class Resource(ResourceMethods):
