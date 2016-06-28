@@ -98,7 +98,7 @@ class Resource(models.Resource, models.MonitorableResource):
             org_resource._assoc('projects', org_pk, project_id)
 
         # if the monitor flag is set, wait for the SCM to update
-        if monitor:
+        if monitor and answer.get('changed', False):
             return self.monitor(project_id, timeout=timeout)
 
         return answer
