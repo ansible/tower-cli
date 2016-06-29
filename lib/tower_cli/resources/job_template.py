@@ -32,12 +32,12 @@ class Resource(models.Resource):
         display=False,
         type=click.Choice(['run', 'check', 'scan']),
     )
-    inventory = models.Field(type=types.Related('inventory'))
+    inventory = models.Field(type=types.Related('inventory'), required=False)
     project = models.Field(type=types.Related('project'))
     playbook = models.Field()
     machine_credential = models.Field(
         'credential',
-        display=False,
+        display=False, required=False,
         type=types.Related('credential'),
     )
     cloud_credential = models.Field(type=types.Related('credential'),
