@@ -19,8 +19,9 @@ from tower_cli import get_resource, models, resources
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc, types
 
-INVENTORY_SOURCES = ['manual', 'ec2', 'rax', 'vmware',
-                     'gce', 'azure', 'openstack']
+INVENTORY_SOURCES = ['manual', 'file', 'ec2', 'rax', 'vmware',
+                     'gce', 'azure', 'azure_rm', 'openstack',
+                     'satellite6', 'cloudforms', 'custom']
 
 
 class Resource(models.Resource):
@@ -60,6 +61,11 @@ class Resource(models.Resource):
     @click.option('--instance-filters', help='A comma-separated list of '
                   'filter expressions for matching hosts to be imported to '
                   'Tower.')
+    @click.option('--group-by', help='Limit groups automatically created from'
+                  ' inventory source.')
+    @click.option('--source-script', type=types.Related('inventory_script'),
+                  help='Inventory script to be used when group type is '
+                  '"custom".')
     @click.option('--overwrite', type=bool,
                   help='Delete child groups and hosts not found in source.')
     @click.option('--overwrite-vars', type=bool,
@@ -138,6 +144,11 @@ class Resource(models.Resource):
     @click.option('--instance-filters', help='A comma-separated list of '
                   'filter expressions for matching hosts to be imported to '
                   'Tower.')
+    @click.option('--group-by', help='Limit groups automatically created from'
+                  ' inventory source.')
+    @click.option('--source-script', type=types.Related('inventory_script'),
+                  help='Inventory script to be used when group type is '
+                  '"custom".')
     @click.option('--overwrite', type=bool,
                   help='Delete child groups and hosts not found in source.')
     @click.option('--overwrite-vars', type=bool,
