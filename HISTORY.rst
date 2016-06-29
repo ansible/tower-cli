@@ -1,7 +1,7 @@
 Release History
 ===============
 
-2.3.2 (2016-06-29)
+2.3.2 (2016-06-30)
 ------------------
 
 - Add RPM specfile and Makefile 
