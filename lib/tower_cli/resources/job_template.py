@@ -42,6 +42,8 @@ class Resource(models.Resource):
     )
     cloud_credential = models.Field(type=types.Related('credential'),
                                     required=False, display=False)
+    network_credential = models.Field(type=types.Related('credential'),
+                                      required=False, display=False)
     forks = models.Field(type=int, required=False, display=False)
     limit = models.Field(required=False, display=False)
     verbosity = models.Field(
