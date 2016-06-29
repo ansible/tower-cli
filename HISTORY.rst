@@ -1,6 +1,17 @@
 Release History
 ===============
 
+2.3.2 (2016-06-29)
+------------------
+
+- Add RPM specfile and Makefile 
+- Tower compatibility fixes
+- Allow scan JTs as an option for "job_type"
+- Add ability to create group as subgroup of another group 
+- Add YAML output format against JSON and humanized output formats 
+- Add SSL corner case error handling and suggestion 
+- Allow resource disassociation with "null"
+
 2.3.1 (2015-12-10)
 ------------------
 
