@@ -16,7 +16,6 @@ Requires:	python-six >= 1.7.2
 Requires:	PyYAML >= 3.10
 Requires: 	python-requests >= 2.3.0
 Requires:	python-click >= 2.1
-Requires:	python-colorama >= 0.3.1
 
 %description
 ansible-tower-cli is a command line tool for Ansible Tower. It allows Tower
