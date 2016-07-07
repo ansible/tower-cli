@@ -5,6 +5,6 @@ six>=1.7.2
 PyYAML>=3.10
 
 # === Python < 2.7 ===
-# importlib>=1.0.3
+# importlib>=1.0.2
 # ordereddict>=1.1
 # simplejson>=3.5.3
