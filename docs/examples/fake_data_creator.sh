@@ -62,8 +62,6 @@ tower-cli project create --name sample_playbooks --organization "Default" --scm-
 # Examples of moving around a project to different organizations and back again
 echo " associating a project with an organization"
 tower-cli organization associate_project --organization="Bio Inc" --project="sample_playbooks"
-echo " disassociating a project with an organization"
-tower-cli organization disassociate_project --organization="Bio Inc" --project="sample_playbooks"
 tower-cli organization associate_project --organization="Hyrule Ventures" --project="sample_playbooks"
 
 echo "Tower-CLI DATA FAKER: creating users"
