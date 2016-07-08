@@ -12,13 +12,13 @@ others developing API interactions with Tower's REST API.
 About Tower
 -----------
 
-`Ansible Tower <http://ansible.com/tower>`__ is a GUI and REST interface
+`Ansible Tower <https://www.ansible.com/tower>`__ is a GUI and REST interface
 for Ansible that supercharges it by adding RBAC, centralized logging,
 autoscaling/provisioning callbacks, graphical inventory editing, and
 more.
 
 Tower is free to use for up to 30 days or 10 nodes. Beyond this, `a
-license is required <http://ansible.com/ansible-pricing>`__.
+license is required <https://www.ansible.com/pricing>`__.
 
 Capabilities
 ------------
@@ -232,7 +232,7 @@ If you want an example for a particular case that this README does not
 cover, the development distribution of tower-cli includes a script that
 populates the Tower server with fake data using tower-cli commands.
 These attempt to cover most of the available features and can be found
-in the folder `/docs/examples/ </docs/examples>`__.
+in the folder `/docs/examples/ <https://github.com/ansible/tower-cli/tree/master/docs/examples>`__.
 
 License
 -------

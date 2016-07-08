@@ -21,7 +21,7 @@ echo "        == Tower-CLI DATA FAKER == "
 echo "  Setting up fake data for tower-cli testing"
 echo " "
 
-echo "Tower-CLI DATA FAKER: writing config settings"
+echo "Tower-CLI DATA FAKER: reading config settings"
 hostval=$(tower-cli config host)
 userval=$(tower-cli config username)
 passwordval=$(tower-cli config password)
@@ -36,7 +36,6 @@ fi
 echo " current configuration settings:"
 echo $hostval
 echo $userval
-echo $passwordval
 
 tower-cli config verify_ssl false
 

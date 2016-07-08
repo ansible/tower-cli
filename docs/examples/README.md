@@ -27,7 +27,7 @@ should be all the unique information necessary.
 ### Create Fake Data
 
 You may want to reference the
-[fake data creator](/docs/examples/fake_data_creator.sh) for
+[fake data creator](https://github.com/ansible/tower-cli/blob/master/docs/examples/fake_data_creator.sh) for
 examples on how to create different types of resources.
 
 If you want to run the script, which auto-populates your Tower server
