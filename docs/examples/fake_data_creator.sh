@@ -21,7 +21,7 @@ echo "        == Tower-CLI DATA FAKER == "
 echo "  Setting up fake data for tower-cli testing"
 echo " "
 
-echo "Tower-CLI DATA FAKER: writing config settings"
+echo "Tower-CLI DATA FAKER: reading config settings"
 hostval=$(tower-cli config host)
 userval=$(tower-cli config username)
 passwordval=$(tower-cli config password)
@@ -36,7 +36,6 @@ fi
 echo " current configuration settings:"
 echo $hostval
 echo $userval
-echo $passwordval
 
 tower-cli config verify_ssl false
 
@@ -63,8 +62,6 @@ tower-cli project create --name sample_playbooks --organization "Default" --scm-
 # Examples of moving around a project to different organizations and back again
 echo " associating a project with an organization"
 tower-cli organization associate_project --organization="Bio Inc" --project="sample_playbooks"
-echo " disassociating a project with an organization"
-tower-cli organization disassociate_project --organization="Bio Inc" --project="sample_playbooks"
 tower-cli organization associate_project --organization="Hyrule Ventures" --project="sample_playbooks"
 
 echo "Tower-CLI DATA FAKER: creating users"
