@@ -29,13 +29,17 @@ class Resource(models.MonitorableResource):
     source = models.Field(
         default='manual',
         help_text='The type of inventory source in use.',
-        type=click.Choice(['', 'ec2', 'rax', 'vmware',
-                           'gce', 'azure', 'openstack']),
+        type=click.Choice(['', 'file', 'ec2', 'rax', 'vmware',
+                           'gce', 'azure', 'azure_rm', 'openstack',
+                           'satellite6', 'cloudforms', 'custom']),
     )
     source_regions = models.Field(required=False, display=False)
     # Variables not shared by all cloud providers
     source_vars = models.Field(required=False, display=False)
     instance_filters = models.Field(required=False, display=False)
+    group_by = models.Field(required=False, display=False)
+    source_script = models.Field(type=types.Related('inventory_script'),
+                                 required=False)
     # Boolean variables
     overwrite = models.Field(type=bool, required=False, display=False)
     overwrite_vars = models.Field(type=bool, required=False, display=False)
