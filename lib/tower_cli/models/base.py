@@ -158,12 +158,10 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 decorate it as a click command, and return that method.
                 """
                 # Sanity check: Does a method exist corresponding to this
-                # command? If not, this is an error.
+                # command? If not, None is returned for click to raise
+                # exception.
                 if not hasattr(self.resource, name):
-                    raise exc.UsageError(
-                        'The %s resource has no such command: "%s"' %
-                        (self.resource_name, name),
-                    )
+                    return None
 
                 # Get the method.
                 method = getattr(self.resource, name)

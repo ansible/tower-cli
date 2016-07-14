@@ -179,10 +179,9 @@ class SubcommandTests(unittest.TestCase):
 
     def test_get_command_error(self):
         """Establish that if `get_command` is called against a command that
-        does not actually exist on the resource, that we raise UsageError.
+        does not actually exist on the resource, that null value is returned.
         """
-        with self.assertRaises(exc.UsageError):
-            self.command.get_command(None, 'bogus')
+        self.assertEqual(self.command.get_command(None, 'bogus'), None)
 
     def test_command_with_pk(self):
         """Establish that the `get_command` method appropriately adds a
