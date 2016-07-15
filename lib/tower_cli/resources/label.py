@@ -15,7 +15,7 @@
 
 import click
 
-from tower_cli import get_resource, models
+from tower_cli import get_resource, resources, models
 from tower_cli.utils import types
 from tower_cli.utils import debug
 from tower_cli.utils.data_structures import OrderedDict
@@ -39,6 +39,7 @@ class Resource(models.Resource):
         else:
             return object.__getattribute__(self, name)
 
+    @resources.command
     @click.option('--job-template', type=types.Related('job_template'),
                   required=False, help='The job template to relate to.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
