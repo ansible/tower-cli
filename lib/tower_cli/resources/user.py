@@ -27,3 +27,4 @@ class Resource(models.Resource):
     first_name = models.Field(required=False)
     last_name = models.Field(required=False)
     is_superuser = models.Field(required=False, type=bool)
+    is_system_auditor = models.Field(required=False, type=bool)
