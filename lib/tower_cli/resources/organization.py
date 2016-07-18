@@ -22,6 +22,7 @@ from tower_cli.utils import types
 class Resource(models.Resource):
     cli_help = 'Manage organizations within Ansible Tower.'
     endpoint = '/organizations/'
+    deprecated_methods = ['associate_project', 'disassociate_project']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

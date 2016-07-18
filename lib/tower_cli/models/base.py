@@ -55,9 +55,15 @@ class ResourceMeta(type):
         for base in bases:
             base_commands = getattr(base, 'commands', [])
             commands = commands.union(base_commands)
+
+        # Read list of deprecated resource methods if present.
+        deprecates = attrs.pop('deprecated_methods', [])
+
         for key, value in attrs.items():
             if getattr(value, '_cli_command', False):
                 commands.add(key)
+                if key in deprecates:
+                    setattr(value, 'deprecated', True)
 
             # If this method has been overwritten from the superclass, copy
             # any click options or arguments from the superclass implementation
@@ -283,6 +289,11 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 """
                 @functools.wraps(method)
                 def func(*args, **kwargs):
+                    # Echo warning if this method is deprecated.
+                    if getattr(method, 'deprecated', False):
+                        debug.log('This method is deprecated in Tower 3.0.',
+                                  header='warning')
+
                     result = method(*args, **kwargs)
 
                     # If this was a request that could result in a modification
