@@ -17,7 +17,7 @@ from __future__ import absolute_import, unicode_literals
 
 import click
 
-from tower_cli import models
+from tower_cli import models, resources
 from tower_cli.utils import types
 from tower_cli.utils import parser
 
@@ -117,3 +117,17 @@ class Resource(models.Resource):
         return super(Resource, self).modify(
             pk=pk, create_on_missing=create_on_missing, **kwargs
         )
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--label', type=types.Related('label'))
+    def associate_label(self, job_template, label):
+        """Associate an label with this job template."""
+        return self._assoc('labels', job_template, label)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--label', type=types.Related('label'))
+    def disassociate_label(self, job_template, label):
+        """Disassociate an label from this job template."""
+        return self._disassoc('labels', job_template, label)
