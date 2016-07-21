@@ -15,6 +15,7 @@
 
 import tower_cli
 from tower_cli.api import client
+from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest
 
@@ -38,7 +39,16 @@ class LabelTests(unittest.TestCase):
         """
         with client.test_mode as t:
             t.register_json('/job_templates/6/', {})
+            t.register_json('/job_templates/6/labels/?name=foo',
+                            {'count': 0, 'results': []})
             t.register_json('/job_templates/6/labels/', {'id': 1},
                             method='POST', status_code=201)
+            t.register_json('/labels/?name=foo&organization=1',
+                            {'count': 0, 'results': []})
             r = self.res.create(name='foo', organization=1, job_template=6)
             self.assertEqual(dict(r), {'id': 1, 'changed': True})
+            t.register_json('/labels/?name=foo&organization=1',
+                            {'count': 1, 'results': [{'id': 1}]})
+            with self.assertRaises(exc.TowerCLIError):
+                self.res.create(name='foo', organization=1, job_template=6,
+                                fail_on_found=True)

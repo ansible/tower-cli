@@ -16,10 +16,7 @@
 import click
 
 from tower_cli import get_resource, resources, models
-from tower_cli.utils import types
-from tower_cli.utils import debug
-from tower_cli.utils.data_structures import OrderedDict
-from tower_cli.api import client
+from tower_cli.utils import types, debug, exceptions as exc
 
 
 class Resource(models.Resource):
@@ -50,22 +47,29 @@ class Resource(models.Resource):
         types are discriminated by whether to provide --job-template option.
         """
         jt_id = kwargs.pop('job_template', None)
+        old_endpoint = self.endpoint
         if jt_id is not None:
-            get_resource('job_template').get(pk=jt_id)
-            data = dict((k, kwargs[k])
-                        for k in ('organization', 'name') if k in kwargs)
-            r = client.post('/job_templates/%d/labels/' %
-                            jt_id, data=data)
-            if r.status_code == 201:
-                answer = OrderedDict((
-                    ('changed', True),
-                    ('id', r.json()['id']),
-                ))
-                answer.update(r.json())
-                return answer
+            jt = get_resource('job_template')
+            jt.get(pk=jt_id)
+            try:
+                label_id = self.get(name=kwargs.get('name', None),
+                                    organization=kwargs.get('organization',
+                                                            None))['id']
+            except exc.NotFound:
+                pass
             else:
-                debug.log('label could have existed, try creating isolatedly',
-                          header='details')
-        return super(Resource, self).create(fail_on_found=fail_on_found,
-                                            force_on_exists=force_on_exists,
-                                            **kwargs)
+                if fail_on_found:
+                    raise exc.TowerCLIError('Label already exists and fail-on'
+                                            '-found is switched on. Please use'
+                                            ' "associate_label" method of job'
+                                            '_template instead.')
+                else:
+                    debug.log('Label already exists, associating with job '
+                              'template.', header='details')
+                    return jt.associate_label(jt_id, label_id)
+            self.endpoint = '/job_templates/%d/labels/' % jt_id
+        result = super(Resource, self).\
+            create(fail_on_found=fail_on_found,
+                   force_on_exists=force_on_exists, **kwargs)
+        self.endpoint = old_endpoint
+        return result
