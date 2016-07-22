@@ -1,6 +1,6 @@
-# Copyright 2015, Ansible, Inc.
+# Copyright 2016, Ansible by Red Hat
 # Alan Rominger <arominge@redhat.com>
-# Aaron Tan
+# Aaron Tan <sitan@redhat.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,238 +15,99 @@
 # limitations under the License.
 
 import tower_cli
-from tower_cli import models
-from tower_cli.api import client
+
+# used to test static methods
+from tower_cli.resources.role import Resource as Role
 from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest, mock
+
+
+class RoleUnitTests(unittest.TestCase):
+    """Test role internal helper functions."""
+
+    def test_plurals(self):
+        """English words changed from singular to plural"""
+        self.assertEqual(Role.pluralize("inventory"), "inventories")
+        self.assertEqual(Role.pluralize("job_template"), "job_templates")
+
+    def test_obj_res_team(self):
+        """Test that the input format can be correctly translated into the
+        object & resource data structure for granting the resource role
+        to the object.
+        Do this for teams getting read permission on inventory here."""
+        obj, obj_type, res, res_type = Role.obj_res(
+            {"team": 3, "inventory": 5, "type": "read", "not_a_res": None}
+        )
+        self.assertEqual(obj, 3)
+        self.assertEqual(obj_type, 'team')
+        self.assertEqual(res, 5)
+        self.assertEqual(res_type, 'inventory')
+
+    def test_obj_res_user(self):
+        """Testing obj_res method, user on credential here."""
+        obj, obj_type, res, res_type = Role.obj_res(
+            {"user": 2, "inventory": None, "type": "read", "credential": 9}
+        )
+        self.assertEqual(obj, 2)
+        self.assertEqual(obj_type, 'user')
+        self.assertEqual(res, 9)
+        self.assertEqual(res_type, 'credential')
+
+    def test_obj_res_errors(self):
+        """Testing obj_res method, ability to produce errors here."""
+        with self.assertRaises(exc.UsageError):
+            obj, obj_type, res, res_type = Role.obj_res(
+                {"inventory": None, "credential": None}
+            )
 
 
 class RoleTests(unittest.TestCase):
     """Test role commands."""
 
     def setUp(self):
-        self.gr = tower_cli.get_resource('role')
+        self.res = tower_cli.get_resource('role')
 
-    def test_root_and_no_inventory(self):
-        """Establish that if we try to get root groups without specifying
-        an inventory, that we get a usage error.
-        """
-        with self.assertRaises(exc.UsageError):
-            self.gr.list(root=True, inventory=None)
+    def test_removed_methods(self):
+        """Test that None is returned from removed methods."""
+        self.assertEqual(
+            self.res.as_command().get_command(None, 'delete'), None)
 
-    def test_list_root(self):
-        """Establish that getting root groups from the Tower API works in
-        the way that we expect.
-        """
-        with client.test_mode as t:
-            t.register_json('/inventories/1/root_groups/', {
-                'count': 2,
-                'results': [
-                    {'id': 1, 'name': 'Foo', 'inventory': 1},
-                    {'id': 2, 'name': 'Bar', 'inventory': 2},
-                ],
-                'next': None,
-                'previous': None,
-            })
-            result = self.gr.list(root=True, inventory=1)
-            self.assertEqual(result['results'], [
-                {'id': 1, 'name': 'Foo', 'inventory': 1},
-                {'id': 2, 'name': 'Bar', 'inventory': 2},
-            ])
+    def test_list_user(self):
+        """Assure that super method is called with right parameters"""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+            mock_list.return_value = {'results': []}
+            self.res.list(user=1)
+            mock_list.assert_called_once_with(members__in=1)
 
-    def test_list_normal_situation(self):
-        """Test that anything not covered by the subclass implementation
-        simply calls the superclass implementation.
-        """
-        with mock.patch.object(models.Resource, 'list') as super_list:
-            self.gr.list(root=False)
-            super_list.assert_called_once_with()
+    def test_list_team(self):
+        """Teams can not be passed as a parameter, check use of sublist"""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+            mock_list.return_value = {'results': []}
+            self.res.list(team=1, inventory=3, type='read')
+            mock_list.assert_called_once_with(
+                content_id=3, role_field='read_role')
+            self.assertEqual(self.res.endpoint, 'teams/1/roles/')
 
-    def test_create_no_change(self):
-        """Establish that if we try to create a group that already exists,
-        that we return the standard changed: false.
-        """
-        with mock.patch.object(models.Resource, 'create') as super_create:
-            super_create.return_value = {'changed': False, 'id': 1}
-            with client.test_mode as t:
-                answer = self.gr.create(name='Foo', inventory=1)
-                self.assertEqual(len(t.requests), 0)
-            # This also establishes that the "credential" argument above
-            # was dropped at the superclass method (as it should be).
-            super_create.assert_called_once_with(
-                fail_on_found=False, force_on_exists=False,
-                name='Foo', inventory=1)
-            self.assertFalse(answer['changed'])
+    def test_list_resource(self):
+        """Listing based on a resource the role applies to"""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+            mock_list.return_value = {'results': []}
+            self.res.list(inventory=3, type='read')
+            mock_list.assert_called_once_with(
+                role_field='read_role')
+            self.assertEqual(self.res.endpoint, 'inventories/3/object_roles/')
 
-    def test_create_change_but_no_isource_request_needed(self):
-        """Establish that if we make a new group but don't have any interesting
-        inventory source arguments, that the group creation stands with no
-        further requests.
-        """
-        with client.test_mode as t:
-            t.register_json('/groups/?name=Foo', {
-                'count': 0,
-                'next': None,
-                'previous': None,
-                'results': [],
-            }, method='GET')
-            t.register_json('/groups/', {
-                'id': 1,
-                'name': 'Foo',
-                'inventory': 1,
-            }, method='POST')
-            answer = self.gr.create(name='Foo', inventory=1)
-            self.assertEqual(len(t.requests), 2)
-        self.assertTrue(answer['changed'])
-
-    def test_create_with_manual(self):
-        """Try to change group to manual, find that it already is.
-        """
-        with client.test_mode as t:
-            t.register_json('/groups/?name=Foo', {
-                'count': 0,
-                'next': None,
-                'previous': None,
-                'results': [],
-            }, method='GET')
-            t.register_json('/groups/', {
-                'id': 1,
-                'name': 'Foo',
-                'inventory': 1,
-            }, method='POST')
-            answer = self.gr.create(name='Foo', inventory=1, source="manual")
-            self.assertEqual(len(t.requests), 2)
-        self.assertTrue(answer['changed'])
-
-    def test_create_change_with_isource_modify(self):
-        """Establish that if we make a new group and provide inventory source
-        arguments, that a modify request is made for the inventory source.
-        """
-        with client.test_mode as t:
-            t.register_json('/groups/?name=Foo', {
-                'count': 0, 'results': [],
-                'next': None, 'previous': None,
-            }, method='GET')
-            t.register_json('/groups/', {
-                'id': 1, 'inventory': 1, 'name': 'Foo',
-                'related': {'inventory_source': '/inventory_sources/42/'},
-            }, method='POST')
-            t.register_json('/inventory_sources/42/', {
-                'id': 42, 'source': 'manual', 'credential': None,
-            }, method='GET')
-            t.register_json('/inventory_sources/42/', {
-                'id': 42,
-                'source': 'rax',
-                'credential': None,
-            }, method='PATCH')
-            answer = self.gr.create(name='Foo', inventory=1, source='rax')
-            self.assertEqual(len(t.requests), 4)
-        self.assertTrue(answer['changed'])
-
-    def test_create_FOE_with_isource_modify(self):
-        """Establish that if we create a group, setting force_on_exists,
-        and both the group and inventory_source are unchanged, that
-        is correctly proceeds and echos that there was no change.
-        """
-        Foo_data = {'id': 1, 'name': 'Foo', 'inventory': 1,
-                    'related': {'inventory_source': '/inventory_sources/42/'}}
-        with client.test_mode as t:
-            t.register_json('/groups/?name=Foo', {
-                'count': 1, 'results': [Foo_data],
-                'next': None, 'previous': None,
-            }, method='GET')
-            t.register_json('/inventory_sources/42/', {
-                'id': 42, 'source': 'rax', 'credential': None,
-            }, method='GET')
-            answer = self.gr.create(name='Foo', inventory=1, source='rax',
-                                    force_on_exists=True)
-            self.assertEqual(len(t.requests), 2)
-        self.assertFalse(answer['changed'])
-
-    def test_modify_no_change(self):
-        """Establish that if we attempt to modify a group and the group itself
-        exists, that we do not attempt to hit the inventory source at all.
-        """
-        with mock.patch.object(models.Resource, 'modify') as super_modify:
-            super_modify.return_value = {'changed': False}
-            with client.test_mode as t:
-                self.gr.modify(42, description='rax')
-                self.assertEqual(len(t.requests), 0)
-            super_modify.assert_called_once_with(
-                pk=42, create_on_missing=False, description='rax')
-
-    def test_modify_with_source_attr_change(self):
-        """Establish that if we attempt to modify a field in a group's
-        inventory_source, that the inventory source module is sent the
-        modification command.
-        """
-        isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'write') as isrc_modify:
-            isrc_modify.return_value = {'changed': True}
-            with client.test_mode as t:
-                t.register_json('/groups/1/', {
-                    'id': 1, 'name': 'foo', 'inventory': 1,
-                    'related': {'inventory_source': '/inventory_sources/42/'},
-                }, method='GET')
-                r = self.gr.modify(1, name='foo', source='rax')
-                self.assertEqual(len(t.requests), 1)
-                # make sure that the module says it was changed
-                self.assertEqual(r['changed'], True)
-            isrc_modify.assert_called_once_with(
-                pk=42, source='rax', force_on_exists=True,
-            )
-
-    def test_modify_with_group_attr_change(self):
-        """ Test than when the group description is changed, we hit the
-        endpoint for the group and not the inventory_source. """
-        isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'write') as isrc_modify:
-            isrc_modify.return_value = {'changed': False}
-            with client.test_mode as t:
-                t.register_json('/groups/1/', {
-                    'id': 1, 'name': 'foo', 'inventory': 1,
-                    'related': {'inventory_source': '/inventory_sources/42/'},
-                }, method='GET')
-                t.register_json('/groups/1/', {
-                    'id': 1, 'changed': True,
-                    'related': {'inventory_source': '/inventory_sources/42/'},
-                }, method='PATCH')
-                r = self.gr.modify(
-                    1, name='foo', description='rax servers', source='rax')
-                self.assertEqual(len(t.requests), 2)
-                # make sure that the module says it was changed
-                self.assertEqual(r['changed'], True)
-
-    def test_modify_with_change_manual(self):
-        """Establish that if we modify a group, changing its source to
-        manual, then the inventory_source is called with empty string.
-        """
-        isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'write') as isrc_modify:
-            with client.test_mode as t:
-                t.register_json('/groups/1/', {
-                    'id': 1, 'name': 'foo', 'inventory': 1,
-                    'related': {'inventory_source': '/inventory_sources/42/'},
-                }, method='GET')
-                self.gr.modify(1, name='foo', source='manual')
-                self.assertEqual(len(t.requests), 1)
-            isrc_modify.assert_called_once_with(
-                pk=42, source='', force_on_exists=True,
-            )
-
-    def test_sync(self):
-        """Establish that the sync method correctly forwards to the
-        inventory source method, after getting the inventory source ID.
-        """
-        isrc = tower_cli.get_resource('inventory_source')
-        with mock.patch.object(type(isrc), 'update') as isrc_sync:
-            with client.test_mode as t:
-                t.register_json('/groups/1/', {
-                    'id': 1, 'name': 'foo', 'inventory': 1,
-                    'related': {'inventory_source': '/inventory_sources/42/'},
-                }, method='GET')
-                self.gr.sync(1)
-                isrc_sync.assert_called_once_with(42, monitor=False,
-                                                  timeout=None)
-                self.assertEqual(len(t.requests), 1)
+    def test_get_user(self):
+        """Assure that super method is called with right parameters"""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {'results': [{
+                'name': 'arole', 'summary_fields': {}}]}
+            self.res.get(user=1)
+            mock_read.assert_called_once_with(
+                fail_on_multiple_results=True, fail_on_no_results=True,
+                members__in=1, pk=None)
