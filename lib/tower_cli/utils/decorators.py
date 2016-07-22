@@ -43,6 +43,7 @@ def command(method=None, **kwargs):
                 'format': inner_kw.pop('format', None),
                 'username': inner_kw.pop('tower_username', None),
                 'verbose': inner_kw.pop('verbose', None),
+                'description_on': inner_kw.pop('description_on', None),
                 'insecure': inner_kw.pop('insecure', None),
             }
             with settings.runtime_values(**runtime_settings):
@@ -105,6 +106,13 @@ def with_global_options(method):
         '-v', '--verbose',
         default=None,
         help='Show information about requests being made.',
+        is_flag=True,
+        required=False,
+    )(method)
+    method = click.option(
+        '--description-on', '-d',
+        default=None,
+        help='Show description in human-formatted output.',
         is_flag=True,
         required=False,
     )(method)
