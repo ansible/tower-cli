@@ -15,8 +15,6 @@
 
 import click
 
-from sdict import adict
-
 from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, types, exceptions as exc
@@ -31,13 +29,17 @@ class Resource(models.MonitorableResource):
     source = models.Field(
         default='manual',
         help_text='The type of inventory source in use.',
-        type=click.Choice(['', 'ec2', 'rax', 'vmware',
-                           'gce', 'azure', 'openstack']),
+        type=click.Choice(['', 'file', 'ec2', 'rax', 'vmware',
+                           'gce', 'azure', 'azure_rm', 'openstack',
+                           'satellite6', 'cloudforms', 'custom']),
     )
     source_regions = models.Field(required=False, display=False)
     # Variables not shared by all cloud providers
     source_vars = models.Field(required=False, display=False)
     instance_filters = models.Field(required=False, display=False)
+    group_by = models.Field(required=False, display=False)
+    source_script = models.Field(type=types.Related('inventory_script'),
+                                 required=False)
     # Boolean variables
     overwrite = models.Field(type=bool, required=False, display=False)
     overwrite_vars = models.Field(type=bool, required=False, display=False)
@@ -73,7 +75,12 @@ class Resource(models.MonitorableResource):
 
         # If we were told to monitor the project update's status, do so.
         if monitor:
-            return self.monitor(inventory_source, timeout=timeout)
+            result = self.monitor(inventory_source, timeout=timeout)
+            inventory = client.get('/inventory_sources/%d/' %
+                                   result['inventory_source'])\
+                              .json()['inventory']
+            result['inventory'] = int(inventory)
+            return result
 
         # Done.
         return {'status': 'ok'}
@@ -106,8 +113,8 @@ class Resource(models.MonitorableResource):
             return job
 
         # Print just the information we need.
-        return adict({
+        return {
             'elapsed': job['elapsed'],
             'failed': job['failed'],
             'status': job['status'],
-        })
+        }

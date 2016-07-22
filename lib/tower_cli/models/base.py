@@ -25,7 +25,6 @@ import re
 import sys
 import time
 from copy import copy
-from sdict import adict
 
 import six
 
@@ -56,9 +55,15 @@ class ResourceMeta(type):
         for base in bases:
             base_commands = getattr(base, 'commands', [])
             commands = commands.union(base_commands)
+
+        # Read list of deprecated resource methods if present.
+        deprecates = attrs.pop('deprecated_methods', [])
+
         for key, value in attrs.items():
             if getattr(value, '_cli_command', False):
                 commands.add(key)
+                if key in deprecates:
+                    setattr(value, 'deprecated', True)
 
             # If this method has been overwritten from the superclass, copy
             # any click options or arguments from the superclass implementation
@@ -159,12 +164,10 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 decorate it as a click command, and return that method.
                 """
                 # Sanity check: Does a method exist corresponding to this
-                # command? If not, this is an error.
+                # command? If not, None is returned for click to raise
+                # exception.
                 if not hasattr(self.resource, name):
-                    raise exc.UsageError(
-                        'The %s resource has no such command: "%s"' %
-                        (self.resource_name, name),
-                    )
+                    return None
 
                 # Get the method.
                 method = getattr(self.resource, name)
@@ -284,6 +287,11 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 """
                 @functools.wraps(method)
                 def func(*args, **kwargs):
+                    # Echo warning if this method is deprecated.
+                    if getattr(method, 'deprecated', False):
+                        debug.log('This method is deprecated in Tower 3.0.',
+                                  header='warning')
+
                     result = method(*args, **kwargs)
 
                     # If this was a request that could result in a modification
@@ -368,7 +376,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 for col in columns:
                     widths[col] = max(
                         len(col),
-                        *[len(six.text_type(i[col])) for i in raw_rows]
+                        *[len(six.text_type(i.get(col, 'N/A')))
+                          for i in raw_rows]
                     )
 
                 # It's possible that the column widths will exceed our terminal
@@ -397,8 +406,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                     data_row = ''
                     for col in columns:
                         template = '{0:%d}' % widths[col]
-                        value = raw_row[col]
-                        if isinstance(raw_row[col], bool):
+                        value = raw_row.get(col, 'N/A')
+                        if isinstance(raw_row.get(col, 'N/A'), bool):
                             template = template.replace('{0:', '{0:>')
                             value = six.text_type(value).lower()
                         data_row += template.format(value or '') + ' '
@@ -945,11 +954,11 @@ class ExeResource(MonitorableResource):
             return job
 
         # Print just the information we need.
-        return adict({
+        return {
             'elapsed': job['elapsed'],
             'failed': job['failed'],
             'status': job['status'],
-        })
+        }
 
     @resources.command
     @click.option('--fail-if-not-running', is_flag=True, default=False,
@@ -976,7 +985,7 @@ class ExeResource(MonitorableResource):
                 raise exc.TowerCLIError('Job not running.')
 
         # Return a success.
-        return adict({'status': 'canceled', 'changed': changed})
+        return {'status': 'canceled', 'changed': changed}
 
 
 class Resource(ResourceMethods):

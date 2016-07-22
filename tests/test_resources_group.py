@@ -79,6 +79,22 @@ class GroupTests(unittest.TestCase):
                 name='Foo', inventory=1)
             self.assertFalse(answer['changed'])
 
+    def test_create_as_child(self):
+        """Establish that if we start the creation process of a child group
+        """
+        with mock.patch.object(models.Resource, 'create') as super_create:
+            super_create.return_value = {'changed': False, 'id': 1}
+            with mock.patch.object(models.Resource, 'get') as super_get:
+                super_get.return_value = {'id': 2, 'inventory': 1}
+                with client.test_mode as t:
+                    answer = self.gr.create(name='Foo', parent=2)
+                    self.assertEqual(len(t.requests), 0)
+                super_get.assert_called_once_with(2)
+            super_create.assert_called_once_with(
+                fail_on_found=False, force_on_exists=False,
+                name='Foo', inventory=1)
+            self.assertFalse(answer['changed'])
+
     def test_create_change_but_no_isource_request_needed(self):
         """Establish that if we make a new group but don't have any interesting
         inventory source arguments, that the group creation stands with no
@@ -250,3 +266,66 @@ class GroupTests(unittest.TestCase):
                 isrc_sync.assert_called_once_with(42, monitor=False,
                                                   timeout=None)
                 self.assertEqual(len(t.requests), 1)
+
+    def test_set_child_endpoint_id(self):
+        """Test that we can change the endpoint to list children of another
+        group - given the id of parent.
+        """
+        with client.test_mode as t:
+            t.register_json('/groups/1/', {
+                'id': 1, 'inventory': 1, 'name': 'Foo',
+            }, method='GET')
+            self.gr.set_child_endpoint(1)
+            self.assertEqual(self.gr.endpoint, '/groups/1/children/')
+
+    def test_set_child_endpoint_name(self):
+        """Test that we can change the endpoint to list children of another
+        group - given the name of parent.
+        """
+        with client.test_mode as t:
+            t.register_json('/groups/?name=Foo', {
+                'count': 1, 'results': [{
+                    'id': 1, 'inventory': 1, 'name': 'Foo',
+                }],
+                'next': None, 'previous': None,
+            }, method='GET')
+            self.gr.set_child_endpoint("Foo")
+            self.assertEqual(self.gr.endpoint, '/groups/1/children/')
+
+    def test_create_no_inventory_error(self):
+        """Establish that error is thrown when no group/inventory given."""
+        with self.assertRaises(exc.UsageError):
+            self.gr.create(1)
+
+    def test_list_under_parent(self):
+        """Establish that listing with a parent specified works."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ):
+                self.gr.list(parent="foo_group")
+                mock_list.assert_called_once_with()
+
+    def test_associate(self):
+        """Establish that associate commands work."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods._assoc') as mock_assoc:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ) as mock_lookup:
+                mock_lookup.return_value = {'id': 1}
+                self.gr.associate(group=1, parent=2)
+                mock_assoc.assert_called_once_with('children', 1, 1)
+
+    def test_disassociate(self):
+        """Establish that associate commands work."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods._disassoc'
+                ) as mock_assoc:
+            with mock.patch(
+                    'tower_cli.resources.group.Resource.lookup_with_inventory'
+                    ) as mock_lookup:
+                mock_lookup.return_value = {'id': 1}
+                self.gr.disassociate(group=1, parent=2)
+                mock_assoc.assert_called_once_with('children', 1, 1)

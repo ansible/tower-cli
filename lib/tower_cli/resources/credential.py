@@ -49,10 +49,11 @@ class Resource(models.Resource):
     kind = models.Field(
         display=True,
         help_text='The type of credential being added. '
-                  'Valid options are: ssh, scm, aws, rax, vmware,'
-                  ' gce, azure, openstack.',
-        type=click.Choice(['ssh', 'scm', 'aws', 'rax', 'vmware',
-                           'gce', 'azure', 'openstack']),
+                  'Valid options are: ssh, net, scm, aws, rax, vmware,'
+                  ' foreman, cloudforms, gce, azure, azure_rm, openstack.',
+        type=click.Choice(['ssh', 'net', 'scm', 'aws', 'rax', 'vmware',
+                           'foreman', 'cloudforms', 'gce', 'azure',
+                           'azure_rm', 'openstack']),
     )
 
     # need host in order to use VMware
@@ -87,6 +88,41 @@ class Resource(models.Resource):
     )
     ssh_key_unlock = models.Field('ssh_key_unlock', password=True,
                                   required=False)
+
+    # Extra fields in 3.0
+    authorize = models.Field(
+        help_text='Whether to use the authorize mechanism when type is "net".',
+        required=False, display=False,
+        type=click.BOOL,
+    )
+    authorize_password = models.Field(
+        help_text='Password used by the authorize mechanism when type is '
+                  '"net".',
+        password=True, required=False, display=False,
+    )
+    client = models.Field(
+        help_text='Client Id or Application Id for the credential when type '
+                  'is "azure_rm".',
+        required=False, display=False,
+    )
+    secret = models.Field(
+        help_text='Secret Token for this credential when type is "azure_rm".',
+        required=False, display=False
+    )
+    subscription = models.Field(
+        help_text='Subscription identifier for this credential when type is '
+                  '"azure_rm".',
+        required=False, display=False,
+    )
+    tenant = models.Field(
+        help_text='Tenant identifier for this credential when type is '
+                  '"azure_rm"',
+        required=False, display=False,
+    )
+    domain = models.Field(
+        help_text='Domain name for this credential when type is "openstack".',
+        required=False, display=False,
+    )
 
     # Method with which to esclate
     become_method = models.Field(

@@ -18,8 +18,6 @@ import yaml
 
 from six.moves import StringIO
 
-from sdict import adict
-
 import click
 
 from tower_cli import models, resources
@@ -181,10 +179,9 @@ class SubcommandTests(unittest.TestCase):
 
     def test_get_command_error(self):
         """Establish that if `get_command` is called against a command that
-        does not actually exist on the resource, that we raise UsageError.
+        does not actually exist on the resource, that null value is returned.
         """
-        with self.assertRaises(exc.UsageError):
-            self.command.get_command(None, 'bogus')
+        self.assertEqual(self.command.get_command(None, 'bogus'), None)
 
     def test_command_with_pk(self):
         """Establish that the `get_command` method appropriately adds a
@@ -456,13 +453,16 @@ class SubcommandTests(unittest.TestCase):
         """Establish that a custom dictionary with no ID is made into a
         table and printed as expected.
         """
-        func = self.command._echo_method(lambda: adict(foo='bar', spam='eggs'))
+        func = self.command._echo_method(lambda:
+                                         {'foo': 'bar', 'spam': 'eggs'})
         with mock.patch.object(click, 'secho') as secho:
             with settings.runtime_values(format='human'):
                 func()
             output = secho.mock_calls[-1][1][0]
-        self.assertIn('foo spam', output)
-        self.assertIn('bar eggs', output)
+        self.assertIn('foo', output)
+        self.assertIn('spam', output)
+        self.assertIn('bar', output)
+        self.assertIn('eggs', output)
 
 
 class ResourceTests(unittest.TestCase):

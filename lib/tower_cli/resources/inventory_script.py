@@ -1,5 +1,6 @@
-# Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2016, Ansible by Red Hat.
+# Aaron Tan <sitan@redhat.com>
+# Alan Rominger <arominge@redhat.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,17 +15,16 @@
 # limitations under the License.
 
 from tower_cli import models
+from tower_cli.utils import types
 
 
 class Resource(models.Resource):
-    cli_help = 'Manage users within Ansible Tower.'
-    endpoint = '/users/'
-    identity = ('username',)
+    cli_help = 'Manage inventory scripts within Ansible Tower.'
+    endpoint = '/inventory_scripts/'
+    internal = True
 
-    username = models.Field(unique=True)
-    password = models.Field(required=False, display=False)
-    email = models.Field(unique=True)
-    first_name = models.Field(required=False)
-    last_name = models.Field(required=False)
-    is_superuser = models.Field(required=False, type=bool)
-    is_system_auditor = models.Field(required=False, type=bool)
+    name = models.Field(unique=True)
+    description = models.Field(required=False, display=False)
+    script = models.Field(display=False)
+    organization = models.Field(type=types.Related('organization'),
+                                display=False)
