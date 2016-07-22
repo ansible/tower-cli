@@ -20,7 +20,12 @@ from tower_cli.utils import types, debug, exceptions as exc
 
 
 class Resource(models.Resource):
-    cli_help = 'Manage permissions within Ansible Tower.'
+    cli_help = (
+        'Manage permissions within Ansible Tower in versions prior to 3.0. \n'
+        'Starting with Ansible Tower 3.0, use the role resource to manage '
+        'access controls. \n'
+        'All commands must specify either a user or a team to operate on.'
+    )
     endpoint = '/permissions/'
     identity = ('name', )
     no_lookup_flag = False
