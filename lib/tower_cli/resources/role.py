@@ -201,57 +201,55 @@ class Resource(models.ResourceMethods):
         """Re-implementation of the parent `write` method specific to roles.
         Adds a grantee (user or team) to the resource's role."""
 
-        # Parse the input data, determine which is resource and which
-        obj, obj_type, res, res_type = self.obj_res(kwargs)
-
         # Get the role, using only the resource data
         data, self.endpoint = self.data_endpoint(kwargs, ignore=['obj'])
-        response = self._lookup(fail_on_missing=True, **data)
-        role_id = response['id']
+        response = self.read(pk=None, fail_on_no_results=True,
+                             fail_on_multiple_results=True, **data)
+        role_data = response['results'][0]
+        role_id = role_data['id']
 
-        # Role exists, change display settings to reflect this
+        # Role exists, change display settings to output something
+        obj, obj_type, res, res_type = self.obj_res(kwargs)
         if settings.format == 'human':
-            response['type'] = kwargs['type']
-            if obj_type == 'user':
-                self.set_display(set_false=['team'], set_true=[res_type])
-                response['user'] = obj
-                response[res_type] = res
-            else:
-                self.set_display(set_false=['user'], set_true=[res_type])
-                response['team'] = obj
-                response[res_type] = res
+            role_data['type'] = kwargs['type']
+            self.set_display(
+                set_false=['team' if obj_type == 'user' else 'team'],
+                set_true=[res_type])
+            role_data[obj_type] = obj
+            role_data[res_type] = res
 
         # Check if user/team has this role
         # Implictly, force_on_exists is false for roles
         debug.log('Checking if %s already has role.' % obj_type,
                   header='details')
-        r = client.get('%s/%s/roles' % (self.pluralize(obj_type), obj),
-                       params={'id': role_id})
-        resp = r.json()
-        if ((resp['count'] > 0 and not disassociate) or
-                (resp['count'] == 0 and disassociate)):
-            response['changed'] = False
+        data, self.endpoint = self.data_endpoint(kwargs)
+        response = self.read(pk=None, fail_on_no_results=False,
+                             fail_on_multiple_results=False, **data)
+
+        msg = ''
+        if response['count'] > 0 and not disassociate:
+            msg = 'This %s is already a member of the role.' % obj_type
+        elif response['count'] == 0 and disassociate:
+            msg = 'This %s is already a non-member of the role.' % obj_type
+
+        if msg:
+            role_data['changed'] = False
             if fail_on_found:
-                raise exc.NotFound(
-                    'This %s is already a member of this role.' % obj_type)
+                raise exc.NotFound(msg)
             else:
-                return response
+                debug.log(msg, header='DECISION')
+                return role_data
 
         # Add or remove the user/team to the role
-        if disassociate:
-            debug.log('Attempting to remove the %s from this role.' % obj_type,
-                      header='details')
-        else:
-            debug.log('Attempting to add the %s to this role.' % obj_type,
-                      header='details')
+        debug.log('Attempting to %s the %s from this role.' % (
+            'remove' if disassociate else 'add', obj_type), header='details')
         post_data = {'id': role_id}
         if disassociate:
             post_data['disassociate'] = True
-        r = client.post('%s/%s/roles/' % (self.pluralize(obj_type), obj),
-                        data=post_data)
-
-        response['changed'] = True
-        return response
+        client.post('%s/%s/roles/' % (self.pluralize(obj_type), obj),
+                    data=post_data)
+        role_data['changed'] = True
+        return role_data
 
     # Command method for roles
     # TODO: write commands to see access_list for resource
@@ -292,9 +290,7 @@ class Resource(models.ResourceMethods):
                   help='If used, return an error if the user already has the '
                        'role.')
     def grant(self, fail_on_found=False, **kwargs):
-        """Add a user or a team to a role.
-
-        Required information:
+        """Add a user or a team to a role. Required information:
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
         3) A user or a team to add to the role"""
@@ -306,9 +302,7 @@ class Resource(models.ResourceMethods):
                   help='If used, return an error if the user is already '
                        'not a member of the role.')
     def revoke(self, fail_on_found=False, **kwargs):
-        """Remove a user or a team from a role.
-
-        Required information:
+        """Remove a user or a team from a role. Required information:
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
         3) A user or a team to add to the role"""
