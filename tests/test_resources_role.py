@@ -19,8 +19,18 @@ import tower_cli
 # used to test static methods
 from tower_cli.resources.role import Resource as Role
 from tower_cli.utils import exceptions as exc
+from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
+from copy import copy
+
+example_role_data = {
+    "id": 1, "type": "role", "url": "/api/v1/roles/1/",
+    "related": {"users": "/api/v1/roles/1/users/",
+                "teams": "/api/v1/roles/1/teams/"},
+    "summary_fields": {},
+    "name": "System Administrator",
+    "description": "Can manage all aspects of the system"}
 
 
 class RoleUnitTests(unittest.TestCase):
@@ -58,11 +68,51 @@ class RoleUnitTests(unittest.TestCase):
         """Testing obj_res method, ability to produce errors here."""
         with self.assertRaises(exc.UsageError):
             obj, obj_type, res, res_type = Role.obj_res(
-                {"inventory": None, "credential": None}
-            )
+                {"inventory": None, "credential": None})
+
+    def test_populate_resource_columns(self):
+        """Test function that fills in extra columns"""
+        singleton_output = copy(example_role_data)
+        Role.populate_resource_columns(singleton_output)
+        self.assertIn('resource_name', singleton_output)
+        # Case for non-singleton roles
+        normal_output = copy(example_role_data)
+        normal_output['summary_fields'] = {
+            "resource_name": "Default",
+            "resource_type": "organization",
+            "resource_type_display_name": "Organization"}
+        Role.populate_resource_columns(normal_output)
+        self.assertIn('resource_name', normal_output)
+
+    def test_data_endpoint_team_ignore(self):
+        """Translation of input args to lookup args, ignoring team"""
+        kwargs = {'team': 2, 'type': 'admin', 'inventory': 5}
+        data, endpoint = Role.data_endpoint(kwargs, ignore=['obj'])
+        self.assertEqual(endpoint, 'inventories/5/object_roles/')
+
+    def test_data_endpoint_team(self):
+        """Translation of input args to lookup args, using team"""
+        kwargs = {'team': 2, 'type': 'admin', 'inventory': 5}
+        data, endpoint = Role.data_endpoint(kwargs, ignore=[])
+        self.assertEqual(endpoint, 'teams/2/roles/')
+        self.assertIn('content_id', data)
+
+    def test_data_endpoint_team_no_res(self):
+        """Translation of input args to lookup args, using team"""
+        kwargs = {'team': 2}
+        data, endpoint = Role.data_endpoint(kwargs, ignore=[])
+        self.assertEqual(endpoint, 'teams/2/roles/')
+        self.assertNotIn('content_id', data)
+
+    def test_data_endpoint_inventory_ignore(self):
+        """Translation of input args to lookup args, ignoring inventory"""
+        kwargs = {'user': 2, 'type': 'admin', 'inventory': 5}
+        data, endpoint = Role.data_endpoint(kwargs, ignore=['res'])
+        self.assertIn('members__in', data)
+        self.assertEqual(endpoint, '/roles/')
 
 
-class RoleTests(unittest.TestCase):
+class RoleMethodTests(unittest.TestCase):
     """Test role commands."""
 
     def setUp(self):
@@ -73,11 +123,18 @@ class RoleTests(unittest.TestCase):
         self.assertEqual(
             self.res.as_command().get_command(None, 'delete'), None)
 
+    def test_configure_write_display(self):
+        """Test that output configuration for writing to role works."""
+        data = copy(example_role_data)
+        kwargs = {'user': 2, 'inventory': 3, 'type': 'admin'}
+        self.res.configure_display(data, kwargs, write=True)
+        self.assertIn('user', data)
+
     def test_list_user(self):
         """Assure that super method is called with right parameters"""
         with mock.patch(
                 'tower_cli.models.base.ResourceMethods.list') as mock_list:
-            mock_list.return_value = {'results': []}
+            mock_list.return_value = {'results': [example_role_data]}
             self.res.list(user=1)
             mock_list.assert_called_once_with(members__in=1)
 
@@ -107,7 +164,37 @@ class RoleTests(unittest.TestCase):
                 'tower_cli.models.base.ResourceMethods.read') as mock_read:
             mock_read.return_value = {'results': [{
                 'name': 'arole', 'summary_fields': {}}]}
-            self.res.get(user=1)
+            with settings.runtime_values(format='human'):
+                self.res.get(user=1)
             mock_read.assert_called_once_with(
                 fail_on_multiple_results=True, fail_on_no_results=True,
                 members__in=1, pk=None)
+
+    def test_get_user_json(self):
+        """Test internal use with json format, no debug"""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {'results': [{
+                'name': 'arole', 'summary_fields': {}}]}
+            with settings.runtime_values(format='json'):
+                self.res.get(user=1, include_debug_header=False)
+            mock_read.assert_called_once_with(
+                fail_on_multiple_results=True, fail_on_no_results=True,
+                members__in=1, pk=None)
+
+    def test_grant_user_role(self):
+        """Assure that super method is called granting role"""
+        with mock.patch(
+                'tower_cli.resources.role.Resource.role_write') as mock_write:
+            kwargs = dict(user=1, type='read', project=3)
+            self.res.grant(**kwargs)
+            mock_write.assert_called_once_with(fail_on_found=False, **kwargs)
+
+    def test_revoke_user_role(self):
+        """Assure that super method is called revoking role"""
+        with mock.patch(
+                'tower_cli.resources.role.Resource.role_write') as mock_write:
+            kwargs = dict(user=1, type='read', project=3)
+            self.res.revoke(**kwargs)
+            mock_write.assert_called_once_with(fail_on_found=False,
+                                               disassociate=True, **kwargs)

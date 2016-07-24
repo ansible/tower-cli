@@ -145,16 +145,20 @@ class Resource(models.ResourceMethods):
         Also changes the format of `type` in data to what the server
         expects for the role model, as it exists in the database."""
         obj, obj_type, res, res_type = cls.obj_res(in_data, fail_on=[])
+        if 'obj' in ignore:
+            obj = None
+            obj_type = None
+        if 'res' in ignore:
+            res = None
+            res_type = None
         # Input fields are not actually present on role model, and all have
         # to be managed as individual special-cases
         data = copy(in_data)
         if obj and obj_type == 'user':
-            if 'obj' not in ignore:
-                data['members__in'] = obj
+            data['members__in'] = obj
             data.pop(obj_type)
         if obj and obj_type == 'team':
-            if obj not in ignore:
-                endpoint = '%s/%s/roles/' % (cls.pluralize(obj_type), obj)
+            endpoint = '%s/%s/roles/' % (cls.pluralize(obj_type), obj)
             data.pop(obj_type)
             if res is not None:
                 # For teams, this is the best lookup we can do
@@ -189,13 +193,36 @@ class Resource(models.ResourceMethods):
             item_dict['resource_type'] = item_dict[
                 'summary_fields']['resource_type']
 
-    def set_display(self, set_true=[], set_false=[]):
+    def set_display_columns(self, set_true=[], set_false=[]):
         """Add or remove columns from the output."""
         for i in range(len(self.fields)):
             if self.fields[i].name in set_true:
                 self.fields[i].display = True
             elif self.fields[i].name in set_false:
                 self.fields[i].display = False
+
+    def configure_display(self, data, kwargs=None, write=False):
+        """Populates columns and sets display attribute as needed.
+        Operates on data."""
+        if settings.format != 'human':
+            return  # This is only used for human format
+        if write:
+            obj, obj_type, res, res_type = self.obj_res(kwargs)
+            data['type'] = kwargs['type']
+            data[obj_type] = obj
+            data[res_type] = res
+            self.set_display_columns(
+                set_false=['team' if obj_type == 'user' else 'team'],
+                set_true=[res_type])
+        else:
+            self.set_display_columns(
+                set_false=['user', 'team'],
+                set_true=['resource_name', 'resource_type'])
+            if 'results' in data:
+                for i in range(len(data['results'])):
+                    self.populate_resource_columns(data['results'][i])
+            else:
+                self.populate_resource_columns(data)
 
     def role_write(self, fail_on_found=False, disassociate=False, **kwargs):
         """Re-implementation of the parent `write` method specific to roles.
@@ -209,17 +236,11 @@ class Resource(models.ResourceMethods):
         role_id = role_data['id']
 
         # Role exists, change display settings to output something
-        obj, obj_type, res, res_type = self.obj_res(kwargs)
-        if settings.format == 'human':
-            role_data['type'] = kwargs['type']
-            self.set_display(
-                set_false=['team' if obj_type == 'user' else 'team'],
-                set_true=[res_type])
-            role_data[obj_type] = obj
-            role_data[res_type] = res
+        self.configure_display(role_data, kwargs, write=True)
 
         # Check if user/team has this role
         # Implictly, force_on_exists is false for roles
+        obj, obj_type, res, res_type = self.obj_res(kwargs)
         debug.log('Checking if %s already has role.' % obj_type,
                   header='details')
         data, self.endpoint = self.data_endpoint(kwargs)
@@ -260,28 +281,19 @@ class Resource(models.ResourceMethods):
         r = super(Resource, self).list(**data)
 
         # Change display settings and data format for human consumption
-        if settings.format == 'human':
-            self.set_display(
-                set_false=['user', 'team'],
-                set_true=['resource_name', 'resource_type'])
-            for i in range(len(r['results'])):
-                self.populate_resource_columns(r['results'][i])
+        self.configure_display(r)
         return r
 
     @resources.command(use_fields_as_options=RESOURCE_FIELDS)
     def get(self, pk=None, **kwargs):
         """Get information about a role."""
-        data, self.endpoint = self.data_endpoint(kwargs)
         if kwargs.pop('include_debug_header', True):
             debug.log('Getting the role record.', header='details')
+        data, self.endpoint = self.data_endpoint(kwargs)
         response = self.read(pk=pk, fail_on_no_results=True,
                              fail_on_multiple_results=True, **data)
         item_dict = response['results'][0]
-        if settings.format == 'human':
-            self.set_display(
-                set_false=['user', 'team'],
-                set_true=['resource_name', 'resource_type'])
-            self.populate_resource_columns(item_dict)
+        self.configure_display(item_dict)
         return item_dict
 
     @resources.command(use_fields_as_options=RESOURCE_FIELDS)
@@ -294,7 +306,7 @@ class Resource(models.ResourceMethods):
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
         3) A user or a team to add to the role"""
-        return self.role_write(fail_on_found, **kwargs)
+        return self.role_write(fail_on_found=fail_on_found, **kwargs)
 
     @resources.command(use_fields_as_options=RESOURCE_FIELDS)
     @click.option('--fail-on-found', default=False,
@@ -306,4 +318,5 @@ class Resource(models.ResourceMethods):
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
         3) A user or a team to add to the role"""
-        return self.role_write(fail_on_found, disassociate=True, **kwargs)
+        return self.role_write(fail_on_found=fail_on_found,
+                               disassociate=True, **kwargs)
