@@ -55,4 +55,5 @@ class LogTests(unittest.TestCase):
             with settings.runtime_values(verbose=True):
                 debug.log(s, nl=3)
             self.assertEqual(secho.mock_calls[0][1][0],
-                             'All your base are belong to us.\n\n')
+                             '*** All your base are belong to us. '
+                             '*******************************************\n\n')

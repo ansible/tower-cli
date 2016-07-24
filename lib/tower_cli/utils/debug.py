@@ -29,15 +29,32 @@ def log(s, header='', file=sys.stderr, nl=1, **kwargs):
     if not settings.verbose:
         return
 
-    # If this is a "header" line, make it a header.
+    # Construct resulting string to stderr.
+    word_arr = s.split(' ')
+    result = []
     if header:
-        s = '*** %s: %s %s' % \
-            (header.upper(), s, '*' * (72 - len(header) - len(s)))
+        word_arr.insert(0, '%s:' % header.upper())
+    i = 0
+    while i < len(word_arr):
+        to_add = ['***']
+        count = 3
+        while count <= 79:
+            count += len(word_arr[i]) + 1
+            if count <= 79:
+                to_add.append(word_arr[i])
+                i += 1
+                if i == len(word_arr):
+                    break
+        if i != len(word_arr):
+            count -= len(word_arr[i]) + 1
+        to_add.append('*' * (78 - count))
+        result.append(' '.join(to_add))
 
     # If `nl` is an int greater than 1, add the appropriate newlines
     # to the output.
     if isinstance(nl, int) and nl > 1:
-        s += '\n' * (nl - 1)
+        for i in range(nl - 1):
+            result.append('')
 
     # Output to stderr.
-    return secho(s, file=file, **kwargs)
+    return secho('\n'.join(result), file=file, **kwargs)
