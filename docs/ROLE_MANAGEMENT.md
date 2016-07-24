@@ -5,9 +5,11 @@ permissions to various resources within Tower. Each role represents:
 
  - A type of permission like "use", "update", or "admin"
  - A resource that this permission applies to, like an inventory or credential
- - The actor, in the form of a user or a team, that receives the permission
 
-Collectively, this is a "Role Based Access Control" or RBAC.
+This is "Role Based Access Control" or RBAC. Each role may have several
+users associated with it, where each of the users gains the specified type
+of permission. Teams may also be associated with a role, in which case all
+users who are members of the team receive the specified type of permission.
 
 ## Managing Roles with tower-cli
 
@@ -57,14 +59,38 @@ tower-cli role list --project test_project
 The following commands will create an inventory and user and demonstrate
 the different role commands on them.
 
-```
-tower-cli inventory create --name 'test_inventory' --organization Default
+```bash
+# Create the inventory and list its roles
+tower-cli inventory create --name 'test_inventory' --organization 'Default'
 tower-cli role list --inventory 'test_inventory'
-tower-cli role get --type read --inventory test_inventory
+tower-cli role get --type 'use' --inventory 'test_inventory'
 
-tower-cli user create --username 'test_user' --password 'pa$$' --email abc@abc.com
-tower-cli role grant --type read --user test_user --inventory test_inventory
+# Create a user, give access to the inventory and take it away
+tower-cli user create --username 'test_user' --password 'pa$$' --email 'user@example.com'
+tower-cli role grant --type 'use' --user 'test_user' --inventory 'test_inventory'
+tower-cli role list --user 'test_user' --type 'use'
+tower-cli role revoke --type 'use' --user 'test_user' --inventory 'test_inventory'
 
-tower-cli role revoke --type read --user test_user --inventory test_inventory
+# Create a team, give access to the inventory and take it away
+tower-cli team create --name 'test_team' --organization 'Default'
+tower-cli role grant --type 'use' --team 'test_team' --inventory 'test_inventory'
+tower-cli role list --team 'test_team' --type 'use'
+tower-cli role revoke --type 'use' --team 'test_team' --inventory 'test_inventory'
 ```
 
+### Organization and Team Roles
+
+For assigning users to teams and organizations, include the team or
+organization flag, and it will be acted on as the resource. Note that teams
+can be either the resource or the role grantee, depending on the context.
+
+The following example appoints `test_user` to the member role of a team
+and of an organization.
+
+```bash
+tower-cli role grant --user 'test_user' --team 'test_team' --type 'member'
+tower-cli role grant --organization 'Default' --user 'test_user' --type 'member'
+```
+
+These commands are also redundant with the tower-cli organization and team
+`associate` and `disassociate` commands.

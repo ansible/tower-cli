@@ -145,15 +145,17 @@ class Resource(models.ResourceMethods):
         Also changes the format of `type` in data to what the server
         expects for the role model, as it exists in the database."""
         obj, obj_type, res, res_type = cls.obj_res(in_data, fail_on=[])
-        if 'obj' in ignore:
+        data = copy(in_data)
+        if obj and 'obj' in ignore:
+            data.pop(obj_type, None)
             obj = None
             obj_type = None
-        if 'res' in ignore:
+        if res and 'res' in ignore:
+            data.pop(res_type, None)
             res = None
             res_type = None
         # Input fields are not actually present on role model, and all have
         # to be managed as individual special-cases
-        data = copy(in_data)
         if obj and obj_type == 'user':
             data['members__in'] = obj
             data.pop(obj_type)
@@ -163,7 +165,7 @@ class Resource(models.ResourceMethods):
             if res is not None:
                 # For teams, this is the best lookup we can do
                 #  without making the addional request for its member_role
-                data['content_id'] = res
+                data['object_id'] = res
                 data.pop(res_type)
         elif res:
             endpoint = '%s/%s/object_roles/' % (cls.pluralize(res_type), res)
@@ -212,7 +214,7 @@ class Resource(models.ResourceMethods):
             data[obj_type] = obj
             data[res_type] = res
             self.set_display_columns(
-                set_false=['team' if obj_type == 'user' else 'team'],
+                set_false=['team' if obj_type == 'user' else 'user'],
                 set_true=[res_type])
         else:
             self.set_display_columns(
@@ -230,6 +232,7 @@ class Resource(models.ResourceMethods):
 
         # Get the role, using only the resource data
         data, self.endpoint = self.data_endpoint(kwargs, ignore=['obj'])
+        debug.log('Checking if role exists.', header='details')
         response = self.read(pk=None, fail_on_no_results=True,
                              fail_on_multiple_results=True, **data)
         role_data = response['results'][0]

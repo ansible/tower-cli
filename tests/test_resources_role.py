@@ -47,22 +47,12 @@ class RoleUnitTests(unittest.TestCase):
         to the object.
         Do this for teams getting read permission on inventory here."""
         obj, obj_type, res, res_type = Role.obj_res(
-            {"team": 3, "inventory": 5, "type": "read", "not_a_res": None}
-        )
+            {"team": 3, "inventory": 5, "type": "read", "not_a_res": None,
+             "credential": None, "project": None})
         self.assertEqual(obj, 3)
         self.assertEqual(obj_type, 'team')
         self.assertEqual(res, 5)
         self.assertEqual(res_type, 'inventory')
-
-    def test_obj_res_user(self):
-        """Testing obj_res method, user on credential here."""
-        obj, obj_type, res, res_type = Role.obj_res(
-            {"user": 2, "inventory": None, "type": "read", "credential": 9}
-        )
-        self.assertEqual(obj, 2)
-        self.assertEqual(obj_type, 'user')
-        self.assertEqual(res, 9)
-        self.assertEqual(res_type, 'credential')
 
     def test_obj_res_errors(self):
         """Testing obj_res method, ability to produce errors here."""
@@ -89,20 +79,15 @@ class RoleUnitTests(unittest.TestCase):
         kwargs = {'team': 2, 'type': 'admin', 'inventory': 5}
         data, endpoint = Role.data_endpoint(kwargs, ignore=['obj'])
         self.assertEqual(endpoint, 'inventories/5/object_roles/')
-
-    def test_data_endpoint_team(self):
-        """Translation of input args to lookup args, using team"""
-        kwargs = {'team': 2, 'type': 'admin', 'inventory': 5}
-        data, endpoint = Role.data_endpoint(kwargs, ignore=[])
-        self.assertEqual(endpoint, 'teams/2/roles/')
-        self.assertIn('content_id', data)
+        # test that team was ignored
+        self.assertNotIn('team', data)
 
     def test_data_endpoint_team_no_res(self):
         """Translation of input args to lookup args, using team"""
         kwargs = {'team': 2}
         data, endpoint = Role.data_endpoint(kwargs, ignore=[])
         self.assertEqual(endpoint, 'teams/2/roles/')
-        self.assertNotIn('content_id', data)
+        self.assertNotIn('object_id', data)
 
     def test_data_endpoint_inventory_ignore(self):
         """Translation of input args to lookup args, ignoring inventory"""
@@ -145,7 +130,7 @@ class RoleMethodTests(unittest.TestCase):
             mock_list.return_value = {'results': []}
             self.res.list(team=1, inventory=3, type='read')
             mock_list.assert_called_once_with(
-                content_id=3, role_field='read_role')
+                object_id=3, role_field='read_role')
             self.assertEqual(self.res.endpoint, 'teams/1/roles/')
 
     def test_list_resource(self):
@@ -154,16 +139,14 @@ class RoleMethodTests(unittest.TestCase):
                 'tower_cli.models.base.ResourceMethods.list') as mock_list:
             mock_list.return_value = {'results': []}
             self.res.list(inventory=3, type='read')
-            mock_list.assert_called_once_with(
-                role_field='read_role')
+            mock_list.assert_called_once_with(role_field='read_role')
             self.assertEqual(self.res.endpoint, 'inventories/3/object_roles/')
 
     def test_get_user(self):
         """Assure that super method is called with right parameters"""
         with mock.patch(
                 'tower_cli.models.base.ResourceMethods.read') as mock_read:
-            mock_read.return_value = {'results': [{
-                'name': 'arole', 'summary_fields': {}}]}
+            mock_read.return_value = {'results': [copy(example_role_data)]}
             with settings.runtime_values(format='human'):
                 self.res.get(user=1)
             mock_read.assert_called_once_with(
@@ -198,3 +181,56 @@ class RoleMethodTests(unittest.TestCase):
             self.res.revoke(**kwargs)
             mock_write.assert_called_once_with(fail_on_found=False,
                                                disassociate=True, **kwargs)
+
+    def test_role_write_user_exists(self):
+        """Simulate granting user permission where they already have it."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {'results': [copy(example_role_data)],
+                                      'count': 1}
+            r = self.res.role_write(user=2, inventory=3, type='admin')
+            self.assertEqual(r['user'], 2)
+
+    def test_role_write_user_exists_FOF(self):
+        """Simulate granting user permission where they already have it."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {'results': [copy(example_role_data)],
+                                      'count': 1}
+            with mock.patch('tower_cli.api.Client.post'):
+                with self.assertRaises(exc.NotFound):
+                    self.res.role_write(user=2, inventory=3, type='admin',
+                                        fail_on_found=True)
+
+    def test_role_write_user_does_not_exist(self):
+        """Simulate revoking user permission where they already lack it."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {'results': [copy(example_role_data)],
+                                      'count': 0}
+            r = self.res.role_write(user=2, inventory=3, type='admin',
+                                    disassociate=True)
+            self.assertEqual(r['user'], 2)
+
+    def test_role_grant_user(self):
+        """Simulate granting user permission."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {
+                'results': [copy(example_role_data)], 'count': 0}
+            with mock.patch('tower_cli.api.Client.post') as mock_post:
+                self.res.role_write(user=2, inventory=3, type='admin')
+                mock_post.assert_called_once_with(
+                    'users/2/roles/', data={'id': 1})
+
+    def test_role_revoke_user(self):
+        """Simulate granting user permission."""
+        with mock.patch(
+                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+            mock_read.return_value = {
+                'results': [copy(example_role_data)], 'count': 1}
+            with mock.patch('tower_cli.api.Client.post') as mock_post:
+                self.res.role_write(user=2, inventory=3, type='admin',
+                                    disassociate=True)
+                mock_post.assert_called_once_with(
+                    'users/2/roles/', data={'id': 1, 'disassociate': True})
