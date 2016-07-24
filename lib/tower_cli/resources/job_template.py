@@ -17,7 +17,7 @@ from __future__ import absolute_import, unicode_literals
 
 import click
 
-from tower_cli import models
+from tower_cli import models, resources
 from tower_cli.utils import types
 from tower_cli.utils import parser
 
@@ -32,16 +32,18 @@ class Resource(models.Resource):
         display=False,
         type=click.Choice(['run', 'check', 'scan']),
     )
-    inventory = models.Field(type=types.Related('inventory'))
+    inventory = models.Field(type=types.Related('inventory'), required=False)
     project = models.Field(type=types.Related('project'))
     playbook = models.Field()
     machine_credential = models.Field(
         'credential',
-        display=False,
+        display=False, required=False,
         type=types.Related('credential'),
     )
     cloud_credential = models.Field(type=types.Related('credential'),
                                     required=False, display=False)
+    network_credential = models.Field(type=types.Related('credential'),
+                                      required=False, display=False)
     forks = models.Field(type=int, required=False, display=False)
     limit = models.Field(required=False, display=False)
     verbosity = models.Field(
@@ -59,6 +61,21 @@ class Resource(models.Resource):
     ask_variables_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for extra_vars on launch.')
+    ask_limit_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for host limits on launch.')
+    ask_tags_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job tags on launch.')
+    ask_job_type_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job type on launch.')
+    ask_inventory_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for inventory on launch.')
+    ask_credential_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for machine credential on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
 
     @click.option('--extra-vars', required=False, multiple=True,
@@ -100,3 +117,17 @@ class Resource(models.Resource):
         return super(Resource, self).modify(
             pk=pk, create_on_missing=create_on_missing, **kwargs
         )
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--label', type=types.Related('label'))
+    def associate_label(self, job_template, label):
+        """Associate an label with this job template."""
+        return self._assoc('labels', job_template, label)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--label', type=types.Related('label'))
+    def disassociate_label(self, job_template, label):
+        """Disassociate an label from this job template."""
+        return self._disassoc('labels', job_template, label)
