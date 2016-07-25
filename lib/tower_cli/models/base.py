@@ -519,7 +519,9 @@ class ResourceMethods(BaseResource):
         # Did we get more than one result back?
         # If so, this is also an error, and we need to complain.
         if fail_on_multiple_results and resp['count'] >= 2:
-            raise exc.MultipleResults('Expected one result, got %d. Tighten '
+            raise exc.MultipleResults('Expected one result, got %d. Possibly '
+                                      'caused by not providing required '
+                                      'fields. Please tighten '
                                       'your criteria.' % resp['count'])
 
         # Return the response.
