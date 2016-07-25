@@ -39,7 +39,7 @@ ROLE_TYPES = [
 ]
 
 
-class Resource(models.ResourceMethods):
+class Resource(models.Resource):
     """A resource for managing roles.
 
     This resource has ordinary list and get methods,
