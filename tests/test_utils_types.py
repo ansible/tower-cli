@@ -24,7 +24,6 @@ from tower_cli.utils import exceptions as exc, types
 from tower_cli import get_resource
 
 from tests.compat import unittest, mock
-# from tests.compat import mock.mock_open
 
 
 class FileTests(unittest.TestCase):
