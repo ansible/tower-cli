@@ -333,7 +333,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
                 # What are the columns we will show?
                 columns = [field.name for field in self.resource.fields
-                           if field.display]
+                           if field.display or settings.description_on
+                           and field.name == 'description']
                 columns.insert(0, 'id')
 
                 # Sanity check: If there is a "changed" key in our payload

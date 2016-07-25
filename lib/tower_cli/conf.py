@@ -87,6 +87,7 @@ class Settings(object):
             'username': '',
             'verify_ssl': 'true',
             'verbose': 'false',
+            'description_on': 'false',
         }
         self._defaults = Parser(defaults=defaults)
         self._defaults.add_section('general')
