@@ -26,7 +26,8 @@ class Field(object):
     def __init__(self, key=None, type=six.text_type, default=None,
                  display=True, filterable=True, help_text=None,
                  is_option=True, password=False, read_only=False,
-                 required=True, show_default=False, unique=False):
+                 required=True, show_default=False, unique=False,
+                 multiple=False):
         # Init the name to blank.
         # What's going on here: This is set by the ResourceMeta metaclass
         # when the **resource** is instantiated.
@@ -47,6 +48,7 @@ class Field(object):
         self.required = required
         self.show_default = show_default
         self.unique = unique
+        self.multiple = multiple
         self.no_lookup = False
 
         # If this is a password, display is always off.
