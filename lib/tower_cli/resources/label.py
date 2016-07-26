@@ -20,7 +20,7 @@ from tower_cli.utils import types, debug, exceptions as exc
 
 
 class Resource(models.Resource):
-    cli_help = 'Manage inventory within Ansible Tower.'
+    cli_help = 'Manage labels within Ansible Tower.'
     endpoint = '/labels/'
 
     name = models.Field(unique=True)
@@ -45,6 +45,10 @@ class Resource(models.Resource):
         There are two types of label creation: isolatedly creating a new
         label and creating a new label under a job template. Here the two
         types are discriminated by whether to provide --job-template option.
+
+        Fields in the resource's `identity` tuple are used for a lookup;
+        if a match is found, then no-op (unless `force_on_exists` is set) but
+        do not fail (unless `fail_on_found` is set).
         """
         jt_id = kwargs.pop('job_template', None)
         old_endpoint = self.endpoint

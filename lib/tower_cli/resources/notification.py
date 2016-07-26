@@ -17,7 +17,7 @@ import click
 import json
 import copy
 
-from tower_cli import models, resources
+from tower_cli import get_resource, models, resources
 from tower_cli.utils import types, debug, exceptions as exc
 
 
@@ -175,22 +175,60 @@ class Resource(models.Resource):
                     config_item['notification_configuration']
 
     @resources.command
-    def create(self, **kwargs):
+    @click.option('--job-template', type=types.Related('job_template'),
+                  required=False, help='The job template to relate to.')
+    @click.option('--status', type=click.Choice(['error', 'success']),
+                  required=False, help='Specify job run status of job '
+                  'template to relate to.')
+    def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a notification template.
 
         All required configuration-related fields (required according to
         notification_type) must be provided.
+
+        There are two types of notification template creation: isolatedly
+        creating a new notification template and creating a new notification
+        template under a job template. Here the two types are discriminated by
+        whether to provide --job-template option. --status option controls
+        more specific, job-run-status-related association.
 
         Fields in the resource's `identity` tuple are used for a lookup;
         if a match is found, then no-op (unless `force_on_exists` is set) but
         do not fail (unless `fail_on_found` is set).
         """
         config_item = self._separate(kwargs)
+        jt_id = kwargs.pop('job_template', None)
+        status = kwargs.pop('status', 'any')
+        old_endpoint = self.endpoint
+        if jt_id is not None:
+            jt = get_resource('job_template')
+            jt.get(pk=jt_id)
+            try:
+                nt_id = self.get(**copy.deepcopy(kwargs))['id']
+            except exc.NotFound:
+                pass
+            else:
+                if fail_on_found:
+                    raise exc.TowerCLIError('Notification template already '
+                                            'exists and fail-on-found is '
+                                            'switched on. Please use'
+                                            ' "associate_notification" method'
+                                            ' of job_template instead.')
+                else:
+                    debug.log('Notification template already exists, '
+                              'associating with job template.',
+                              header='details')
+                    return jt.associate_notification(jt_id, nt_id,
+                                                     status=status)
+            self.endpoint = '/job_templates/%d/notification_templates_%s/' %\
+                                 (jt_id, status)
         self._configuration(kwargs, config_item)
-        return super(Resource, self).create(**kwargs)
+        result = super(Resource, self).create(**kwargs)
+        self.endpoint = old_endpoint
+        return result
 
     @resources.command
-    def modify(self, pk=None, **kwargs):
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify an existing notification template.
 
         Not all required configuration-related fields (required according to
@@ -203,7 +241,7 @@ class Resource(models.Resource):
         To modify unique fields, you must use the primary key for the lookup.
         """
         # Create the resource if needed.
-        if pk is None and kwargs.get('create_on_missing', False):
+        if pk is None and create_on_missing:
             try:
                 self.get(**copy.deepcopy(kwargs))
             except exc.NotFound:
@@ -214,7 +252,8 @@ class Resource(models.Resource):
         notification_type = kwargs.pop('notification_type', None)
         debug.log('Modify everything except notification type and'
                   ' configuration', header='details')
-        part_result = super(Resource, self).modify(pk=pk, **kwargs)
+        part_result = super(Resource, self).\
+                modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
 
         # Modify notification type and configuration
         if notification_type is None or \
@@ -230,7 +269,8 @@ class Resource(models.Resource):
         self._configuration(kwargs, config_item)
         debug.log('Modify notification type and configuration',
                   header='details')
-        result = super(Resource, self).modify(pk=pk, **kwargs)
+        result = super(Resource, self).\
+                modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
 
         # Update 'changed' field to give general changed info
         if 'changed' in result and 'changed' in part_result:
@@ -238,7 +278,7 @@ class Resource(models.Resource):
         return result
 
     @resources.command
-    def delete(self, pk=None, **kwargs):
+    def delete(self, pk=None, fail_on_missing=False, **kwargs):
         """Remove the given notification template.
 
         Note here configuration-related fields like
@@ -249,10 +289,11 @@ class Resource(models.Resource):
         considered a failure; otherwise, a success with no change is reported.
         """
         self._separate(kwargs)
-        return super(Resource, self).delete(pk=pk, **kwargs)
+        return super(Resource, self).\
+                delete(pk=pk, fail_on_missing=fail_on_missing, **kwargs)
 
     @resources.command
-    def list(self, **kwargs):
+    def list(self, all_pages=False, **kwargs):
         """Return a list of notification templates.
 
         Note here configuration-related fields like
@@ -265,7 +306,7 @@ class Resource(models.Resource):
         If no filters are provided, return all results.
         """
         self._separate(kwargs)
-        return super(Resource, self).list(**kwargs)
+        return super(Resource, self).list(all_pages=all_pages, **kwargs)
 
     @resources.command
     def get(self, pk=None, **kwargs):

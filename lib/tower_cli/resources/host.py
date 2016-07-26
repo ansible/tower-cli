@@ -49,6 +49,8 @@ class Resource(models.Resource):
     @click.option('--group', type=types.Related('group'),
                   help='List hosts that are children of this group.')
     def list(self, group=None, **kwargs):
+        """Return a list of hosts.
+        """
         if group:
             kwargs['query'] = (kwargs.get('query', ()) +
                                (('groups__in', group),))
