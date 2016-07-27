@@ -20,6 +20,9 @@ from tower_cli.utils import types, debug
 from tower_cli.api import client
 
 
+PROMPT = '[Type "ASK" to make this field promptable]'
+
+
 class Resource(models.Resource):
     cli_help = 'Manage credentials within Ansible Tower.'
     endpoint = '/credentials/'
@@ -73,8 +76,8 @@ class Resource(models.Resource):
         required=False,
     )
     password = models.Field(
-        help_text='The password. For AWS credentials, the secret key. '
-                  'For Rackspace credentials, the API key.',
+        help_text='%sThe password. For AWS credentials, the secret key. '
+                  'For Rackspace credentials, the API key.' % PROMPT,
         password=True,
         required=False,
     )
@@ -86,8 +89,8 @@ class Resource(models.Resource):
         required=False,
         type=models.File('r'),
     )
-    ssh_key_unlock = models.Field('ssh_key_unlock', password=True,
-                                  required=False)
+    ssh_key_unlock = models.Field(help_text='%sssh_key_unlock' % PROMPT,
+                                  password=True, required=False)
 
     # Extra fields in 3.0
     authorize = models.Field(
@@ -140,8 +143,12 @@ class Resource(models.Resource):
 
     # SSH specific fields.
     become_username = models.Field(required=False, display=False)
-    become_password = models.Field(password=True, required=False)
-    vault_password = models.Field(password=True, required=False)
+    become_password = models.Field(password=True, required=False,
+                                   help_text='%sThe become_password field' %
+                                   PROMPT)
+    vault_password = models.Field(password=True, required=False,
+                                  help_text='%sThe vault_password field' %
+                                  PROMPT)
 
     def create(self, **kwargs):
         if (kwargs.get('user', False) or kwargs.get('team', False) or
