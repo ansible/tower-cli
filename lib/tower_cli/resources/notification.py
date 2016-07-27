@@ -70,73 +70,74 @@ class Resource(models.Resource):
     # notification_configuration-related fields. fields with default values
     # are optional.
     username = models.Field(required=False, display=False,
-                            help_text='[{}]The username.'.format('email'))
+                            help_text='[{0}]The username.'.format('email'))
     sender = models.Field(required=False, display=False,
-                          help_text='[{}]The sender.'.format('email'))
+                          help_text='[{0}]The sender.'.format('email'))
     recipients = models.Field(required=False, display=False, multiple=True,
-                              help_text='[{}]The recipients.'.format('email'))
+                              help_text='[{0}]The recipients.'.format('email'))
     use_tls = models.Field(required=False, display=False, type=click.BOOL,
                            default=False,
-                           help_text='[{}]The tls trigger.'.format('email'))
+                           help_text='[{0}]The tls trigger.'.format('email'))
     host = models.Field(required=False, display=False,
-                        help_text='[{}]The host.'.format('email'))
+                        help_text='[{0}]The host.'.format('email'))
     use_ssl = models.Field(required=False, display=False, type=click.BOOL,
-                           default=False, help_text='[{}]The ssl trigger.'
+                           default=False, help_text='[{0}]The ssl trigger.'
                            .format('email/irc'))
     password = models.Field(required=False, display=False, password=True,
-                            help_text='[{}]The password.'.format('email/irc'))
+                            help_text='[{0}]The password.'.format('email/irc'))
     port = models.Field(required=False, display=False, type=click.INT,
-                        help_text='[{}]The email port.'.format('email/irc'))
+                        help_text='[{0}]The email port.'.format('email/irc'))
     channels = models.Field(required=False, display=False, multiple=True,
-                            help_text='[{}]The channel.'.format('slack'))
+                            help_text='[{0}]The channel.'.format('slack'))
     token = models.Field(required=False, display=False, password=True,
-                         help_text='[{}]The token.'.
+                         help_text='[{0}]The token.'.
                          format('slack/pagerduty/hipchat'))
     account_token = models.Field(required=False, display=False, password=True,
-                                 help_text='[{}]The account token.'.
+                                 help_text='[{0}]The account token.'.
                                  format('twilio'))
     from_number = models.Field(required=False, display=False,
-                               help_text='[{}]The source phone number.'.
+                               help_text='[{0}]The source phone number.'.
                                format('twilio'))
     to_numbers = models.Field(required=False, display=False, multiple=True,
-                              help_text='[{}]The destination SMS numbers.'.
+                              help_text='[{0}]The destination SMS numbers.'.
                               format('twilio'))
     account_sid = models.Field(required=False, display=False,
-                               help_text='[{}The account sid.'.
+                               help_text='[{0}The account sid.'.
                                format('twilio'))
     subdomain = models.Field(required=False, display=False,
-                             help_text='[{}]The subdomain.'.
+                             help_text='[{0}]The subdomain.'.
                              format('pagerduty'))
     service_key = models.Field(required=False, display=False,
-                               help_text='[{}]The API service/integration'
+                               help_text='[{0}]The API service/integration'
                                ' key.'.format('pagerduty'))
     client_name = models.Field(required=False, display=False,
-                               help_text='[{}]The client identifier.'.
+                               help_text='[{0}]The client identifier.'.
                                format('pagerduty'))
     message_from = models.Field(required=False, display=False,
-                                help_text='[{}]The label to be shown with '
+                                help_text='[{0}]The label to be shown with '
                                 'notification.'.format('hipchat'))
     api_url = models.Field(required=False, display=False,
-                           help_text='[{}]The api url.'.format('hipchat'))
+                           help_text='[{0}]The api url.'.format('hipchat'))
     color = models.Field(required=False, display=False,
                          type=click.Choice(['yellow', 'green', 'red', 'purple',
                                             'gray', 'random']),
-                         help_text='[{}]The notification color.'.
+                         help_text='[{0}]The notification color.'.
                          format('hipchat'))
     notify = models.Field(required=False, display=False, default=False,
-                          help_text='[{}]The notify channel trigger.'.
+                          help_text='[{0}]The notify channel trigger.'.
                           format('hipchat'))
     url = models.Field(required=False, display=False,
-                       help_text='[{}]The target URL.'.format('webhook'))
+                       help_text='[{0}]The target URL.'.format('webhook'))
     headers = models.Field(required=False, display=False,
                            type=models.File('r', lazy=True),
-                           help_text='[{}]The http headers.'.format('webhook'))
+                           help_text='[{0}]The http headers.'.
+                           format('webhook'))
     server = models.Field(required=False, display=False,
-                          help_text='[{}]Server address.'.format('irc'))
+                          help_text='[{0}]Server address.'.format('irc'))
     nickname = models.Field(required=False, display=False,
-                            help_text='[{}]The irc nick.'.format('irc'))
+                            help_text='[{0}]The irc nick.'.format('irc'))
     target = models.Field(required=False, display=False,
-                          help_text='[{}]The distination channels or users.'
+                          help_text='[{0}]The distination channels or users.'
                           .format('irc'))
 
     def _separate(self, kwargs):
@@ -221,7 +222,7 @@ class Resource(models.Resource):
                     return jt.associate_notification(jt_id, nt_id,
                                                      status=status)
             self.endpoint = '/job_templates/%d/notification_templates_%s/' %\
-                                 (jt_id, status)
+                            (jt_id, status)
         self._configuration(kwargs, config_item)
         result = super(Resource, self).create(**kwargs)
         self.endpoint = old_endpoint
@@ -253,13 +254,13 @@ class Resource(models.Resource):
         debug.log('Modify everything except notification type and'
                   ' configuration', header='details')
         part_result = super(Resource, self).\
-                modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
+            modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
 
         # Modify notification type and configuration
         if notification_type is None or \
            notification_type == part_result['notification_type']:
             for item in part_result['notification_configuration']:
-                if item not in config_item:
+                if item not in config_item or not config_item[item]:
                     config_item[item] = \
                             part_result['notification_configuration'][item]
         if notification_type is None:
@@ -270,7 +271,7 @@ class Resource(models.Resource):
         debug.log('Modify notification type and configuration',
                   header='details')
         result = super(Resource, self).\
-                modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
+            modify(pk=pk, create_on_missing=create_on_missing, **kwargs)
 
         # Update 'changed' field to give general changed info
         if 'changed' in result and 'changed' in part_result:
@@ -290,7 +291,7 @@ class Resource(models.Resource):
         """
         self._separate(kwargs)
         return super(Resource, self).\
-                delete(pk=pk, fail_on_missing=fail_on_missing, **kwargs)
+            delete(pk=pk, fail_on_missing=fail_on_missing, **kwargs)
 
     @resources.command
     def list(self, all_pages=False, **kwargs):
