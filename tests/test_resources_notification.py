@@ -183,3 +183,45 @@ class NotificationTests(unittest.TestCase):
                                 notification_type='email', token='hi')
             self.assertEqual(cm.exception.message,
                              'Required config field username not provided.')
+
+    def test_notification_configuration_ignore_configuration_options(self):
+        """Establish that --notification-configuration option would ignore
+        any configuration-related options.
+        """
+        nc = """
+        {
+            "channels": [
+                "ho",
+                "ha",
+                "yoho"
+            ],
+            "token": "jingobells"
+        }
+        """
+        with client.test_mode as t:
+            t.register_json(self.endpoint, {'count': 0, 'results': []},
+                            name='hey')
+            t.register_json(self.endpoint, {'id': 19}, method='POST')
+            self.res.create(name='hey', notification_type='slack',
+                            notification_configuration=nc, username='a',
+                            sender='b')
+            self.assertEqual(json.loads(t.requests[1].body)
+                             ['notification_configuration'], json.loads(nc))
+
+    def test_incorrect_json_format(self):
+        """Establish that incorrect json format would trigger exception.
+        """
+        nc = """
+        {
+            "channels": [
+                "ho",
+                "ha",
+                "yoho"
+            ],
+            "token": "jingobells"
+        """
+        with self.assertRaises(exc.TowerCLIError) as cm:
+            self.res.create(name='hey', notification_type='slack',
+                            notification_configuration=nc)
+        self.assertEqual(cm.exception.message,
+                         'Provided json file format invalid. Please recheck.')
