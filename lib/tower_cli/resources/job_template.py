@@ -134,22 +134,26 @@ class Resource(models.Resource):
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
-    @click.option('--notification', type=types.Related('label'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
     @click.option('--status', type=click.Choice(['any', 'error', 'success']),
                   required=False, default='any', help='Specify job run status'
                   ' of job template to relate to.')
-    def associate_notification(self, job_template, notification, status):
+    def associate_notification_template(self, job_template,
+                                        notification_template, status):
         """Associate a notification template from this job template."""
         return self._assoc('notification_templates_%s' % status,
-                           job_template, notification)
+                           job_template, notification_template)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
-    @click.option('--notification', type=types.Related('label'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
     @click.option('--status', type=click.Choice(['any', 'error', 'success']),
                   required=False, default='any', help='Specify job run status'
                   ' of job template to relate to.')
-    def disassociate_notification(self, job_template, notification, status):
+    def disassociate_notification_template(self, job_template,
+                                           notification_template, status):
         """Disassociate a notification template from this job template."""
         return self._disassoc('notification_templates_%s' % status,
-                              job_template, notification)
+                              job_template, notification_template)

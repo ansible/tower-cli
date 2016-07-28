@@ -6,16 +6,13 @@ a successful/unsuccessful job run, all its related notification templates
 will send out notifications to corresponding notification receiver, indicating
 the status of job run.
 
-Note although tower-cli uses `notification` as resource name, it actually refers
-to notification templates and related operations.
- 
 ## Managing Notification Templates with tower-cli
 
 To see the commands available for notification templates, see 
-`tower-cli notification --help`. Within a specific command, get the help 
-text with `tower-cli notification <command> --help`.
+`tower-cli notification_template --help`. Within a specific command, get the help 
+text with `tower-cli notification_template <command> --help`.
 
-The arguments for all notification commands follow the same pattern, although
+The arguments for all notification template commands follow the same pattern, although
 not all arguments are mandatory for all commands. The structure follows
 the following pattern:
 
@@ -53,8 +50,9 @@ destination this option is used for. When creating a new notification template w
 destination type (controlled by `--notification-type` option), *all non-default* related 
 configuration-related options must be provided.
 * When modifying an existing notification template, not every configuration-related
-option has to be provided. But if this modification modifies destination type, *all non-default* 
-related configuration-related options must be provided.
+option has to be provided(but encryped fields must, even you are not changing it!). But if 
+this modification modifies destination type, *all non-default* related configuration-related 
+options must be provided.
 * `--notification-configuration` option provides a json file specifying the configuration
 details. All other configuration-related options will be ignored if `--notification-configuration``
 is provided.
@@ -63,26 +61,26 @@ is provided.
 
 ```bash
 # Create a notification template in isolation.
-tower-cli notification create --name foo --description bar --notification-type slack --channels a --channels b --token hey
+tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey
 
 # Create a notification template under an existing job template.
-tower-cli notification create --name foo --description bar --notification-type slack --channels a --channels b --token hey --job-template 5
+tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey --job-template 5
 
 # Get exactly one notification template.
-tower-cli notification get --name foo
+tower-cli notification_template get --name foo
 
 # Get a list of notification templates under certain criteria.
-tower-cli notification list --notification-type irc
+tower-cli notification_template list --notification-type irc
 
 # Modify an existing notification.
-tower-cli notification modify --description foo --token hi 17
+tower-cli notification_template modify --description foo --token hi 17
 
 # Delete an existing notification template.
-tower-cli notification delete --name foo
+tower-cli notification_template delete --name foo
 
 # Associate a job template with an existing notification template.
-tower-cli job_template associate_notification --job-template 5 --notification 3
+tower-cli job_template associate_notification_template --job-template 5 --notification-template 3
 
 # Disassociate a job template with an existing notification template.
-tower-cli job_template disassociate_notification --job-template 5 --notification 3
+tower-cli job_template disassociate_notification_template --job-template 5 --notification-template 3
 ```

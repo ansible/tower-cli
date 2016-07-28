@@ -23,11 +23,11 @@ import json
 import copy
 
 
-class NotificationTests(unittest.TestCase):
+class NotificationTemplateTests(unittest.TestCase):
     """A set of tests for commands operating on the notification template
     """
     def setUp(self):
-        self.res = tower_cli.get_resource('notification')
+        self.res = tower_cli.get_resource('notification_template')
         self.endpoint = '/notification_templates/'
 
     def test_create_in_isolation(self):
@@ -225,3 +225,24 @@ class NotificationTests(unittest.TestCase):
                             notification_configuration=nc)
         self.assertEqual(cm.exception.message,
                          'Provided json file format invalid. Please recheck.')
+
+    def test_encrypted_fields_must_be_given(self):
+        """Establish that encrypted configuration fields must be provided
+        even in modification.
+        """
+        nt = {
+            'id': 17,
+            'name': 'foo',
+            'notification_type': 'slack',
+            'notification_configuration': {
+                'channels': ['a', 'b'],
+                'token': '$encrypted$'
+            },
+            'description': ''
+        }
+        with client.test_mode as t:
+            t.register_json(self.endpoint + '12/', nt)
+            with self.assertRaises(exc.TowerCLIError) as cm:
+                self.res.modify(pk=12, channels=('1',))
+            self.assertEqual(cm.exception.message,
+                             'Required config field token not provided.')

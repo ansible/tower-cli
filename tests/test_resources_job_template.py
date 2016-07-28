@@ -156,7 +156,7 @@ class TemplateTests(unittest.TestCase):
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 84}))
 
-    def test_associate_notification(self):
+    def test_associate_notification_template(self):
         """Establish that a job template should be able to associate itself
         with an existing notification template.
         """
@@ -165,11 +165,11 @@ class TemplateTests(unittest.TestCase):
                             '?id=3', {'count': 0, 'results': []})
             t.register_json('/job_templates/5/notification_templates_any/',
                             {}, method='POST')
-            self.res.associate_notification(5, 3, 'any')
+            self.res.associate_notification_template(5, 3, 'any')
             self.assertEqual(t.requests[1].body,
                              json.dumps({'associate': True, 'id': 3}))
 
-    def test_disassociate_notification(self):
+    def test_disassociate_notification_template(self):
         """Establish that a job template should be able to disassociate itself
         from an associated notification template.
         """
@@ -178,6 +178,6 @@ class TemplateTests(unittest.TestCase):
                             '?id=3', {'count': 1, 'results': [{'id': 3}]})
             t.register_json('/job_templates/5/notification_templates_any/',
                             {}, method='POST')
-            self.res.disassociate_notification(5, 3, 'any')
+            self.res.disassociate_notification_template(5, 3, 'any')
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 3}))

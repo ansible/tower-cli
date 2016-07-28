@@ -22,7 +22,7 @@ from tower_cli.utils import types, debug, exceptions as exc
 
 
 class Resource(models.Resource):
-    cli_help = 'Manage notifications within Ansible Tower.'
+    cli_help = 'Manage notification templates within Ansible Tower.'
     endpoint = '/notification_templates/'
 
     # Actual fields
@@ -66,6 +66,7 @@ class Resource(models.Resource):
 
     # Fields which are expected to be json files.
     json_fields = ['notification_configuration', 'headers']
+    encrypted_fields = ['password', 'token', 'account_token']
 
     # notification_configuration-related fields. fields with default values
     # are optional.
@@ -261,8 +262,10 @@ class Resource(models.Resource):
            notification_type == part_result['notification_type']:
             for item in part_result['notification_configuration']:
                 if item not in config_item or not config_item[item]:
-                    config_item[item] = \
-                            part_result['notification_configuration'][item]
+                    to_add = part_result['notification_configuration'][item]
+                    if not (to_add == '$encrypted$' and
+                            item in Resource.encrypted_fields):
+                        config_item[item] = to_add
         if notification_type is None:
             kwargs['notification_type'] = part_result['notification_type']
         else:
