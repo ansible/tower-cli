@@ -28,15 +28,15 @@ from tower_cli.conf import settings
 from copy import copy
 
 
+ACTOR_FIELDS = ['user', 'team']
+
 RESOURCE_FIELDS = [
-    'user', 'team', 'credential', 'inventory', 'job_template', 'credential',
-    'organization', 'project', 'type'
-]
+    'target_team', 'credential', 'inventory', 'job_template', 'credential',
+    'organization', 'project']
 
 ROLE_TYPES = [
     'admin', 'read', 'member', 'owner', 'execute', 'adhoc', 'update',
-    'use', 'auditor'
-]
+    'use', 'auditor']
 
 
 class Resource(models.Resource):
@@ -51,8 +51,10 @@ class Resource(models.Resource):
 
     user = models.Field(type=types.Related('user'),
                         required=False, display=True)
-    team = models.Field(type=types.Related('team'),
-                        required=False, display=True)
+    team = models.Field(
+        type=types.Related('team'), required=False, display=True,
+        help_text='The team that receives the permissions '
+                  'specified by the role')
     type = models.Field(
         required=False, display=True, type=click.Choice(ROLE_TYPES),
         help_text='The type of permission that the role controls.')
@@ -64,6 +66,9 @@ class Resource(models.Resource):
 
     # These are purely resource fields, and are always inputs,
     # but are only selectively set as output columns
+    target_team = models.Field(
+        type=types.Related('team'), required=False, display=False,
+        help_text='The team that the role acts on.')
     credential = models.Field(type=types.Related('credential'),
                               required=False, display=False)
     inventory = models.Field(type=types.Related('inventory'),
@@ -101,40 +106,44 @@ class Resource(models.Resource):
         obj - the role grantee
         res - the resource that the role applies to
         """
-        errors = ''
+        errors = []
         if not data.get('type', None) and 'type' in fail_on:
-            errors = 'You must provide a role type to use this command.'
+            errors += ['You must provide a role type to use this command.']
 
         # Find the grantee, and remove them from resource_list
-        resource_list = copy(data)
-        if data.get('user', False):
-            obj = resource_list.pop('user')
-            obj_type = 'user'
-        elif data.get('team', False):
-            obj = resource_list.pop('team')
-            obj_type = 'team'
-        else:
-            if 'obj' in fail_on:
-                errors = '\n'.join([errors, 'You must specify either user or '
-                                            'team to use this command.'])
-            obj = None
-            obj_type = None
+        obj = None
+        obj_type = None
+        for fd in ACTOR_FIELDS:
+            if data.get(fd, False):
+                if not obj:
+                    obj = data[fd]
+                    obj_type = fd
+                else:
+                    errors += ['You can not give a role to a user '
+                               'and team at the same time.']
+        if not obj and 'obj' in fail_on:
+            errors += ['You must specify either user or '
+                       'team to use this command.']
 
         # Out of the resource list, pick out available valid resource field
         res = None
         res_type = None
-        for fd in resource_list:
-            if fd not in RESOURCE_FIELDS:
-                continue
-            if resource_list[fd] is not None and fd != 'type':
-                res = resource_list[fd]
-                res_type = fd
+        for fd in RESOURCE_FIELDS:
+            if data.get(fd, False):
+                if not res:
+                    res = data[fd]
+                    res_type = fd
+                    if res_type == 'target_team':
+                        res_type = 'team'
+                else:
+                    errors += ['You can only give a role to one '
+                               'type of resource at a time.']
         if not res and 'res' in fail_on:
-            errors = '\n'.join([errors, 'You must specify a target resource '
-                                        'to use this command.'])
+            errors += ['You must specify a target resource '
+                       'to use this command.']
 
         if errors:
-            raise exc.UsageError(errors)
+            raise exc.UsageError("\n".join(errors))
         return obj, obj_type, res, res_type
 
     @classmethod
@@ -145,36 +154,28 @@ class Resource(models.Resource):
         Also changes the format of `type` in data to what the server
         expects for the role model, as it exists in the database."""
         obj, obj_type, res, res_type = cls.obj_res(in_data, fail_on=[])
-        data = copy(in_data)
+        print ' data: ' + str([obj, obj_type, res, res_type])
+        data = {}
         if obj and 'obj' in ignore:
-            data.pop(obj_type, None)
             obj = None
-            obj_type = None
         if res and 'res' in ignore:
-            data.pop(res_type, None)
             res = None
-            res_type = None
         # Input fields are not actually present on role model, and all have
         # to be managed as individual special-cases
         if obj and obj_type == 'user':
             data['members__in'] = obj
-            data.pop(obj_type)
         if obj and obj_type == 'team':
             endpoint = '%s/%s/roles/' % (cls.pluralize(obj_type), obj)
-            data.pop(obj_type)
             if res is not None:
                 # For teams, this is the best lookup we can do
                 #  without making the addional request for its member_role
                 data['object_id'] = res
-                data.pop(res_type)
         elif res:
             endpoint = '%s/%s/object_roles/' % (cls.pluralize(res_type), res)
-            data.pop(res_type)
         else:
             endpoint = '/roles/'
-        if data.get('type', False):
-            data['role_field'] = '%s_role' % data['type'].lower()
-            data.pop('type')
+        if in_data.get('type', False):
+            data['role_field'] = '%s_role' % in_data['type'].lower()
         return data, endpoint
 
     @staticmethod
@@ -215,7 +216,7 @@ class Resource(models.Resource):
             data[res_type] = res
             self.set_display_columns(
                 set_false=['team' if obj_type == 'user' else 'user'],
-                set_true=[res_type])
+                set_true=['target_team' if res_type == 'team' else res_type])
         else:
             self.set_display_columns(
                 set_false=['user', 'team'],
@@ -277,7 +278,8 @@ class Resource(models.Resource):
 
     # Command method for roles
     # TODO: write commands to see access_list for resource
-    @resources.command(use_fields_as_options=RESOURCE_FIELDS)
+    @resources.command(
+        use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     def list(self, **kwargs):
         """Return a list of roles."""
         data, self.endpoint = self.data_endpoint(kwargs)
@@ -287,7 +289,8 @@ class Resource(models.Resource):
         self.configure_display(r)
         return r
 
-    @resources.command(use_fields_as_options=RESOURCE_FIELDS)
+    @resources.command(
+        use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     def get(self, pk=None, **kwargs):
         """Get information about a role."""
         if kwargs.pop('include_debug_header', True):
@@ -299,7 +302,8 @@ class Resource(models.Resource):
         self.configure_display(item_dict)
         return item_dict
 
-    @resources.command(use_fields_as_options=RESOURCE_FIELDS)
+    @resources.command(
+        use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     @click.option('--fail-on-found', default=False,
                   show_default=True, type=bool, is_flag=True,
                   help='If used, return an error if the user already has the '
@@ -311,7 +315,8 @@ class Resource(models.Resource):
         3) A user or a team to add to the role"""
         return self.role_write(fail_on_found=fail_on_found, **kwargs)
 
-    @resources.command(use_fields_as_options=RESOURCE_FIELDS)
+    @resources.command(
+        use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     @click.option('--fail-on-found', default=False,
                   show_default=True, type=bool, is_flag=True,
                   help='If used, return an error if the user is already '

@@ -82,13 +82,14 @@ tower-cli role revoke --type 'use' --team 'test_team' --inventory 'test_inventor
 
 For assigning users to teams and organizations, include the team or
 organization flag, and it will be acted on as the resource. Note that teams
-can be either the resource or the role grantee, depending on the context.
+can be either the resource or the role grantee, depending of whether the
+`--team` or the `--target-team` flag is used.
 
 The following example appoints `test_user` to the member role of a team
 and of an organization.
 
 ```bash
-tower-cli role grant --user 'test_user' --team 'test_team' --type 'member'
+tower-cli role grant --user 'test_user' ---target-team 'test_team' --type 'member'
 tower-cli role grant --organization 'Default' --user 'test_user' --type 'member'
 ```
 
