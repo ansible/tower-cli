@@ -1,6 +1,24 @@
 Release History
 ===============
 
+2.4.0
+-----
+
+- Added notification templates
+- Added labels
+- Added description display option 
+- Added deprecation warnings
+- Help text upgrade
+- Give indication of "changed" apart from color
+- New credential fields to support openstack-v2, networking and azure
+- New options for inventory source/group. Add implicit resource inventory
+  script.
+- credentials (no longer require user/team)
+- Added support for system auditors
+- projects (do not post to organizations/N/projects)
+- prompt-for JT fields + job launch options (allow blank inventory too)
+- Update the POST protocol for associate and disassociate actions
+
 2.3.2 (2016-07-21)
 ------------------
 
