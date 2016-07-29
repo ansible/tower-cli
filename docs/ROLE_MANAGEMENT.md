@@ -32,7 +32,7 @@ what the possible actions are.
 ### Basic Operations
 
 The primary use case for roles is adding or removing users and teams from
-roles. In the following example, a user is added to the project use role.
+roles. In the following example, a user is added to the project "use" role.
 
 ```
 tower-cli role grant --type use --user test_user --project test_project
@@ -41,6 +41,7 @@ tower-cli role grant --type use --user test_user --project test_project
 In the above command "test_user" is the username of a user to receive the
 new permission, "test_project" is the name of the project they are receiving
 permission for, and "use" is the type of permission they are receiving.
+Specifically, this allows test_user to use test_project in a job template.
 
 In a similar fashion, to remove the user from that role:
 
@@ -48,7 +49,7 @@ In a similar fashion, to remove the user from that role:
 tower-cli role revoke --type use --user test_user --project test_project
 ```
 
-To list all of the roles on that project:
+To list the roles on that project:
 
 ```
 tower-cli role list --project test_project
@@ -93,5 +94,5 @@ tower-cli role grant --user 'test_user' ---target-team 'test_team' --type 'membe
 tower-cli role grant --organization 'Default' --user 'test_user' --type 'member'
 ```
 
-These commands are also redundant with the tower-cli organization and team
+These commands are redundant with the tower-cli organization and team
 `associate` and `disassociate` commands.

@@ -25,8 +25,6 @@ from tower_cli.utils import (
 )
 from tower_cli.conf import settings
 
-from copy import copy
-
 
 ACTOR_FIELDS = ['user', 'team']
 
@@ -101,7 +99,7 @@ class Resource(models.Resource):
     @staticmethod
     def obj_res(data, fail_on=['type', 'obj', 'res']):
         """
-        Given some input data,
+        Given some CLI input data,
         Returns the following and their types:
         obj - the role grantee
         res - the resource that the role applies to
@@ -121,6 +119,7 @@ class Resource(models.Resource):
                 else:
                     errors += ['You can not give a role to a user '
                                'and team at the same time.']
+                    break
         if not obj and 'obj' in fail_on:
             errors += ['You must specify either user or '
                        'team to use this command.']
@@ -138,6 +137,7 @@ class Resource(models.Resource):
                 else:
                     errors += ['You can only give a role to one '
                                'type of resource at a time.']
+                    break
         if not res and 'res' in fail_on:
             errors += ['You must specify a target resource '
                        'to use this command.']
@@ -148,17 +148,19 @@ class Resource(models.Resource):
 
     @classmethod
     def data_endpoint(cls, in_data, ignore=[]):
-        """Removes the resource field from `data` and sets the endpoint to
-        the roles subendpoint for that resource.
+        """
+        Converts a set of CLI input arguments, `in_data`, into
+        request data and an endpoint that can be used to look
+        up a role or list of roles.
 
         Also changes the format of `type` in data to what the server
-        expects for the role model, as it exists in the database."""
+        expects for the role model, as it exists in the database.
+        """
         obj, obj_type, res, res_type = cls.obj_res(in_data, fail_on=[])
-        print ' data: ' + str([obj, obj_type, res, res_type])
         data = {}
-        if obj and 'obj' in ignore:
+        if 'obj' in ignore:
             obj = None
-        if res and 'res' in ignore:
+        if 'res' in ignore:
             res = None
         # Input fields are not actually present on role model, and all have
         # to be managed as individual special-cases
@@ -266,7 +268,7 @@ class Resource(models.Resource):
                 return role_data
 
         # Add or remove the user/team to the role
-        debug.log('Attempting to %s the %s from this role.' % (
+        debug.log('Attempting to %s the %s in this role.' % (
             'remove' if disassociate else 'add', obj_type), header='details')
         post_data = {'id': role_id}
         if disassociate:

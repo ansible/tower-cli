@@ -54,11 +54,17 @@ class RoleUnitTests(unittest.TestCase):
         self.assertEqual(res, 5)
         self.assertEqual(res_type, 'inventory')
 
-    def test_obj_res_errors(self):
+    def test_obj_res_missing_errors(self):
         """Testing obj_res method, ability to produce errors here."""
         with self.assertRaises(exc.UsageError):
             obj, obj_type, res, res_type = Role.obj_res(
                 {"inventory": None, "credential": None})
+
+    def test_obj_res_too_many_errors(self):
+        """Testing obj_res method, ability to duplicate errors."""
+        with self.assertRaises(exc.UsageError):
+            obj, obj_type, res, res_type = Role.obj_res(
+                {"inventory": 1, "target_team": 2, "user": 3, "team": 5})
 
     def test_populate_resource_columns(self):
         """Test function that fills in extra columns"""
@@ -73,14 +79,6 @@ class RoleUnitTests(unittest.TestCase):
             "resource_type_display_name": "Organization"}
         Role.populate_resource_columns(normal_output)
         self.assertIn('resource_name', normal_output)
-
-    def test_data_endpoint_team_ignore(self):
-        """Translation of input args to lookup args, ignoring team"""
-        kwargs = {'team': 2, 'type': 'admin', 'inventory': 5}
-        data, endpoint = Role.data_endpoint(kwargs, ignore=['obj'])
-        self.assertEqual(endpoint, 'inventories/5/object_roles/')
-        # test that team was ignored
-        self.assertNotIn('team', data)
 
     def test_data_endpoint_team_no_res(self):
         """Translation of input args to lookup args, using team"""
