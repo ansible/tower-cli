@@ -17,7 +17,6 @@ from __future__ import absolute_import, unicode_literals
 from copy import copy
 from getpass import getpass
 from distutils.version import LooseVersion
-from ast import literal_eval
 
 import click
 
@@ -78,9 +77,11 @@ class Resource(models.ExeResource):
         '--credential', required=False, type=types.Related('credential'),
         help='Specify machine credential for job template to run.'
     )
-    def launch(self, job_template=None, tags=None, monitor=False, timeout=None,
-               no_input=True, extra_vars=None, limit=None, job_type=None,
-               inventory=None, credential=None, **kwargs):
+    @click.option('--use-job-endpoint', required=False, default=False,
+                  is_flag=True, help='A flag that disable launching jobs'
+                  ' from job template when set.')
+    def launch(self, job_template=None, monitor=False, timeout=None,
+               no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately starts it, and
@@ -89,6 +90,8 @@ class Resource(models.ExeResource):
         # Get the job template from Ansible Tower.
         # This is used as the baseline for starting the job.
 
+        tags = kwargs.get('tags', None)
+        use_job_endpoint = kwargs.pop('use_job_endpoint', False)
         jt_resource = get_resource('job_template')
         jt = jt_resource.get(job_template)
 
@@ -140,7 +143,7 @@ class Resource(models.ExeResource):
         for resource in PROMPT_LIST:
             if data.pop('ask_' + resource + '_on_launch', False) \
                and not no_input:
-                resource_object = literal_eval(resource)
+                resource_object = kwargs.get(resource, None)
                 if type(resource_object) == types.Related:
                     resource_class = get_resource(resource)
                     resource_object = resource_class.get(resource).\
@@ -167,7 +170,7 @@ class Resource(models.ExeResource):
 
         # Create the new job in Ansible Tower.
         start_data = {}
-        if supports_job_template_launch:
+        if supports_job_template_launch and not use_job_endpoint:
             endpoint = '/job_templates/%d/launch/' % jt['id']
             if 'extra_vars' in data and len(data['extra_vars']) > 0:
                 start_data['extra_vars'] = data['extra_vars']
@@ -201,7 +204,7 @@ class Resource(models.ExeResource):
 
         # If this used the /job_template/N/launch/ route, get the job
         # ID from the result.
-        if supports_job_template_launch:
+        if supports_job_template_launch and not use_job_endpoint:
             job_id = job_started.json()['job']
 
         # Get some information about the running job to print
