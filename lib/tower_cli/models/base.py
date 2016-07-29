@@ -232,7 +232,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                             else None,
                             help=field.help,
                             type=field.type,
-                            show_default=field.show_default
+                            show_default=field.show_default,
+                            multiple=field.multiple
                         )(new_method)
 
                 # Make a click Command instance using this method

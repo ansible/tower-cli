@@ -151,6 +151,8 @@ class Resource(models.Resource):
                                   PROMPT)
 
     def create(self, **kwargs):
+        """Create a credential.
+        """
         if (kwargs.get('user', False) or kwargs.get('team', False) or
                 kwargs.get('organization', False)):
             debug.log('Checking Project API Details.', header='details')
