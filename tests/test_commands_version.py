@@ -45,7 +45,7 @@ class VersionTests(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertEqual(
                 result.output.strip(),
-                'Ansible Tower 4.21\nTower CLI %s' % tower_cli.__version__,
+                'Tower CLI %s\nAnsible Tower 4.21' % tower_cli.__version__,
             )
 
     def test_cannot_connect(self):
