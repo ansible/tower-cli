@@ -29,32 +29,35 @@ def log(s, header='', file=sys.stderr, nl=1, **kwargs):
     if not settings.verbose:
         return
 
-    # Construct resulting string to stderr.
-    word_arr = s.split(' ')
-    result = []
+    # Construct multi-line string to stderr if header is provided.
     if header:
+        word_arr = s.split(' ')
+        multi = []
         word_arr.insert(0, '%s:' % header.upper())
-    i = 0
-    while i < len(word_arr):
-        to_add = ['***']
-        count = 3
-        while count <= 79:
-            count += len(word_arr[i]) + 1
-            if count <= 79:
-                to_add.append(word_arr[i])
-                i += 1
-                if i == len(word_arr):
-                    break
-        if i != len(word_arr):
-            count -= len(word_arr[i]) + 1
-        to_add.append('*' * (78 - count))
-        result.append(' '.join(to_add))
+        i = 0
+        while i < len(word_arr):
+            to_add = ['***']
+            count = 3
+            while count <= 79:
+                count += len(word_arr[i]) + 1
+                if count <= 79:
+                    to_add.append(word_arr[i])
+                    i += 1
+                    if i == len(word_arr):
+                        break
+            if i != len(word_arr):
+                count -= len(word_arr[i]) + 1
+            to_add.append('*' * (78 - count))
+            multi.append(' '.join(to_add))
+        s = '\n'.join(multi)
+        lines = len(multi)
+    else:
+        lines = 1
 
-    # If `nl` is an int greater than 1, add the appropriate newlines
-    # to the output.
-    if isinstance(nl, int) and nl > 1:
-        for i in range(nl - 1):
-            result.append('')
+    # If `nl` is an int greater than the number of rows of a message,
+    # add the appropriate newlines to the output.
+    if isinstance(nl, int) and nl > lines:
+        s += '\n' * (nl - lines)
 
     # Output to stderr.
-    return secho('\n'.join(result), file=file, **kwargs)
+    return secho(s, file=file, **kwargs)
