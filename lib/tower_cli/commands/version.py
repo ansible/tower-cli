@@ -28,6 +28,9 @@ from tower_cli.utils.exceptions import TowerCLIError
 def version():
     """Display version information."""
 
+    # Print out the current version of Tower CLI.
+    click.echo('Tower CLI %s' % __version__)
+
     # Attempt to connect to the Ansible Tower server.
     # If we succeed, print a version; if not, generate a failure.
     try:
@@ -36,6 +39,3 @@ def version():
     except RequestException as ex:
         raise TowerCLIError('Could not connect to Ansible Tower.\n%s' %
                             six.text_type(ex))
-
-    # Print out the current version of Tower CLI.
-    click.echo('Tower CLI %s' % __version__)

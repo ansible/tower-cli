@@ -21,6 +21,7 @@ import sys
 import click
 
 import tower_cli
+from tower_cli import __version__
 from tower_cli.utils import secho
 
 
@@ -74,7 +75,16 @@ class TowerCLI(click.MultiCommand):
         secho('No such command: %s.' % name, fg='red', bold=True)
         sys.exit(2)
 
+    def invoke(self, ctx):
+        if ctx.params.get('version', False):
+            click.echo('Tower CLI %s' % __version__)
+        else:
+            return super(TowerCLI, self).invoke(ctx)
+
 
 if __name__ == '__main__':
-    cli = TowerCLI()
+    cli = TowerCLI(
+        params=[click.Option(param_decls=['--version'], is_flag=True,
+                             help='Display tower-cli version.')],
+    )
     cli()
