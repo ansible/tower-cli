@@ -29,7 +29,7 @@ from tower_cli.conf import settings
 ACTOR_FIELDS = ['user', 'team']
 
 RESOURCE_FIELDS = [
-    'target_team', 'credential', 'inventory', 'job_template', 'credential',
+    'target_team', 'credential', 'inventory', 'job_template',
     'organization', 'project']
 
 ROLE_TYPES = [
