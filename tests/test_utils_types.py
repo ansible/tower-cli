@@ -48,6 +48,29 @@ class FileTests(unittest.TestCase):
             convert.assert_called_with(os.path.expanduser('~/my_file.txt'),
                                        'myfile', None)
 
+    def test_variables_file(self):
+        """Establish that file with variables is opened in this type."""
+        f = types.Variables()
+        with mock.patch.object(click.File, 'convert') as convert:
+            convert.return_value = "foo: bar"
+
+            foo_converted = f.convert('@foobar.yml', 'myfile', None)
+
+            convert.assert_called_once_with("foobar.yml", 'myfile', None)
+            self.assertEqual(foo_converted, 'foo: bar')
+
+    def test_variables_no_file(self):
+        """Establish that plain variables are passed as-is."""
+        f = types.Variables()
+        foo_converted = f.convert('foo: barz', 'myfile', None)
+        self.assertEqual(foo_converted, 'foo: barz')
+
+    def test_variables_backup_option(self):
+        """Establish that non-string input is protected against."""
+        f = types.Variables()
+        foo_converted = f.convert(54, 'myfile', None)
+        self.assertEqual(foo_converted, 54)
+
 
 class MappedChoiceTests(unittest.TestCase):
     """A set of tests to establish that the MappedChoice class works in the
