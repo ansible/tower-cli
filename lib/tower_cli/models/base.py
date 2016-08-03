@@ -423,6 +423,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 ))
                 if page:
                     response += '(Page %d of %d.)' % (page, total_pages)
+                if payload.get('changed', False):
+                    response = 'Resource changed.\n' + response
                 return response
 
         return Subcommand(resource=self)
