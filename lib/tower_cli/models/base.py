@@ -226,11 +226,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                             args.insert(0, field.key)
 
                         # Apply the option to the method.
+                        option_help = field.help
+                        if field.required:
+                            option_help = '[REQUIRED] ' + option_help
                         click.option(
                             *args,
                             default=field.default if not ignore_defaults
                             else None,
-                            help=field.help,
+                            help=option_help,
                             type=field.type,
                             show_default=field.show_default,
                             multiple=field.multiple
