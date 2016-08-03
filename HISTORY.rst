@@ -20,6 +20,7 @@ Release History
 - Update the POST protocol for associate and disassociate actions
 - New job launch option for backwards compatibility
 - New tower-cli option to display tower-cli version
+- Enhanced debug log format (support multi-line debug log)
 
 2.3.2 (2016-07-21)
 ------------------
