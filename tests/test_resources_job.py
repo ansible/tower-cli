@@ -319,6 +319,26 @@ class LaunchTests(unittest.TestCase):
                 getpass.assert_called_once_with('Password for foo: ')
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
+    def test_launch_with_use_job_endpoint_set(self):
+        """Establish that launching a job with `--use-job-endpoint` set would
+        launch job through /jobs/\d/ endpoint regardless of the existance of
+        /job_templates/\d/launch/ endpoint
+        """
+        jt = {
+            'related': {
+                'launch': '/api/v1/job_templates/1/launch/'
+            },
+            'id': 1,
+            'name': 'demo'
+        }
+        with client.test_mode as t:
+            t.register_json('/job_templates/1/', jt)
+            t.register_json('/jobs/16/', {})
+            t.register_json('/jobs/', {'id': 16}, method='POST')
+            t.register_json('/jobs/16/start/', {})
+            t.register_json('/jobs/16/start/', {}, method='POST')
+            self.res.launch(job_template=1, use_job_endpoint=True)
+
 
 class StatusTests(unittest.TestCase):
     """A set of tests to establish that the job status command works in the
