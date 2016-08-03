@@ -142,15 +142,16 @@ class Resource(models.ExeResource):
         modified = set()
         for resource in PROMPT_LIST:
             if data.pop('ask_' + resource + '_on_launch', False) \
-               and not no_input:
+               and not no_input or use_job_endpoint:
                 resource_object = kwargs.get(resource, None)
                 if type(resource_object) == types.Related:
                     resource_class = get_resource(resource)
                     resource_object = resource_class.get(resource).\
                         pop('id', None)
                 if resource_object is None:
-                    debug.log('{0} is asked at launch but not provided'.
-                              format(resource), header='warning')
+                    if not use_job_endpoint:
+                        debug.log('{0} is asked at launch but not provided'.
+                                  format(resource), header='warning')
                 elif resource != 'tags':
                     data[resource] = resource_object
                     modified.add(resource)
