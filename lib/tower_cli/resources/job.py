@@ -40,6 +40,7 @@ class Resource(models.ExeResource):
     endpoint = '/jobs/'
 
     job_template = models.Field(
+        key='-J',
         type=types.Related('job_template'), required=False, display=True
     )
     job_explanation = models.Field(required=False, display=False)
@@ -59,7 +60,7 @@ class Resource(models.ExeResource):
                        'Does nothing if --monitor is not sent.')
     @click.option('--no-input', is_flag=True, default=False,
                   help='Suppress any requests for input.')
-    @click.option('--extra-vars', required=False, multiple=True,
+    @click.option('-e', '--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
     @click.option('--limit', required=False,
