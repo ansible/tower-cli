@@ -56,3 +56,25 @@ class LogTests(unittest.TestCase):
                 debug.log(s, nl=3)
             self.assertEqual(secho.mock_calls[0][1][0],
                              'All your base are belong to us.\n\n')
+
+    def test_multi_lines(self):
+        """Establish that overly long debug messages will be displayed in
+        multiple lines.
+        """
+        s = ' '.join(['multi-line'] * 30)
+        expected = '\n'.join([
+            '*** DETAILS: multi-line multi-line multi-line '
+            'multi-line multi-line multi-line ',
+            '*** multi-line multi-line multi-line multi-line '
+            'multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line '
+            'multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line '
+            'multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line '
+            'multi-line multi-line *********',
+        ])
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(verbose=True):
+                debug.log(s, header='details')
+            self.assertEqual(secho.mock_calls[0][1][0], expected)
