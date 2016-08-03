@@ -18,6 +18,8 @@ Release History
 - projects (do not post to organizations/N/projects)
 - prompt-for JT fields + job launch options (allow blank inventory too)
 - Update the POST protocol for associate and disassociate actions
+- New job launch option for backwards compatibility
+- New tower-cli option to display tower-cli version
 
 2.3.2 (2016-07-21)
 ------------------
