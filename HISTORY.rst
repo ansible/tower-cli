@@ -7,6 +7,7 @@ Release History
 - Added notification templates
 - Added labels
 - Added description display option 
+- Added text indicator for resource change
 - Added deprecation warnings
 - Help text upgrade
 - Give indication of "changed" apart from color
