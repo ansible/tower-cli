@@ -242,7 +242,7 @@ source project, and contributions are highly encouraged. Specifically,
 this CLI project is licensed under the Apache 2.0 license. Pull requests
 and tickets filed in GitHub are welcome.
 
-\(C) 2015, Michael DeHaan, and others, Ansible, Inc.
+\(C) 2016, Ansible Tower by Red Hat 
 
 .. |Build Status| image:: https://img.shields.io/travis/ansible/tower-cli.svg
    :target: https://travis-ci.org/ansible/tower-cli
