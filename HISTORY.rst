@@ -1,15 +1,16 @@
 Release History
 ===============
 
-2.4.0
------
+3.0.0 (2016-08-05)
+------------------
 
+- Added resource role for tower3.0 and permission for previous tower versions
 - Added notification templates
 - Added labels
 - Added description display option 
 - Added text indicator for resource change
 - Added deprecation warnings
-- Help text upgrade
+- Help text upgrades
 - Give indication of "changed" apart from color
 - New credential fields to support openstack-v2, networking and azure
 - New options for inventory source/group. Add implicit resource inventory
