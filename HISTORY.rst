@@ -1,6 +1,29 @@
 Release History
 ===============
 
+3.0.0 (2016-08-05)
+------------------
+
+- Added resource role for tower3.0 and permission for previous tower versions
+- Added notification templates
+- Added labels
+- Added description display option 
+- Added text indicator for resource change
+- Added deprecation warnings
+- Help text upgrades
+- Give indication of "changed" apart from color
+- New credential fields to support openstack-v2, networking and azure
+- New options for inventory source/group. Add implicit resource inventory
+  script.
+- credentials (no longer require user/team)
+- Added support for system auditors
+- projects (do not post to organizations/N/projects)
+- prompt-for JT fields + job launch options (allow blank inventory too)
+- Update the POST protocol for associate and disassociate actions
+- New job launch option for backwards compatibility
+- New tower-cli option to display tower-cli version
+- Enhanced debug log format (support multi-line debug log)
+
 2.3.2 (2016-07-21)
 ------------------
 
