@@ -110,7 +110,7 @@ def with_global_options(method):
         required=False,
     )(method)
     method = click.option(
-        '--description-on', '-d',
+        '--description-on',
         default=None,
         help='Show description in human-formatted output.',
         is_flag=True,
