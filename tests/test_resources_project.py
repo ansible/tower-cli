@@ -100,8 +100,8 @@ class CreateTests(unittest.TestCase):
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
 
-    def test_create_monitor(self):
-        """Establish that a project can be created with the monitor flag
+    def test_create_wait(self):
+        """Establish that a project can be created with the wait flag
         enabled and still sucessfully exit and complete.
         """
         with client.test_mode as t:
@@ -112,7 +112,7 @@ class CreateTests(unittest.TestCase):
                             method='GET')
             t.register_json('/projects/', {'changed': True, 'id': 42},
                             method='POST')
-            # Endpoints related to monitoring the resource
+            # Endpoints related to waiting for the resource
             t.register_json(
                 '/projects/42/', {
                     'status': 'successful',
@@ -125,7 +125,7 @@ class CreateTests(unittest.TestCase):
                 method='GET'
             )
 
-            result = self.res.create(name='bar', scm_type="git", monitor=True)
+            result = self.res.create(name='bar', scm_type="git", wait=True)
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[-1].method, 'GET')
             self.assertDictContainsSubset({'changed': True}, result)
@@ -187,7 +187,11 @@ class UpdateTests(unittest.TestCase):
                             method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
                 self.res.update(1, monitor=True)
-                monitor.assert_called_once_with(1, timeout=None)
+                monitor.assert_called_once_with(42, 1, timeout=None)
+            # Test wait method, which follows same pattern
+            with mock.patch.object(type(self.res), 'wait') as wait:
+                self.res.update(1, wait=True)
+                wait.assert_called_once_with(42, timeout=None)
 
     def test_cannot_update(self):
         """Establish that attempting to update a non-updatable project

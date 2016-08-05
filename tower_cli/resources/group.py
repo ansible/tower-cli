@@ -234,7 +234,7 @@ class Resource(models.Resource):
         # Return the superclass implementation.
         return super(Resource, self).list(**kwargs)
 
-    @click.argument('group', type=types.Related('group'))
+    @click.argument('group', required=False, type=types.Related('group'))
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `monitor` on the newly '
                        'launched job rather than exiting with a success.')
@@ -242,13 +242,26 @@ class Resource(models.Resource):
                   help='If provided with --monitor, this command (not the job)'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    @resources.command(use_fields_as_options=False, no_args_is_help=True)
+    @resources.command(no_args_is_help=True)
     def sync(self, group, monitor=False, timeout=None, **kwargs):
         """Update the given group's inventory source."""
 
         isrc = get_resource('inventory_source')
-        isid = self._get_inventory_source_id(group)
+        isid = self._get_inventory_source_id(group, kwargs)
         return isrc.update(isid, monitor=monitor, timeout=timeout, **kwargs)
+
+    @resources.command
+    @click.argument('group', required=False, type=types.Related('group'))
+    @click.option('--start-line', required=False, type=int,
+                  help='Line at which to start printing the standard out.')
+    @click.option('--end-line', required=False, type=int,
+                  help='Line at which to end printing the standard out.')
+    def stdout(self, group, start_line=None, end_line=None, **kwargs):
+        """Print the standard out of the last group update."""
+
+        isrc = get_resource('inventory_source')
+        isid = self._get_inventory_source_id(group, kwargs)
+        return isrc.stdout(isid)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--group', help='The group to move.')
@@ -274,12 +287,15 @@ class Resource(models.Resource):
             group, kwargs.get('inventory', None))['id']
         return self._disassoc('children', parent_id, group_id)
 
-    def _get_inventory_source_id(self, group):
+    def _get_inventory_source_id(self, group, data=None):
         """Return the inventory source ID given a group dictionary returned
-        from the Tower API.
+        from the Tower API. Alternatively, get it from a group's identity
+        set in data.
         """
+        if group is None:
+            group = self.get(**data)
         # If we got a group ID rather than a group, get the group.
-        if isinstance(group, int):
+        elif isinstance(group, int):
             group = self.get(group)
 
         # Return the inventory source ID.

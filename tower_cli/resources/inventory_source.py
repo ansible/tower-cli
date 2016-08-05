@@ -24,10 +24,11 @@ class Resource(models.MonitorableResource):
     cli_help = 'Manage inventory sources within Ansible Tower.'
     endpoint = '/inventory_sources/'
     internal = True
+    unified_job_type = '/inventory_updates/'
 
     credential = models.Field(type=types.Related('credential'), required=False)
     source = models.Field(
-        default='manual',
+        default=None,
         help_text='The type of inventory source in use.',
         type=click.Choice(['', 'file', 'ec2', 'rax', 'vmware',
                            'gce', 'azure', 'azure_rm', 'openstack',
@@ -57,7 +58,8 @@ class Resource(models.MonitorableResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
-    def update(self, inventory_source, monitor=False, timeout=None, **kwargs):
+    def update(self, inventory_source, monitor=False, wait=False,
+               timeout=None, **kwargs):
         """Update the given inventory source."""
 
         # Establish that we are able to update this inventory source
@@ -74,8 +76,13 @@ class Resource(models.MonitorableResource):
         r = client.post('%s%d/update/' % (self.endpoint, inventory_source))
 
         # If we were told to monitor the project update's status, do so.
-        if monitor:
-            result = self.monitor(inventory_source, timeout=timeout)
+        if monitor or wait:
+            inventory_update_id = r.json()['inventory_update']
+            if monitor:
+                result = self.monitor(inventory_update_id, inventory_source,
+                                      timeout=timeout)
+            elif wait:
+                result = self.wait(inventory_update_id, timeout=timeout)
             inventory = client.get('/inventory_sources/%d/' %
                                    result['inventory_source'])\
                               .json()['inventory']
@@ -85,26 +92,12 @@ class Resource(models.MonitorableResource):
         # Done.
         return {'status': 'ok'}
 
-    @resources.command
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
-    def status(self, pk, detail=False):
-        """Print the current job status."""
-        # Get the job from Ansible Tower.
-        debug.log('Asking for inventory source status.', header='details')
-        inv_src = client.get('/inventory_sources/%d/' % pk).json()
-
-        # Determine the appropriate inventory source update.
-        if 'current_update' in inv_src['related']:
-            debug.log('A current update exists; retrieving it.',
-                      header='details')
-            job = client.get(inv_src['related']['current_update'][7:]).json()
-        elif inv_src['related'].get('last_update', None):
-            debug.log('No current update exists; retrieving the most '
-                      'recent update.', header='details')
-            job = client.get(inv_src['related']['last_update'][7:]).json()
-        else:
-            raise exc.NotFound('No inventory source updates exist.')
+    def status(self, pk, detail=False, **kwargs):
+        """Print the status of the most recent sync."""
+        # Obtain the most recent inventory sync
+        job = self.last_job_data(pk, **kwargs)
 
         # In most cases, we probably only want to know the status of the job
         # and the amount of time elapsed. However, if we were asked for

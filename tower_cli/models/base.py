@@ -25,6 +25,7 @@ import re
 import sys
 import time
 from copy import copy
+from base64 import b64decode
 
 import six
 
@@ -829,10 +830,79 @@ class MonitorableResource(ResourceMethods):
     """
     abstract = True  # Not inherited.
 
+    def __init__(self, *args, **kwargs):
+        if not hasattr(self, 'unified_job_type'):
+            self.unified_job_type = self.endpoint
+        return super(MonitorableResource, self).__init__(*args, **kwargs)
+
     def status(self, pk, detail=False):
         """A stub method requesting the status of the resource."""
         raise NotImplementedError('This resource does not implement a status '
                                   'method, and must do so.')
+
+    def last_job_data(self, pk=None, **kwargs):
+        """
+        Internal utility function for Unified Job Templates
+        Returns data about the last job run off of that UJT
+        """
+        ujt = self.get(pk, include_debug_header=True, **kwargs)
+
+        # Determine the appropriate inventory source update.
+        if 'current_update' in ujt['related']:
+            debug.log('A current job; retrieving it.', header='details')
+            return client.get(ujt['related']['current_update'][7:]).json()
+        elif ujt['related'].get('last_update', None):
+            debug.log('No current job or update exists; retrieving the most '
+                      'recent.', header='details')
+            return client.get(ujt['related']['last_update'][7:]).json()
+        else:
+            raise exc.NotFound('No related jobs or updates exist.')
+
+    def lookup_stdout(self, pk=None, start_line=None, end_line=None):
+        """
+        Internal utility function to return standard out
+        requires the pk of a unified job
+        """
+        stdout_url = '%s%d/stdout/' % (self.unified_job_type, pk)
+        payload = {
+            'format': 'json', 'content_encoding': 'base64',
+            'content_format': 'ansi'}
+        if start_line:
+            payload['start_line'] = start_line
+        if end_line:
+            payload['end_line'] = end_line
+        debug.log('Requesting a copy of job standard output', header='details')
+        resp = client.get(stdout_url, params=payload).json()
+        content = b64decode(resp['content'])
+
+        return content
+
+    @resources.command
+    @click.option('--start-line', required=False, type=int,
+                  help='Line at which to start printing the standard out.')
+    @click.option('--end-line', required=False, type=int,
+                  help='Line at which to end printing the standard out.')
+    def stdout(self, pk, start_line=None, end_line=None, **kwargs):
+        """
+        Print out the standard out of a unified job to the command line.
+        For Projects, print the standard out of most recent update
+        For Inventory Sources, print standard out of most recent sync
+        For Jobs, print the job's standard out
+        """
+        # resource is Unified Job Template
+        if self.unified_job_type != self.endpoint:
+            unified_job = self.last_job_data(pk, **kwargs)
+            pk = unified_job['id']
+        # resource is Unified Job, but pk not given
+        elif not pk:
+            unified_job = self.get(**kwargs)
+            pk = unified_job['id']
+
+        content = self.lookup_stdout(pk, start_line, end_line)
+        if len(content) > 0:
+            click.echo(content, nl=0)
+
+        return {"changed": False}
 
     @resources.command
     @click.option('--min-interval',
@@ -844,13 +914,101 @@ class MonitorableResource(ResourceMethods):
     @click.option('--timeout', required=False, type=int,
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
-    def monitor(self, pk, min_interval=1, max_interval=30,
-                timeout=None, outfile=sys.stdout, **kwargs):
-        """Monitor a running job.
+    @click.option('--stdout', is_flag=True,
+                  help='Prints stdout on a rolling basis.')
+    def monitor(self, pk, parent_pk=None, interval=0.01, timeout=None,
+                outfile=sys.stdout, **kwargs):
+        """
+        Stream the standard output from a
+            job, project update, or inventory udpate.
+        """
+        # If we do not have the unified job info, infer it from parent
+        if pk is None:
+            pk = self.last_job_data(parent_pk, **kwargs)['id']
 
+        # Pause until job is in running state
+        self.wait(pk, exit_on='running')
+
+        # Loop initialization
+        start = time.time()
+        start_line = 0
+        result = client.get('%s%s/' % (self.unified_job_type, pk)).json()
+
+        click.echo('\033[0;91m------Starting Standard Out Stream------\033[0m',
+                   nl=False, file=outfile)
+
+        click.echo(' ', nl=2, file=outfile)
+
+        # Poll the Ansible Tower instance for status, and print
+        # standard out to the out file
+        while result['status'] != 'successful':
+
+            # Polling loop exit conditions
+            if result['failed']:
+                raise exc.JobFailure('Job failed.')
+            elif timeout and time.time() - start > timeout:
+                raise exc.Timeout('Monitoring aborted due to timeout.')
+
+            # Put the process to sleep briefly.
+            time.sleep(interval)
+
+            # Make request to get standard out
+            content = self.lookup_stdout(pk, start_line)
+
+            # In the first moments of running the job, the standard out
+            # may not be available yet
+            if not content.startswith("Waiting for results"):
+                line_count = content.count('\n')
+                start_line += line_count
+                # Special de-duplication case for start of job stream
+                if (line_count == 0 and start_line == 0 and
+                        content.startswith("SSH password:")):
+                    line_count = 1
+                    content = ''
+                click.echo(content, nl=0)
+
+            result = client.get(
+                '%s%s/' % (self.unified_job_type, pk)).json()
+
+        click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m',
+                   nl=2, file=outfile)
+
+        # Return the job ID and other response data
+        answer = OrderedDict((
+            ('changed', True),
+            ('id', pk),
+        ))
+        answer.update(result)
+        # Make sure to return ID of resource and not update number
+        # relevant for project creation and update
+        if parent_pk:
+            answer['id'] = parent_pk
+        else:
+            answer['id'] = pk
+        return answer
+
+    @resources.command
+    @click.option('--min-interval',
+                  default=1, help='The minimum interval to request an update '
+                                  'from Tower.')
+    @click.option('--max-interval',
+                  default=30, help='The maximum interval to request an update '
+                                   'from Tower.')
+    @click.option('--timeout', required=False, type=int,
+                  help='If provided, this command (not the job) will time out '
+                       'after the given number of seconds.')
+    def wait(self, pk, parent_pk=None, min_interval=1, max_interval=30,
+             timeout=None, outfile=sys.stdout, exit_on='successful', **kwargs):
+        """
+        Wait for a running job to finish.
         Blocks further input until the job completes (whether successfully or
         unsuccessfully) and a final status can be given.
         """
+        # If we do not have the unified job info, infer it from parent
+        if pk is None:
+            pk = self.last_job_data(parent_pk, **kwargs)['id']
+
+        # Initialize loop data
         dots = itertools.cycle([0, 1, 2, 3])
         longest_string = 0
         interval = min_interval
@@ -864,10 +1022,11 @@ class MonitorableResource(ResourceMethods):
         # and run in Python.  This seems fine; outfile can be set to /dev/null
         # and very much the normal use for this method should be CLI
         # monitoring.
-        result = self.status(pk, detail=True)
+        result = client.get('%s%s/' % (self.unified_job_type, pk)).json()
+        # result = self.status(pk, detail=True)
         last_poll = time.time()
         timeout_check = 0
-        while result['status'] != 'successful':
+        while result['status'] != exit_on:
             # If the job has failed, we want to raise an Exception for that
             # so we get a non-zero response.
             if result['failed']:
@@ -916,7 +1075,8 @@ class MonitorableResource(ResourceMethods):
             # to the next time that we intend to do a check, and once that
             # time hits, we do the status check as part of the normal cycle.
             if time.time() - last_poll > interval:
-                result = self.status(pk, detail=True)
+                result = client.get(
+                    '%s%s/' % (self.unified_job_type, pk)).json()
                 last_poll = time.time()
                 interval = min(interval * 1.5, max_interval)
 
@@ -939,7 +1099,10 @@ class MonitorableResource(ResourceMethods):
         answer.update(result)
         # Make sure to return ID of resource and not update number
         # relevant for project creation and update
-        answer['id'] = pk
+        if parent_pk:
+            answer['id'] = parent_pk
+        else:
+            answer['id'] = pk
         return answer
 
 
