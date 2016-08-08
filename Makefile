@@ -42,4 +42,7 @@ rpm-build/.exists:
 	mkdir -p rpm-build
 	touch rpm-build/.exists
 
-
+# For devel convinience
+install:
+	sudo rm -rf dist/ build/ 
+	sudo python setup.py install
