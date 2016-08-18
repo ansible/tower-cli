@@ -24,6 +24,7 @@ UNIFIED_JT = {
     'inventory_source': '/inventory_sources',
     'project': '/projects',
 }
+CLICK_ATTRS = ('__click_params__', '_cli_command', '_cli_command_attrs')
 
 
 def jt_aggregate(func, is_create=False, has_pk=False):
@@ -84,7 +85,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
         return result
 
     decorator = decorator_with_pk if has_pk else decorator_without_pk
-    for item in ['__click_params__', '_cli_command', '_cli_command_attrs']:
+    for item in CLICK_ATTRS:
         setattr(decorator, item, getattr(func, item, []))
     decorator.__doc__ = func.__doc__
 
