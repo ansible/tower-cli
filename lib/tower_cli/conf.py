@@ -88,6 +88,7 @@ class Settings(object):
             'verify_ssl': 'true',
             'verbose': 'false',
             'description_on': 'false',
+            'certificate': '',
         }
         self._defaults = Parser(defaults=defaults)
         self._defaults.add_section('general')
