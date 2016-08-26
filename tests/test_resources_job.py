@@ -40,9 +40,10 @@ def register_get(t):
                     }, method='GET')
 
 
-def standard_registration(t):
+def standard_registration(t, **kwargs):
     """ Endpoints common to launching any job with template #1 and
-    is automatically assigned to job #42 """
+    is automatically assigned to job #42. kwargs is used to provide
+    extra return fields of job launch"""
 
     # A GET to the template endpoint is made to find the extra_vars to combine
     t.register_json('/job_templates/1/', {
@@ -58,7 +59,9 @@ def standard_registration(t):
 
     # A POST to the launch endpoint will launch a job, and we
     # expect that the tower server will return the job number
-    t.register_json('/job_templates/1/launch/', {'job': 42}, method='POST')
+    data = {'job': 42}
+    data.update(kwargs)
+    t.register_json('/job_templates/1/launch/', data, method='POST')
 
 
 def jt_vars_registration(t, extra_vars):
@@ -338,6 +341,26 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/jobs/16/start/', {})
             t.register_json('/jobs/16/start/', {}, method='POST')
             self.res.launch(job_template=1, use_job_endpoint=True)
+
+    def test_ignored_fields(self):
+        """Establish that if ignored_fields is returned when launching job,
+        it will be displayed in verbose mode.
+        """
+        echo_count_with_ignore = 0
+        echo_count = 0
+        with client.test_mode as t:
+            standard_registration(t)
+            with settings.runtime_values(verbose=True):
+                with mock.patch.object(click, 'secho') as secho:
+                    self.res.launch(job_template=1)
+                echo_count = secho.call_count
+        with client.test_mode as t:
+            standard_registration(t, ignored_fields={'foo': 'bar'})
+            with settings.runtime_values(verbose=True):
+                with mock.patch.object(click, 'secho') as secho:
+                    self.res.launch(job_template=1)
+                echo_count_with_ignore = secho.call_count
+        self.assertEqual(echo_count_with_ignore - echo_count, 2)
 
 
 class StatusTests(unittest.TestCase):
