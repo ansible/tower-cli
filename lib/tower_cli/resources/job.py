@@ -212,8 +212,8 @@ class Resource(models.ExeResource):
         # If 'ignored_fields' is present in the returning json, display it
         # in verbose mode.
         if 'ignored_fields' in job_started.json():
-            debug.log('Some provided fields are ignored on the server side:',
-                      header='warning')
+            debug.log('List of ignored fields on the server side:',
+                      header='detail')
             for key, value in job_started.json()['ignored_fields'].items():
                 debug.log('{0}: {1}'.format(key, value))
 
