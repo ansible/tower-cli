@@ -1,10 +1,13 @@
 sudo: false
 language: python
+python:
+    - "2.6"
+    - "2.7"
+    - "3.3"
+    - "3.4"
+    - "3.5"
+    - "pypy"
 env:
-    - TOXENV=py2.6
-    - TOXENV=py2.7
-    - TOXENV=py3.3
-    - TOXENV=py3.4
     - TOXENV=flake8
 install:
     - pip install flake8
