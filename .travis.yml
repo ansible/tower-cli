@@ -8,7 +8,7 @@ python:
     - "3.5"
 install:
     - pip install flake8
-    - pip install tox
+    - pip install tox-travis
     - pip install coveralls
 before_script:
     flake8 .
