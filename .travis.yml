@@ -6,13 +6,12 @@ python:
     - "3.3"
     - "3.4"
     - "3.5"
-    - "pypy"
-env:
-    - TOXENV=flake8
 install:
     - pip install flake8
     - pip install tox
     - pip install coveralls
+before_script:
+    flake8 .
 script:
     - tox
 after_success:
