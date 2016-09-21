@@ -10,3 +10,6 @@
 | `verbose`        | Boolean/'false'                                       | Whether to show information about requests being made.                                                                                                     |
 | `description_on` | Boolean/'false'                                       | Whether to show description in human-formatted output.                                                                                                     |
 | `certificate`    | String/''                                             | Path to a custom certificate file that will be used throughout the command. Ignored if `--insecure` flag if set in command or `verify_ssl` is set to false |
+
+## Notes
+* Under the hood we use the SSL functionality of requests, however the current requests version has checkings on a deprecated SSL certificate field `commonName` (deprecated by RFC 2818). In order to prevent any related usage issues, please make sure to add `subjectAltName` field to your own certificate in use. We will update help docs as soon as changes are made on the requests side.
