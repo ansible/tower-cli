@@ -11,7 +11,8 @@ env:
     - TOXENV=flake8
 install:
     - pip install flake8
-    - pip install tox coveralls --use-mirrors
+    - pip install tox
+    - pip install coveralls
 script:
     - tox
 after_success:
