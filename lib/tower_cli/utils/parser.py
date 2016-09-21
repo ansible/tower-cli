@@ -19,6 +19,7 @@ import json
 import ast
 import shlex
 import sys
+import six
 
 from tower_cli.utils import exceptions as exc, debug
 from tower_cli.utils.data_structures import OrderedDict
@@ -48,7 +49,7 @@ def parse_kv(var_string):
 
         # Second part of fix to avoid passing shlex unicode in py2.6
         if fix_encoding_26:
-            token = unicode(token)
+            token = six.text_type(token)
         # Look for key=value pattern, if not, process as raw parameter
         if '=' in token:
             (k, v) = token.split('=', 1)
