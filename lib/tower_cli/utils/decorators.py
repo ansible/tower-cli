@@ -45,6 +45,7 @@ def command(method=None, **kwargs):
                 'verbose': inner_kw.pop('verbose', None),
                 'description_on': inner_kw.pop('description_on', None),
                 'insecure': inner_kw.pop('insecure', None),
+                'certificate': inner_kw.pop('certificate', None)
             }
             with settings.runtime_values(**runtime_settings):
                 return method(*inner_a, **inner_kw)
@@ -124,6 +125,15 @@ def with_global_options(method):
         help='Turn off insecure connection warnings. Set config verify_ssl '
              'to make this permanent.',
         is_flag=True,
+        required=False,
+    )(method)
+
+    # Create a custom certificate specification option.
+    method = click.option(
+        '--certificate',
+        default=None,
+        help='Path to a custom certificate file that will be used throughout'
+             ' the command. Overwritten by --insecure flag if set.',
         required=False,
     )(method)
 
