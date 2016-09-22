@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.0.1 (2016-09-22)
+------------------
+
+- Added custom SSL certificate support
+
 3.0.0 (2016-08-05)
 ------------------
 
