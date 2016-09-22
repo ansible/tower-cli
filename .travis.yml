@@ -11,7 +11,7 @@ install:
     - pip install tox-travis
     - pip install coveralls
 before_script:
-    if [[ $TRAVIS_PYTHON_VERSION > 2.6 ]]; then falke8 .; fi
+    - test $TRAVIS_PYTHON_VERSION != '2.6' && falke8 .
 script:
     - tox
 after_success:
