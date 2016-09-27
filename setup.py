@@ -16,12 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import re
 import sys
 from distutils.core import setup
-from os.path import dirname, realpath
-from os import sep
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
@@ -32,6 +29,7 @@ class Tox(TestCommand):
     Based on http://tox.readthedocs.org/en/latest/example/basic.html
     """
     user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.tox_args = ""
@@ -45,6 +43,7 @@ class Tox(TestCommand):
         import tox  # Import here, because outside eggs aren't loaded.
         import shlex
         sys.exit(tox.cmdline(args=shlex.split(self.tox_args)))
+
 
 def parse_requirements(filename):
     """Parse out a list of requirements from the given requirements
@@ -100,6 +99,7 @@ def parse_requirements(filename):
     # Okay, we should have an entire list of requirements now.
     return reqs
 
+
 def combine_files(*args):
     """returns a string of all the strings in *args combined together,
     with two line breaks between them"""
@@ -137,7 +137,7 @@ setup(
 
     # How to do the tests
     tests_require=['tox'],
-    cmdclass={'test': Tox },
+    cmdclass={'test': Tox},
 
     # Data files
     package_data={
