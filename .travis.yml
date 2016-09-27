@@ -6,6 +6,10 @@ python:
     - "3.3"
     - "3.4"
     - "3.5"
+    - "nightly"
+matrix:
+  allow_failures:
+    - python: nightly
 install:
     - pip install flake8
     - pip install tox-travis
