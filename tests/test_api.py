@@ -196,4 +196,4 @@ class ClientTests(unittest.TestCase):
                 with mock.patch.object(click, 'secho') as secho:
                     with self.assertRaises(exc.ConnectionError):
                         client.get('/ping/')
-                    secho.assert_called()
+                    self.assertTrue(secho.called)
