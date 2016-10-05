@@ -209,6 +209,18 @@ class Resource(models.ExeResource):
         if supports_job_template_launch and not use_job_endpoint:
             job_id = job_started.json()['job']
 
+        # If returning json indicates any ignored fields, display it in
+        # verbose mode.
+        ignored_fields = job_started.json().get('ignored_fields', {})
+        has_ignored_fields = False
+        for key, value in ignored_fields.items():
+            if value and value != '{}':
+                if not has_ignored_fields:
+                    debug.log('List of ignored fields on the server side:',
+                              header='detail')
+                    has_ignored_fields = True
+                debug.log('{0}: {1}'.format(key, value))
+
         # Get some information about the running job to print
         result = self.status(pk=job_id, detail=True)
         result['changed'] = True
