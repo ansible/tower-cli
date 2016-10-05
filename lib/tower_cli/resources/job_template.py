@@ -78,6 +78,7 @@ class Resource(models.Resource):
         help_text='Prompt user for machine credential on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
 
+    @resources.command
     @click.option('--extra-vars', required=False, multiple=True,
                   help='Extra variables used by Ansible in YAML or key=value '
                        'format. Use @ to get YAML from a file.')
@@ -100,6 +101,7 @@ class Resource(models.Resource):
             **kwargs
         )
 
+    @resources.command
     @click.option('--extra-vars', required=False, multiple=True,
                   help='Extra variables used by Ansible in YAML or key=value '
                        'format. Use @ to get YAML from a file.')

@@ -49,6 +49,7 @@ class Resource(models.Resource):
         return parent_data
 
     # Basic options for the source
+    @resources.command
     @click.option('--credential', type=types.Related('credential'),
                   required=False,
                   help='The cloud credential to use.')
@@ -134,6 +135,7 @@ class Resource(models.Resource):
             answer['changed'] = True
         return answer
 
+    @resources.command
     @click.option('--credential', type=types.Related('credential'),
                   required=False)
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
