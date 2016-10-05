@@ -82,10 +82,7 @@ class ResourceMeta(type):
                 # Copy the command attributes from the parent to the child,
                 # if the child has not overridden them.
                 for attkey, attval in super_method._cli_command_attrs.items():
-                    try:
-                        value._cli_command_attrs.setdefault(attkey, attval)
-                    except AttributeError:
-                        pass
+                    value._cli_command_attrs.setdefault(attkey, attval)
         attrs['commands'] = sorted(commands)
 
         # Sanity check: Only perform remaining initialization for subclasses

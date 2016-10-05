@@ -103,14 +103,16 @@ class Resource(models.Resource):
     # Unified jt fields. note these fields will only be used during creation.
     # Plus, one and only one field should be provided.
     job_template = models.Field(type=types.Related('job_template'),
-                                required=False)
+                                required=False, display=False)
     inventory_source = models.Field(type=types.Related('inventory_source'),
-                                    required=False)
-    project = models.Field(type=types.Related('project'), required=False)
+                                    required=False, display=False)
+    project = models.Field(type=types.Related('project'), required=False,
+                           display=False)
 
     # Schedule-specific fields.
     enabled = models.Field(required=False, type=click.BOOL, default=True,
-                           help_text='Whether this schedule will be used')
+                           help_text='Whether this schedule will be used',
+                           show_default=True)
     rrule = models.Field(required=False, display=False,
                          help_text='Schedule rules specifications which is'
                          ' less than 255 characters.')
