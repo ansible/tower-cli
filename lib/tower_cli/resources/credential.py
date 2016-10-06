@@ -15,7 +15,7 @@
 
 import click
 
-from tower_cli import models
+from tower_cli import models, resources
 from tower_cli.utils import types, debug
 from tower_cli.api import client
 
@@ -150,6 +150,7 @@ class Resource(models.Resource):
                                   help_text='%sThe vault_password field' %
                                   PROMPT)
 
+    @resources.command
     def create(self, **kwargs):
         """Create a credential.
         """

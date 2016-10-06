@@ -51,6 +51,7 @@ class Resource(models.Resource, models.MonitorableResource):
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
 
+    @resources.command
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `project monitor` on the '
                        'project rather than exiting with a success.'
