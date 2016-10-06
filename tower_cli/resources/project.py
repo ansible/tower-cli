@@ -161,13 +161,15 @@ class Resource(models.Resource, models.MonitorableResource):
         # Commence the update.
         debug.log('Updating the project.', header='details')
         result = client.post('/projects/%d/update/' % pk)
-        project_update_id = result.json()['project_update']
 
         # If we were told to monitor the project update's status, do so.
         if monitor:
-            return self.monitor(project_update_id, pk, timeout=timeout)
+            project_update_id = result.json()['project_update']
+            return self.monitor(project_update_id, parent_pk=pk,
+                                timeout=timeout)
         elif wait:
-            return self.wait(project_update_id, timeout=timeout)
+            project_update_id = result.json()['project_update']
+            return self.wait(project_update_id, parent_pk=pk, timeout=timeout)
 
         # Return the project update ID.
         return {

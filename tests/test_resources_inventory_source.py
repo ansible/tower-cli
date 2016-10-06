@@ -62,11 +62,11 @@ class UpdateTests(unittest.TestCase):
                             method='GET')
             with mock.patch.object(type(self.isr), 'monitor') as monitor:
                 self.isr.update(1, monitor=True)
-                monitor.assert_called_once_with(32, 1, timeout=None)
+                monitor.assert_called_once_with(32, parent_pk=1, timeout=None)
             # Check wait method, following same pattern
             with mock.patch.object(type(self.isr), 'wait') as wait:
                 self.isr.update(1, wait=True)
-                wait.assert_called_once_with(32, timeout=None)
+                wait.assert_called_once_with(32, parent_pk=1, timeout=None)
 
 
 class StatusTests(unittest.TestCase):

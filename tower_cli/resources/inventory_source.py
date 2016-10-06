@@ -79,10 +79,13 @@ class Resource(models.MonitorableResource):
         if monitor or wait:
             inventory_update_id = r.json()['inventory_update']
             if monitor:
-                result = self.monitor(inventory_update_id, inventory_source,
-                                      timeout=timeout)
+                result = self.monitor(
+                    inventory_update_id, parent_pk=inventory_source,
+                    timeout=timeout)
             elif wait:
-                result = self.wait(inventory_update_id, timeout=timeout)
+                result = self.wait(
+                    inventory_update_id, parent_pk=inventory_source,
+                    timeout=timeout)
             inventory = client.get('/inventory_sources/%d/' %
                                    result['inventory_source'])\
                               .json()['inventory']
@@ -92,6 +95,7 @@ class Resource(models.MonitorableResource):
         # Done.
         return {'status': 'ok'}
 
+    @resources.command
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
     def status(self, pk, detail=False, **kwargs):

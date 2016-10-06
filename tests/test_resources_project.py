@@ -187,11 +187,11 @@ class UpdateTests(unittest.TestCase):
                             method='POST')
             with mock.patch.object(type(self.res), 'monitor') as monitor:
                 self.res.update(1, monitor=True)
-                monitor.assert_called_once_with(42, 1, timeout=None)
+                monitor.assert_called_once_with(42, parent_pk=1, timeout=None)
             # Test wait method, which follows same pattern
             with mock.patch.object(type(self.res), 'wait') as wait:
                 self.res.update(1, wait=True)
-                wait.assert_called_once_with(42, timeout=None)
+                wait.assert_called_once_with(42, parent_pk=1, timeout=None)
 
     def test_cannot_update(self):
         """Establish that attempting to update a non-updatable project

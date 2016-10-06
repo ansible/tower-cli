@@ -905,12 +905,9 @@ class MonitorableResource(ResourceMethods):
         return {"changed": False}
 
     @resources.command
-    @click.option('--min-interval',
-                  default=1, help='The minimum interval to request an update '
+    @click.option('--interval',
+                  default=1, help='Polling interval to refresh content '
                                   'from Tower.')
-    @click.option('--max-interval',
-                  default=30, help='The maximum interval to request an update '
-                                   'from Tower.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
@@ -925,6 +922,7 @@ class MonitorableResource(ResourceMethods):
         # If we do not have the unified job info, infer it from parent
         if pk is None:
             pk = self.last_job_data(parent_pk, **kwargs)['id']
+        job_endpoint = '%s%s/' % (self.unified_job_type, pk)
 
         # Pause until job is in running state
         self.wait(pk, exit_on='running')
@@ -932,15 +930,13 @@ class MonitorableResource(ResourceMethods):
         # Loop initialization
         start = time.time()
         start_line = 0
-        result = client.get('%s%s/' % (self.unified_job_type, pk)).json()
+        result = client.get(job_endpoint).json()
 
         click.echo('\033[0;91m------Starting Standard Out Stream------\033[0m',
-                   nl=False, file=outfile)
+                   nl=2, file=outfile)
 
-        click.echo(' ', nl=2, file=outfile)
-
-        # Poll the Ansible Tower instance for status, and print
-        # standard out to the out file
+        # Poll the Ansible Tower instance for status and content,
+        # and print standard out to the out file
         while result['status'] != 'successful':
 
             # Polling loop exit conditions
@@ -967,8 +963,7 @@ class MonitorableResource(ResourceMethods):
                     content = ''
                 click.echo(content, nl=0)
 
-            result = client.get(
-                '%s%s/' % (self.unified_job_type, pk)).json()
+            result = client.get(job_endpoint).json()
 
         click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m',
                    nl=2, file=outfile)
@@ -1007,8 +1002,8 @@ class MonitorableResource(ResourceMethods):
         # If we do not have the unified job info, infer it from parent
         if pk is None:
             pk = self.last_job_data(parent_pk, **kwargs)['id']
+        job_endpoint = '%s%s/' % (self.unified_job_type, pk)
 
-        # Initialize loop data
         dots = itertools.cycle([0, 1, 2, 3])
         longest_string = 0
         interval = min_interval
@@ -1022,8 +1017,7 @@ class MonitorableResource(ResourceMethods):
         # and run in Python.  This seems fine; outfile can be set to /dev/null
         # and very much the normal use for this method should be CLI
         # monitoring.
-        result = client.get('%s%s/' % (self.unified_job_type, pk)).json()
-        # result = self.status(pk, detail=True)
+        result = client.get(job_endpoint).json()
         last_poll = time.time()
         timeout_check = 0
         while result['status'] != exit_on:
@@ -1075,8 +1069,7 @@ class MonitorableResource(ResourceMethods):
             # to the next time that we intend to do a check, and once that
             # time hits, we do the status check as part of the normal cycle.
             if time.time() - last_poll > interval:
-                result = client.get(
-                    '%s%s/' % (self.unified_job_type, pk)).json()
+                result = client.get(job_endpoint).json()
                 last_poll = time.time()
                 interval = min(interval * 1.5, max_interval)
 
