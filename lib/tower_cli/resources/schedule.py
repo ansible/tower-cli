@@ -111,6 +111,11 @@ class Resource(models.Resource):
                            display=False)
 
     # Schedule-specific fields.
+    unified_job_template = models.Field(required=False, type=int,
+                                        help_text='Integer used to display'
+                                        ' unified job template in result, '
+                                        'Please don\'t use it for create/'
+                                        'modify.')
     enabled = models.Field(required=False, type=click.BOOL, default=True,
                            help_text='Whether this schedule will be used',
                            show_default=True)

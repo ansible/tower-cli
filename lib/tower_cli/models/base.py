@@ -1034,7 +1034,7 @@ class Resource(ResourceMethods):
             **kwargs
         )
 
-    @resources.command
+    @resources.command(ignore_defaults=True)
     @click.option('--create-on-missing', default=False,
                   show_default=True, type=bool, is_flag=True,
                   help='If used, and if options rather than a primary key are '
