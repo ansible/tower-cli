@@ -116,7 +116,7 @@ class Resource(models.Resource):
     rrule = models.Field(required=False, display=False,
                          help_text='Schedule rules specifications which is'
                          ' less than 255 characters.')
-    extra_data = models.Field(type=models.File('r', lazy=True), required=False,
+    extra_data = models.Field(type=types.Variables(), required=False,
                               display=False, help_text='Extra data for '
                               'schedule rules in the form of a .json file.')
 
