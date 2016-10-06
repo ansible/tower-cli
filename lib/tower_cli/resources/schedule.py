@@ -43,7 +43,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
         exc.UsageError: Either more than one unified jt fields are
             provided, or none is provided when is_create flag is set.
     """
-    def helper(kwargs):
+    def helper(kwargs, obj):
         """The helper function preceding actual function that aggregates
         unified jt fields.
         """
@@ -60,6 +60,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
                     )
         if unified_job_template is not None:
             kwargs['unified_job_template'] = unified_job_template[1]
+            obj.identity = tuple(list(obj.identity) + ['unified_job_template'])
             return '/'.join([UNIFIED_JT[unified_job_template[0]],
                              str(unified_job_template[1]), 'schedules/'])
         elif is_create:
@@ -68,7 +69,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
 
     def decorator_without_pk(obj, *args, **kwargs):
         old_endpoint = obj.endpoint
-        new_endpoint = helper(kwargs)
+        new_endpoint = helper(kwargs, obj)
         if is_create:
             obj.endpoint = new_endpoint
         result = func(obj, *args, **kwargs)
@@ -77,7 +78,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
 
     def decorator_with_pk(obj, pk=None, *args, **kwargs):
         old_endpoint = obj.endpoint
-        new_endpoint = helper(kwargs)
+        new_endpoint = helper(kwargs, obj)
         if is_create:
             obj.endpoint = new_endpoint
         result = func(obj, pk=pk, *args, **kwargs)
