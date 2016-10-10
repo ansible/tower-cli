@@ -900,20 +900,19 @@ class MonitorableResource(ResourceMethods):
 
         content = self.lookup_stdout(pk, start_line, end_line)
         if len(content) > 0:
-            click.echo(content, nl=0)
+            click.echo(content, nl=1)
 
         return {"changed": False}
 
     @resources.command
-    @click.option('--interval',
-                  default=1, help='Polling interval to refresh content '
-                                  'from Tower.')
+    @click.option('--interval', default=0.2,
+                  help='Polling interval to refresh content from Tower.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
     @click.option('--stdout', is_flag=True,
                   help='Prints stdout on a rolling basis.')
-    def monitor(self, pk, parent_pk=None, interval=0.01, timeout=None,
+    def monitor(self, pk, parent_pk=None, timeout=None, interval=0.2,
                 outfile=sys.stdout, **kwargs):
         """
         Stream the standard output from a
@@ -925,7 +924,7 @@ class MonitorableResource(ResourceMethods):
         job_endpoint = '%s%s/' % (self.unified_job_type, pk)
 
         # Pause until job is in running state
-        self.wait(pk, exit_on='running')
+        self.wait(pk, exit_on=['running', 'successful'])
 
         # Loop initialization
         start = time.time()
@@ -939,12 +938,6 @@ class MonitorableResource(ResourceMethods):
         # and print standard out to the out file
         while result['status'] != 'successful':
 
-            # Polling loop exit conditions
-            if result['failed']:
-                raise exc.JobFailure('Job failed.')
-            elif timeout and time.time() - start > timeout:
-                raise exc.Timeout('Monitoring aborted due to timeout.')
-
             # Put the process to sleep briefly.
             time.sleep(interval)
 
@@ -954,14 +947,15 @@ class MonitorableResource(ResourceMethods):
             # In the first moments of running the job, the standard out
             # may not be available yet
             if not content.startswith("Waiting for results"):
-                line_count = content.count('\n')
+                line_count = len(content.splitlines())
                 start_line += line_count
-                # Special de-duplication case for start of job stream
-                if (line_count == 0 and start_line == 0 and
-                        content.startswith("SSH password:")):
-                    line_count = 1
-                    content = ''
                 click.echo(content, nl=0)
+
+            # Polling loop exit conditions
+            if result['failed']:
+                raise exc.JobFailure('Job failed.')
+            elif timeout and time.time() - start > timeout:
+                raise exc.Timeout('Monitoring aborted due to timeout.')
 
             result = client.get(job_endpoint).json()
 
@@ -993,7 +987,8 @@ class MonitorableResource(ResourceMethods):
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
     def wait(self, pk, parent_pk=None, min_interval=1, max_interval=30,
-             timeout=None, outfile=sys.stdout, exit_on='successful', **kwargs):
+             timeout=None, outfile=sys.stdout, exit_on=['successful'],
+             **kwargs):
         """
         Wait for a running job to finish.
         Blocks further input until the job completes (whether successfully or
@@ -1020,7 +1015,7 @@ class MonitorableResource(ResourceMethods):
         result = client.get(job_endpoint).json()
         last_poll = time.time()
         timeout_check = 0
-        while result['status'] != exit_on:
+        while result['status'] not in exit_on:
             # If the job has failed, we want to raise an Exception for that
             # so we get a non-zero response.
             if result['failed']:

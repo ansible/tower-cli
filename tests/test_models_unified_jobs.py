@@ -62,7 +62,7 @@ class StandardOutTests(unittest.TestCase):
                     lookup.return_value = 'foobar'
                     result = self.res.stdout(42)
                     assert not result['changed']
-                    mock_echo.assert_called_once_with('foobar', nl=0)
+                    mock_echo.assert_called_once_with('foobar', nl=1)
 
     def test_stdout_with_lookup(self):
         "Test that unified job will be automatically looked up."
