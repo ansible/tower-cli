@@ -910,8 +910,6 @@ class MonitorableResource(ResourceMethods):
     @click.option('--timeout', required=False, type=int,
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
-    @click.option('--stdout', is_flag=True,
-                  help='Prints stdout on a rolling basis.')
     def monitor(self, pk, parent_pk=None, timeout=None, interval=0.2,
                 outfile=sys.stdout, **kwargs):
         """
@@ -936,7 +934,9 @@ class MonitorableResource(ResourceMethods):
 
         # Poll the Ansible Tower instance for status and content,
         # and print standard out to the out file
-        while result['status'] != 'successful':
+        while not result['failed'] and result['status'] != 'successful':
+
+            result = client.get(job_endpoint).json()
 
             # Put the process to sleep briefly.
             time.sleep(interval)
@@ -951,16 +951,14 @@ class MonitorableResource(ResourceMethods):
                 start_line += line_count
                 click.echo(content, nl=0)
 
-            # Polling loop exit conditions
-            if result['failed']:
-                raise exc.JobFailure('Job failed.')
-            elif timeout and time.time() - start > timeout:
+            if timeout and time.time() - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
-
-            result = client.get(job_endpoint).json()
 
         click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m',
                    nl=2, file=outfile)
+
+        if result['failed']:
+            raise exc.JobFailure('Job failed.')
 
         # Return the job ID and other response data
         answer = OrderedDict((

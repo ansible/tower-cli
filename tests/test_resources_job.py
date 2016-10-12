@@ -565,8 +565,8 @@ class MonitorWaitTests(unittest.TestCase):
                                 type(self.res), 'lookup_stdout'):
                             self.res.monitor(42, min_interval=0.21)
 
-            # We should have gotten two requests total, to the same URL.
-            self.assertEqual(len(t.requests), 2)
+            # We should have gotten 3 requests total, to the same URL.
+            self.assertEqual(len(t.requests), 3)
             self.assertEqual(t.requests[0].url, t.requests[1].url)
 
     def test_timeout(self):
