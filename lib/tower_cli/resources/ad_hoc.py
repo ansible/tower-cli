@@ -59,7 +59,10 @@ class Resource(models.ExeResource):
         type=types.MappedChoice([
             (0, 'default'),
             (1, 'verbose'),
-            (2, 'debug'),
+            (2, 'more_verbose'),
+            (3, 'debug'),
+            (4, 'connection'),
+            (5, 'winrm'),
         ]),
         required=False,
     )
