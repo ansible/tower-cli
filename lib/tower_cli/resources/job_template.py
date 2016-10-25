@@ -70,6 +70,9 @@ class Resource(models.Resource):
     ask_tags_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for job tags on launch.')
+    ask_skip_tags_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for tags to skip on launch.')
     ask_job_type_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for job type on launch.')
