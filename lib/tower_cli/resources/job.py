@@ -26,7 +26,9 @@ from tower_cli.utils import debug, types
 from tower_cli.utils import parser
 
 
-PROMPT_LIST = ['limit', 'tags', 'skip_tags', 'job_type', 'inventory', 'credential']
+PROMPT_LIST = [
+    'limit', 'tags', 'skip_tags', 'job_type', 'inventory', 'credential'
+]
 
 
 class Resource(models.ExeResource):
