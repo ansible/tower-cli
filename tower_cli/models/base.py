@@ -591,8 +591,10 @@ class ResourceMethods(BaseResource):
         # Sanity check: Are we missing required values?
         # If we don't have a primary key, then all required values must be
         # set, and if they're not, it's an error.
-        required_fields = [i.key or i.name for i in self.fields if i.required]
-        missing_fields = [i for i in required_fields if i not in kwargs]
+        missing_fields = []
+        for i in self.fields:
+            if i.key not in kwargs and i.name not in kwargs and i.required:
+                missing_fields.append(i.key or i.name)
         if missing_fields and not pk:
             raise exc.BadRequest('Missing required fields: %s' %
                                  ', '.join(missing_fields).replace('_', '-'))
@@ -798,6 +800,10 @@ class ResourceMethods(BaseResource):
         for field_name in self.identity:
             if field_name in kwargs:
                 read_params[field_name] = kwargs[field_name]
+
+        # Special case of resources that only only addressable by id
+        if 'id' in self.identity:
+            return {}
 
         # Sanity check: Do we have any parameters?
         # If not, then there's no way for us to do this read.
