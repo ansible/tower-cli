@@ -215,6 +215,8 @@ class Settings(object):
         """Temporarily override the runtime settings, which exist at the
         highest precedence level.
         """
+        kwargs = config_from_environment(kwargs)
+
         # Coerce all values to strings (to be coerced back by configparser
         # later) and defenestrate any None values.
         for k, v in copy.copy(kwargs).items():
@@ -249,6 +251,22 @@ class Settings(object):
             # have been reverted.
             for key in kwargs:
                 self._cache.pop(k, None)
+
+
+def config_from_environment(kwargs):
+    """Read tower-cli config values from the environment if present, being
+    careful not to override config values that were explicitly passed in.
+    """
+    CONFIG_OPTIONS = ('host', 'username', 'password', 'verify_ssl', 'format',
+                      'color', 'verbose', 'description_on', 'certificate')
+    kwargs = copy.copy(kwargs)
+    for k in CONFIG_OPTIONS:
+        if k not in kwargs or kwargs[k] is None:
+            env = 'TOWER_' + k.upper()
+            v = os.getenv(env, None)
+            if v is not None:
+                kwargs[k] = v
+    return kwargs
 
 
 # The primary way to interact with settings is to simply hit the

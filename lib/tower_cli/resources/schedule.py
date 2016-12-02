@@ -126,6 +126,7 @@ class Resource(models.Resource):
                               display=False, help_text='Extra data for '
                               'schedule rules in the form of a .json file.')
 
+
 Resource.create = jt_aggregate(Resource.create, is_create=True)
 Resource.delete = jt_aggregate(Resource.delete, has_pk=True)
 Resource.get = jt_aggregate(Resource.get, has_pk=True)
