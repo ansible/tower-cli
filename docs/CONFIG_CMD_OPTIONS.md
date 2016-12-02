@@ -13,6 +13,7 @@
 
 ## Environment Variables
 All of the above options can also be set using environment variables. The default behavior is to allow environment variables to override your tower-cli.cfg settings, but they will not override config values that are passed in on the command line at runtime. Below is a table of the available environment variables.
+## Variable Mapping
 | *Environment Variable* | *Tower Config Key* |
 |------------------------|--------------------|
 | `TOWER_COLOR`          | `color`            |
