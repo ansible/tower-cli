@@ -27,6 +27,7 @@ sys.path.append(APP_ROOT)
 def load_tests(loader, standard_tests, throwaway):
     return loader.discover('tests')
 
+
 # Run the tests.
 if __name__ == '__main__':
     unittest.main()

@@ -268,6 +268,7 @@ def config_from_environment(kwargs):
                 kwargs[k] = v
     return kwargs
 
+
 # The primary way to interact with settings is to simply hit the
 # already constructed settings object.
 settings = Settings()

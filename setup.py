@@ -109,6 +109,7 @@ def combine_files(*args):
             file_contents.append(f.read())
     return "\n\n".join(file_contents)
 
+
 setup(
     # Basic metadata
     name='ansible-tower-cli',
