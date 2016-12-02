@@ -101,3 +101,31 @@ class ParserTests(unittest.TestCase):
                                                parser.readfp)
                     read_file_method(StringIO('[general]\nfoo: bar\n'))
                     assert not warn.called
+
+
+class ConfigFromEnvironmentTests(unittest.TestCase):
+    """A set of tests that ensure the environment from config
+    parsing works as intended.
+    """
+    def test_no_override(self):
+        """Establish that the environment variables do not override explicitly
+        passed in values."""
+        settings = Settings()
+        with mock.patch.dict(os.environ, {'TOWER_HOST': 'myhost'}):
+            with settings.runtime_values(host='yourhost'):
+                self.assertEqual(settings.host, 'yourhost')
+
+    def test_read_from_env(self):
+        """Establish that the environment variables are correctly parsed
+        and the values are set in the settings."""
+        settings = Settings()
+
+        mock_env = {'TOWER_HOST': 'myhost', 'TOWER_PASSWORD': 'mypass',
+                    'TOWER_USERNAME': 'myuser', 'TOWER_VERIFY_SSL': 'False'}
+
+        with mock.patch.dict(os.environ, mock_env):
+            with settings.runtime_values():
+                self.assertEqual(settings.host, 'myhost')
+                self.assertEqual(settings.username, 'myuser')
+                self.assertEqual(settings.password, 'mypass')
+                self.assertEqual(settings.verify_ssl, False)
