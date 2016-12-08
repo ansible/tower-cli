@@ -61,6 +61,9 @@ class Resource(models.Resource):
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     extra_vars = models.Field(required=False, display=False)
+    host_config_key = models.Field(
+        required=False, display=False,
+        help_text='Allow Provisioning Callbacks using this host config key')
     ask_variables_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for extra_vars on launch.')
