@@ -29,6 +29,7 @@ class Resource(models.Resource):
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
     job_type = models.Field(
+        required=False,
         display=False,
         type=click.Choice(['run', 'check', 'scan']),
     )
