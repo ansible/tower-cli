@@ -21,7 +21,6 @@ from tower_cli.utils import types
 class Resource(models.Resource):
     cli_help = 'Manage inventory scripts within Ansible Tower.'
     endpoint = '/inventory_scripts/'
-    internal = True
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
