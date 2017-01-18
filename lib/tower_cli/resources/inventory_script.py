@@ -24,6 +24,9 @@ class Resource(models.Resource):
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
-    script = models.Field(display=False)
+    script = models.Field(
+        type=types.Variables(), display=False,
+        help_text='Script code to fetch inventory, prefix with "@" to '
+                  'use contents of file for this field.')
     organization = models.Field(type=types.Related('organization'),
                                 display=False)
