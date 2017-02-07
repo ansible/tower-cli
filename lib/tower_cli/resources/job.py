@@ -26,7 +26,9 @@ from tower_cli.utils import debug, types
 from tower_cli.utils import parser
 
 
-PROMPT_LIST = ['limit', 'tags', 'job_type', 'inventory', 'credential']
+PROMPT_LIST = [
+    'limit', 'tags', 'skip_tags', 'job_type', 'inventory', 'credential'
+]
 
 
 class Resource(models.ExeResource):
@@ -67,6 +69,8 @@ class Resource(models.ExeResource):
                   help='Specify host limit for job template to run.')
     @click.option('--tags', required=False,
                   help='Specify tagged actions in the playbook to run.')
+    @click.option('--skip-tags', required=False,
+                  help='Specify tagged actions in the playbook to ommit.')
     @click.option('--job-type', required=False, type=click.Choice(['run',
                   'check', 'scan']), help='Specify job type for job template'
                   ' to run.')
