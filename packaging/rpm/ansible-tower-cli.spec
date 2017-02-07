@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           ansible-tower-cli
-Version:        3.0.2
+Version:        3.0.3
 Release:        1%{?dist}
 Summary:        Commandline interface for Ansible Tower
 Group:          Development/Tools

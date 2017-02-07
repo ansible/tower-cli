@@ -1,6 +1,14 @@
 Release History
 ===============
 
+3.0.3 (2017-02-07)
+------------------
+
+- Expose custom inventory script resource to the user
+- Include tests and docs in the release tarball
+- Added job template skip_tags prompting support
+- Added job template callback support
+
 3.0.2 (2016-12-08)
 ------------------
 
