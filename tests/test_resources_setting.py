@@ -51,6 +51,49 @@ class SettingTests(unittest.TestCase):
                 [{'id':'FIRST', 'value':123}, {'id':'SECOND', 'value':'foo'}]
             )
 
+    def test_list_all_by_category(self):
+        """Establish that settings can be listed by category"""
+        system_settings = OrderedDict({'FEATURE_ENABLED': True})
+        auth_settings = OrderedDict({'SOME_API_KEY': 'ABC123'})
+        with client.test_mode as t:
+            t.register_json('/settings/system/', system_settings)
+            t.register_json('/settings/authentication/', auth_settings)
+
+            r = self.res.list(category='system')
+            self.assertEqual(
+                r['results'],
+                [{'id':'FEATURE_ENABLED', 'value':True}]
+            )
+
+            r = self.res.list(category='authentication')
+            self.assertEqual(
+                r['results'],
+                [{'id':'SOME_API_KEY', 'value':'ABC123'}]
+            )
+
+    def test_list_invalid_category(self):
+        """Establish that all settings can only be listed by valid categories"""
+        categories = {
+            'results': [{
+                'url': '/api/v1/settings/all/',
+                'name': 'All',
+                'slug': 'all'
+            },{
+                'url': '/api/v1/settings/logging/',
+                'name': 'Logging',
+                'slug': 'logging'
+            }]
+        }
+        with client.test_mode as t:
+            t.register_json('/settings/', categories)
+            t.register_json('/settings/authentication/', '', status_code=404)
+            with self.assertRaises(exc.NotFound) as e:
+                self.res.list(category='authentication')
+            self.assertEqual(
+                e.exception.message,
+                'authentication is not a valid category.  Choose from [all, logging]'
+            )
+
     def test_get(self):
         """Establish that individual settings can be retrieved"""
         all_settings = OrderedDict({'FIRST': 123})

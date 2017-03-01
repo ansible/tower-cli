@@ -31,13 +31,13 @@ class Resource(models.Resource):
                   help='If set, filter settings by a specific category')
     def list(self, **kwargs):
         """Return a list of objects."""
-        self.custom_category = kwargs['category']
+        self.custom_category = kwargs.get('category', 'all')
         try:
             result = super(Resource, self).list(**kwargs)
         except exc.NotFound as e:
             categories = map(
                 lambda category: category['slug'],
-                client.get('settings').json()['results']
+                client.get('/settings/').json()['results']
             )
             e.message = '%s is not a valid category.  Choose from [%s]' % (
                 kwargs['category'],
