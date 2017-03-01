@@ -30,12 +30,14 @@ class SettingTests(unittest.TestCase):
         self.res = tower_cli.get_resource('setting')
 
     def test_create_method_is_disabled(self):
-        """Establish that delete method properly disabled."""
-        self.assertEqual(self.res.as_command().get_command(None, 'create'), None)
+        """Establish that the delete method properly disabled."""
+        self.assertEqual(self.res.as_command().get_command(None, 'create'),
+                         None)
 
     def test_delete_method_is_disabled(self):
-        """Establish that create method properly disabled."""
-        self.assertEqual(self.res.as_command().get_command(None, 'delete'), None)
+        """Establish that the create method properly disabled."""
+        self.assertEqual(self.res.as_command().get_command(None, 'delete'),
+                         None)
 
     def test_list_all(self):
         """Establish that all settings can be listed"""
@@ -48,7 +50,10 @@ class SettingTests(unittest.TestCase):
             r = self.res.list()
             self.assertEqual(
                 sorted(r['results'], key=lambda k: k['id']),
-                [{'id':'FIRST', 'value':123}, {'id':'SECOND', 'value':'foo'}]
+                [
+                    {'id': 'FIRST', 'value': 123},
+                    {'id': 'SECOND', 'value': 'foo'}
+                ]
             )
 
     def test_list_all_by_category(self):
@@ -62,23 +67,23 @@ class SettingTests(unittest.TestCase):
             r = self.res.list(category='system')
             self.assertEqual(
                 r['results'],
-                [{'id':'FEATURE_ENABLED', 'value':True}]
+                [{'id': 'FEATURE_ENABLED', 'value': True}]
             )
 
             r = self.res.list(category='authentication')
             self.assertEqual(
                 r['results'],
-                [{'id':'SOME_API_KEY', 'value':'ABC123'}]
+                [{'id': 'SOME_API_KEY', 'value': 'ABC123'}]
             )
 
     def test_list_invalid_category(self):
-        """Establish that all settings can only be listed by valid categories"""
+        """Establish that settings can only be listed by valid categories"""
         categories = {
             'results': [{
                 'url': '/api/v1/settings/all/',
                 'name': 'All',
                 'slug': 'all'
-            },{
+            }, {
                 'url': '/api/v1/settings/logging/',
                 'name': 'Logging',
                 'slug': 'logging'
@@ -91,7 +96,8 @@ class SettingTests(unittest.TestCase):
                 self.res.list(category='authentication')
             self.assertEqual(
                 e.exception.message,
-                'authentication is not a valid category.  Choose from [all, logging]'
+                ('authentication is not a valid category.  Choose from '
+                 '[all, logging]')
             )
 
     def test_get(self):
@@ -130,4 +136,5 @@ class SettingTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', all_settings, method='PATCH')
-            self.assertRaises(exc.NotFound, self.res.modify, 'MISSING', value=456)
+            self.assertRaises(exc.NotFound, self.res.modify, 'MISSING',
+                              value=456)
