@@ -41,13 +41,20 @@ def parse_kv(var_string):
         fix_encoding_26 = True
 
     # Also hedge against Click library giving non-string type
+    is_unicode = False
     if fix_encoding_26 or not isinstance(var_string, str):
-        var_string = str(var_string)
+        if isinstance(var_string, unicode):
+            var_string = var_string.encode('UTF-8')
+            is_unicode = True
+        else:
+            var_string = str(var_string)
 
     # Use shlex library to split string by quotes, whitespace, etc.
     for token in shlex.split(var_string):
 
         # Second part of fix to avoid passing shlex unicode in py2.6
+        if (is_unicode):
+            token = token.decode('UTF-8')
         if fix_encoding_26:
             token = six.text_type(token)
         # Look for key=value pattern, if not, process as raw parameter
@@ -141,7 +148,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
                       header='decison', nl=2)
     if extra_vars == {}:
         return ""
-    return json.dumps(extra_vars)
+    return json.dumps(extra_vars, ensure_ascii=False)
 
 
 def ordered_dump(data, Dumper=yaml.Dumper, **kws):
