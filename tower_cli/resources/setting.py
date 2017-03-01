@@ -64,12 +64,13 @@ class Resource(models.Resource):
     @resources.command(ignore_defaults=True)
     def modify(self, pk, value, **kwargs):
         """Modify an already existing object."""
-        self.get(pk)
+        prev_value = self.get(pk)['value']
         r = client.patch(self.endpoint, data={pk: value})
+        new_value = r.json()[pk]
         answer = OrderedDict((
-            ('changed', True),
+            ('changed', prev_value != new_value),
             ('id', pk),
-            ('value', value)
+            ('value', new_value)
         ))
         answer.update(r.json())
         return answer
