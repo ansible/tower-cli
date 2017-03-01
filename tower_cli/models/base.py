@@ -115,10 +115,11 @@ class ResourceMeta(type):
 
         # Ensure that the endpoint ends in a trailing slash, since we
         # expect this when we build URLs based on it.
-        if not newattrs['endpoint'].startswith('/'):
-            newattrs['endpoint'] = '/' + newattrs['endpoint']
-        if not newattrs['endpoint'].endswith('/'):
-            newattrs['endpoint'] += '/'
+        if isinstance(newattrs['endpoint'], basestring):
+            if not newattrs['endpoint'].startswith('/'):
+                newattrs['endpoint'] = '/' + newattrs['endpoint']
+            if not newattrs['endpoint'].endswith('/'):
+                newattrs['endpoint'] += '/'
 
         # Construct the class.
         return super_new(cls, name, bases, newattrs)

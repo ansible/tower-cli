@@ -81,7 +81,7 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.method, 'PATCH')
             self.assertEqual(request.body, json.dumps({'FIRST': 456}))
 
-    def test_update_invalid(self):
+    def test_update_invalid_setting_name(self):
         """Establish that a setting must exist to be updated"""
         all_settings = OrderedDict({'FIRST': 123})
         with client.test_mode as t:

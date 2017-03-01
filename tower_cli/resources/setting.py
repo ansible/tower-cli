@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import click
+
 from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
@@ -20,14 +22,30 @@ from tower_cli.utils.data_structures import OrderedDict
 
 class Resource(models.Resource):
     cli_help = 'Manage settings within Ansible Tower.'
-    endpoint = '/settings/all/'
+    custom_category = None
 
     value = models.Field(required=True)
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
+    @click.option('category', '-c', '--category',
+                  help='If set, filter settings by a specific category')
     def list(self, **kwargs):
         """Return a list of objects."""
-        result = super(Resource, self).list(**kwargs)
+        self.custom_category = kwargs['category']
+        try:
+            result = super(Resource, self).list(**kwargs)
+        except exc.NotFound as e:
+            categories = map(
+                lambda category: category['slug'],
+                client.get('settings').json()['results']
+            )
+            e.message = '%s is not a valid category.  Choose from [%s]' % (
+                kwargs['category'],
+                ', '.join(categories)
+            )
+            raise e
+        finally:
+            self.custom_category = None
         return {
             'results': [{'id': k, 'value': v} for k, v in result.items()]
         }
@@ -54,6 +72,10 @@ class Resource(models.Resource):
         ))
         answer.update(r.json())
         return answer
+
+    @property
+    def endpoint(self):
+        return '/settings/%s/' % (self.custom_category or 'all')
 
     def __getattribute__(self, name):
         """Disable inherited methods that cannot be applied to this
