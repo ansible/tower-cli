@@ -128,13 +128,10 @@ setup(
     provides=[
         'tower_cli',
     ],
-    package_dir={
-        'tower_cli': 'lib/tower_cli',
-    },
-    packages=[i for i in find_packages('lib') if i.startswith('tower_cli')],
     scripts=[
         'bin/tower-cli',
     ],
+    packages=find_packages(),
 
     # How to do the tests
     tests_require=['tox'],

@@ -1,7 +1,7 @@
 [run]
-source = lib/tower_cli/
+source = tower_cli/
 omit =
-    lib/tower_cli/utils/compat.py
+    tower_cli/utils/compat.py
 branch = True
 
 
