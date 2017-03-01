@@ -18,6 +18,7 @@ from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
+from tower_cli.utils.decorators import pop_option
 
 
 class Resource(models.Resource):
@@ -85,3 +86,12 @@ class Resource(models.Resource):
             raise AttributeError
         else:
             return object.__getattribute__(self, name)
+
+
+# Settings don't support pagination, and there's nothing to filter on
+pop_option(Resource.list, 'all_pages')
+pop_option(Resource.list, 'page')
+pop_option(Resource.list, 'query')
+
+# Settings don't have a `create` operation
+pop_option(Resource.modify, 'create_on_missing')

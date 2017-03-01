@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import OrderedDict
 import json
 
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
+from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest
 
