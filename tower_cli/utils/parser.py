@@ -43,7 +43,7 @@ def parse_kv(var_string):
     # Also hedge against Click library giving non-string type
     is_unicode = False
     if fix_encoding_26 or not isinstance(var_string, str):
-        if isinstance(var_string, unicode):
+        if isinstance(var_string, six.text_type):
             var_string = var_string.encode('UTF-8')
             is_unicode = True
         else:
