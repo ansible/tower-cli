@@ -15,8 +15,11 @@
 
 from __future__ import absolute_import, unicode_literals
 
-from tower_cli import models
+from tower_cli import models, resources
 from tower_cli.utils import types
+from tower_cli.utils.resource_decorators import unified_job_template_options
+
+import click
 
 
 class Resource(models.Resource):
@@ -26,8 +29,6 @@ class Resource(models.Resource):
 
     workflow_job_template = models.Field(
         key='-W', type=types.Related('workflow'))
-    unified_job_template = models.Field(
-        key='-J', type=types.Related('job_template'))
     inventory = models.Field(
         type=types.Related('inventory'), required=False, display=False)
     credential = models.Field(
@@ -36,6 +37,11 @@ class Resource(models.Resource):
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     limit = models.Field(required=False, display=False)
-    fail_on_job_failure = models.Field(
-        type=bool, required=False, display=False,
-        help_text='Set workflow to fail if connected job fails.')
+
+    @resources.command(use_fields_as_options=False)
+    @unified_job_template_options
+    @click.argument('parent', type=types.Related('node'))
+    @click.argument('child', type=types.Related('node'))
+    def associate_success_node(self, parent, child=None, **kwargs):
+        """Add a node to run on success."""
+        return self._assoc('success_nodes', parent, child)
