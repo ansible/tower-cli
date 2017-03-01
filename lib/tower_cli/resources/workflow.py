@@ -43,9 +43,8 @@ class Resource(models.Resource):
         node_results = node_res.list(workflow_job_template=wfjt_id,
                                      all_pages=True)['results']
 
-        # Build list address translation, and create backlink lists 
+        # Build list address translation, and create backlink lists
         node_list_pos = {}
-        print 'type ' + str(type(node_results))
         for i, node_result in enumerate(node_results):
             for rel in ['success', 'failure', 'always']:
                 node_result['{}_backlinks'.format(rel)] = []
@@ -92,7 +91,7 @@ class Resource(models.Resource):
                     for sub_node_id in sub_node_id_list:
                         ret_dict['{}_nodes'.format(rel)] = branch_schema(
                             sub_node_id)
-            return ret_dict                
+            return ret_dict
 
         schema_dict = []
         for root_node_id in root_nodes:
@@ -104,8 +103,8 @@ class Resource(models.Resource):
     @click.argument('node_network', type=types.Variables(), required=False)
     def schema(self, wfjt, node_network=None):
         """
-        Convert a YAML/JSON file into workflow node objects if
-        `node_network` param is given.
+        Convert YAML/JSON content into workflow node objects if
+        node_network param is given.
         If not, print a YAML representation of the node network.
         """
         if node_network is None:

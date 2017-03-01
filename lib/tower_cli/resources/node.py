@@ -61,8 +61,8 @@ class Resource(models.Resource):
             relationship)
         query_params = ((backward_relationship, parent),)
         response = self.read(
-            fail_on_no_results=False,
-            fail_on_multiple_results=True, **kwargs)
+            fail_on_no_results=False, fail_on_multiple_results=True,
+            query=query_params, **kwargs)
         if len(response['results']) == 0:
             return self.write(**kwargs)
         else:
@@ -76,7 +76,7 @@ class Resource(models.Resource):
         """Add a node to run on success."""
         if child is None:
             child_data = self._get_or_create_child(parent, 'success', **kwargs)
-            child = child['id']
+            child = child_data['id']
         return self._assoc('success_nodes', parent, child)
 
     @resources.command
@@ -87,7 +87,7 @@ class Resource(models.Resource):
         """Add a node to run on success."""
         if child is None:
             child_data = self._get_or_create_child(parent, 'failure', **kwargs)
-            child = child['id']
+            child = child_data['id']
         return self._assoc('success_nodes', parent, child)
 
     @resources.command
@@ -98,5 +98,5 @@ class Resource(models.Resource):
         """Add a node to run on success."""
         if child is None:
             child_data = self._get_or_create_child(parent, 'always', **kwargs)
-            child = child['id']
+            child = child_data['id']
         return self._assoc('success_nodes', parent, child)
