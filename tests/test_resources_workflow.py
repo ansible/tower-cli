@@ -91,5 +91,4 @@ class NodeModelTests(unittest.TestCase):
             self.res.create(workflow_job_template=1,
                             job_template=5)
             mck.assert_called_once_with(workflow_job_template=1,
-                                       unified_job_template=5)
-
+                                        unified_job_template=5)

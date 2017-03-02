@@ -18,10 +18,12 @@ from __future__ import absolute_import, unicode_literals
 from tower_cli import models, resources
 from tower_cli.utils import types
 from tower_cli.utils.resource_decorators import unified_job_template_options
-from tower_cli.utils import exceptions
+from tower_cli.utils import exceptions, debug
 from tower_cli.api import client
 
 import click
+
+from copy import copy
 
 
 NODE_STANDARD_FIELDS = [
@@ -58,6 +60,31 @@ class Resource(models.Resource):
             return unified_job_template_options(method)
         return method
 
+    @staticmethod
+    def _forward_rel_name(rel):
+        return '{0}_nodes'.format(rel)
+
+    @staticmethod
+    def _reverse_rel_name(rel):
+        return 'workflowjobtemplatenodes_{0}'.format(rel)
+
+    def _parent_filter(self, parent, relationship, **kwargs):
+        """
+        Returns filtering parameters to limit a search to the children
+        of a particular node by a particular relationship.
+        """
+        if parent is None or relationship is None:
+            return {}
+        parent_filter_kwargs = {}
+        query_params = ((self._reverse_rel_name(relationship), parent),)
+        parent_filter_kwargs['query'] = query_params
+        if kwargs.get('workflow_job_template', None) is None:
+            parent_data = self.read(pk=parent)['results'][0]
+            parent_filter_kwargs['workflow_job_template'] = parent_data[
+                'workflow_job_template']
+        return parent_filter_kwargs
+
+    @unified_job_template_options
     def _get_or_create_child(self, parent, relationship, **kwargs):
         ujt_pk = kwargs.get('unified_job_template', None)
         if ujt_pk is None:
@@ -65,24 +92,20 @@ class Resource(models.Resource):
                 'A child node must be specified by one of the options '
                 'unified-job-template, job-template, project, or '
                 'inventory-source')
-        backward_relationship = 'workflowjobtemplatenodes_{}'.format(
-            relationship)
-        query_params = ((backward_relationship, parent),)
-        if kwargs.get('workflow_job_template', None) is None:
-            parent_data = self.read(pk=parent)['results'][0]
-            kwargs['workflow_job_template'] = parent_data[
-                'workflow_job_template']
+        kwargs.update(self._parent_filter(parent, relationship, **kwargs))
         response = self.read(
-            fail_on_no_results=False, fail_on_multiple_results=True,
-            query=query_params, **kwargs)
+            fail_on_no_results=False, fail_on_multiple_results=False, **kwargs)
         if len(response['results']) == 0:
-            return self.write(**kwargs)
+            debug.log('Creating new workflow node.', header='details')
+            return client.post(self.endpoint, data=kwargs).json()
+            # return self.write(**kwargs)
         else:
             return response['results'][0]
 
     def _assoc_or_create(self, relationship, parent, child, **kwargs):
         if child is None:
-            child_data = self._get_or_create_child(parent, 'success', **kwargs)
+            child_data = self._get_or_create_child(
+                parent, relationship, **kwargs)
             return child_data
         return self._assoc(relationship, parent, child)
 
@@ -92,7 +115,7 @@ class Resource(models.Resource):
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_success_node(self, parent, child=None, **kwargs):
         """Add a node to run on success."""
-        return self._assoc_or_create('success_nodes', parent, child)
+        return self._assoc_or_create('success', parent, child, **kwargs)
 
     @resources.command
     @click.argument('parent', type=types.Related('node'))
@@ -100,7 +123,8 @@ class Resource(models.Resource):
     def disassociate_success_node(self, parent, child=None, **kwargs):
         """Remove success node.
         The resulatant 2 nodes will both become root nodes."""
-        return self._disassoc('success_nodes', parent, child)
+        return self._disassoc(
+            self._forward_rel_name('success'), parent, child)
 
     @resources.command
     @unified_job_template_options
@@ -108,7 +132,7 @@ class Resource(models.Resource):
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_failure_node(self, parent, child=None, **kwargs):
         """Add a node to run on failure."""
-        return self._assoc_or_create('failure_nodes', parent, child)
+        return self._assoc_or_create('failure', parent, child, **kwargs)
 
     @resources.command
     @click.argument('parent', type=types.Related('node'))
@@ -116,7 +140,8 @@ class Resource(models.Resource):
     def disassociate_failure_node(self, parent, child=None, **kwargs):
         """Remove a failure node link.
         The resulatant 2 nodes will both become root nodes."""
-        return self._disassoc('failure_nodes', parent, child)
+        return self._disassoc(
+            self._forward_rel_name('failure'), parent, child)
 
     @resources.command
     @unified_job_template_options
@@ -124,7 +149,7 @@ class Resource(models.Resource):
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_always_node(self, parent, child=None, **kwargs):
         """Add a node to always run after the parent is finished."""
-        return self._assoc_or_create('always_nodes', parent, child)
+        return self._assoc_or_create('always', parent, child, **kwargs)
 
     @resources.command
     @click.argument('parent', type=types.Related('node'))
@@ -132,4 +157,5 @@ class Resource(models.Resource):
     def disassociate_always_node(self, parent, child=None, **kwargs):
         """Add a node to always run after the parent is finished.
         The resulatant 2 nodes will both become root nodes."""
-        return self._disassoc('always_nodes', parent, child)
+        return self._disassoc(
+            self._forward_rel_name('always'), parent, child)

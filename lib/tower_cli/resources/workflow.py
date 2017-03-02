@@ -120,40 +120,47 @@ class Resource(models.Resource):
         If not, print a YAML representation of the node network.
         """
         if node_network is None:
-            settings.format = 'yaml'
+            if settings.format == 'human':
+                settings.format = 'yaml'
             return self._get_schema(wfjt)
 
         node_res = get_resource('node')
 
-        def create_node_recursive(node_branch):
+        def create_node_recursive(node_branch, parent, relationship):
+            # Create node with data specified by top-level keys
             create_data = {}
             for fd in NODE_STANDARD_FIELDS + JOB_TYPES.values():
                 if fd in node_branch:
-                    if fd in JOB_TYPES.values():
+                    if (
+                            fd in JOB_TYPES.values() and
+                            not node_branch[fd].isdigit()):
+                        # Node's template was given by name, do lookup
                         ujt_res = get_resource(fd)
                         ujt_data = ujt_res.get(name=node_branch[fd])
                         create_data[fd] = ujt_data['id']
                     else:
                         create_data[fd] = node_branch[fd]
             create_data['workflow_job_template'] = wfjt
-            # TODO: handle case of pre-existing node
-            node_data = node_res.create(**create_data)
-            for key in node_branch:
+            node_data = node_res._get_or_create_child(
+                parent, relationship, **create_data)
+            # Repeat the process for all sub-branches
+            for fd in node_branch:
                 for rel in ['success', 'failure', 'always']:
-                    if key.startswith(rel):
-                        for sub_branch in node_branch[key]:
-                            if isinstance(sub_branch, basestring):
-                                raise BadRequest(
-                                    'Sublists in spec must be lists.'
-                                    'Encountered in {0} at {1}'.format(
-                                        key, sub_branch))
-                            sub_node_data = create_node_recursive(sub_branch)
-                            print "\n".join(['success_nodes', str(node_data),
-                            str(sub_node_data)])
+                    relationship_name = node_res._forward_rel_name(rel)
+                    if fd.startswith(rel):
+                        sub_branch_list = node_branch[fd]
+                        if not isinstance(sub_branch_list, list):
+                            raise BadRequest(
+                                'Sublists in spec must be lists.'
+                                'Encountered in {0} at {1}'.format(
+                                    fd, sub_branch))
+                        for sub_branch in sub_branch_list:
+                            sub_node_data = create_node_recursive(
+                                sub_branch, parent=node_data['id'],
+                                relationship=rel)
                             node_res._assoc(
-                                '{0}_nodes'.format(rel),
-                                node_data['id'],
-                                sub_node_data['id'])
+                                relationship_name,
+                                node_data['id'], sub_node_data['id'])
                         break
             return node_data
 
@@ -163,7 +170,8 @@ class Resource(models.Resource):
             node_network, allow_kv=False, require_dict=False)
 
         for base_node in node_network:
-            create_node_recursive(base_node)
+            create_node_recursive(base_node, parent=None, relationship=None)
 
-        settings.format = 'yaml'
+        if settings.format == 'human':
+            settings.format = 'yaml'
         return self._get_schema(wfjt)
