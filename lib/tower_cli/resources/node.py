@@ -23,6 +23,17 @@ from tower_cli.utils import exceptions
 import click
 
 
+NODE_STANDARD_FIELDS = [
+    'unified_job_template', 'inventory', 'credential', 'job_type',
+    'job_tags', 'skip_tags', 'limit'
+]
+JOB_TYPES = {
+    'job': 'job_template',
+    'project_update': 'project',
+    'inventory_update': 'inventory'
+}
+
+
 class Resource(models.Resource):
     cli_help = 'Manage nodes inside of a workflow job template.'
     endpoint = '/workflow_job_template_nodes/'
@@ -40,15 +51,11 @@ class Resource(models.Resource):
     skip_tags = models.Field(required=False, display=False)
     limit = models.Field(required=False, display=False)
 
-    STANDARD_FIELDS = [
-        'unified_job_template', 'inventory', 'credential', 'job_type',
-        'job_tags', 'skip_tags', 'limit'
-    ]
-    JOB_TYPES = {
-        'job': 'job_template',
-        'project_update': 'project',
-        'inventory_update': 'inventory'
-    }
+    def __getattribute__(self, attr):
+        method = super(Resource, self).__getattribute__(attr)
+        if attr in ['create', 'modify']:
+            return unified_job_template_options(method)
+        return method
 
     def _get_or_create_child(self, parent, relationship, **kwargs):
         ujt_pk = kwargs.get('unified_job_template', None)
@@ -84,7 +91,7 @@ class Resource(models.Resource):
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'))
     def associate_failure_node(self, parent, child=None, **kwargs):
-        """Add a node to run on success."""
+        """Add a node to run on failure."""
         if child is None:
             child_data = self._get_or_create_child(parent, 'failure', **kwargs)
             child = child_data['id']
@@ -95,7 +102,7 @@ class Resource(models.Resource):
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'))
     def associate_always_node(self, parent, child=None, **kwargs):
-        """Add a node to run on success."""
+        """Add a node to always run after the parent is finished."""
         if child is None:
             child_data = self._get_or_create_child(parent, 'always', **kwargs)
             child = child_data['id']

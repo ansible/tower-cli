@@ -18,6 +18,7 @@ from __future__ import absolute_import, unicode_literals
 from tower_cli import models, resources, get_resource
 from tower_cli.utils import types
 from tower_cli.conf import settings
+from tower_cli.resources.node import NODE_STANDARD_FIELDS, JOB_TYPES
 
 import click
 
@@ -34,28 +35,26 @@ class Resource(models.Resource):
                   'workflow, use "@" to get from file.')
     organization = models.Field(type=types.Related('organization'))
 
-    def _get_schema(self, wfjt_id):
-        """
-        Returns a dictionary that represents the node network of the
-        workflow job template
-        """
-        node_res = get_resource('node')
-        node_results = node_res.list(workflow_job_template=wfjt_id,
-                                     all_pages=True)['results']
-
+    @staticmethod
+    def _workflow_node_structure(node_results):
+        '''
+        Takes the list results from the API in `node_results` and
+        translates this data into a dictionary organized in a
+        human-readable heirarchial structure
+        '''
         # Build list address translation, and create backlink lists
         node_list_pos = {}
         for i, node_result in enumerate(node_results):
             for rel in ['success', 'failure', 'always']:
-                node_result['{}_backlinks'.format(rel)] = []
+                node_result['{0}_backlinks'.format(rel)] = []
             node_list_pos[node_result['id']] = i
 
         # Populate backlink lists
         for node_result in node_results:
             for rel in ['success', 'failure', 'always']:
-                for sub_node_id in node_result['{}_nodes'.format(rel)]:
+                for sub_node_id in node_result['{0}_nodes'.format(rel)]:
                     j = node_list_pos[sub_node_id]
-                    node_results[j]['{}_backlinks'.format(rel)].append(
+                    node_results[j]['{0}_backlinks'.format(rel)].append(
                         node_result['id'])
 
         # Find the root nodes
@@ -63,7 +62,7 @@ class Resource(models.Resource):
         for node_result in node_results:
             is_root = True
             for rel in ['success', 'failure', 'always']:
-                if node_result['{}_backlinks'.format(rel)] != []:
+                if node_result['{0}_backlinks'.format(rel)] != []:
                     is_root = False
                     break
             if is_root:
@@ -74,22 +73,22 @@ class Resource(models.Resource):
             i = node_list_pos[node_id]
             node_dict = node_results[i]
             ret_dict = {}
-            for fd in node_res.STANDARD_FIELDS:
+            for fd in NODE_STANDARD_FIELDS:
                 val = node_dict.get(fd, None)
                 if val is not None:
                     if fd == 'unified_job_template':
                         job_type = node_dict['summary_fields'][
                             'unified_job_template']['unified_job_type']
-                        ujt_key = node_res.JOB_TYPES[job_type]
+                        ujt_key = JOB_TYPES[job_type]
                         ret_dict[ujt_key] = val
                     else:
                         ret_dict[fd] = val
                 for rel in ['success', 'failure', 'always']:
-                    sub_node_id_list = node_dict['{}_nodes'.format(rel)]
+                    sub_node_id_list = node_dict['{0}_nodes'.format(rel)]
                     if len(sub_node_id_list) == 0:
                         continue
                     for sub_node_id in sub_node_id_list:
-                        ret_dict['{}_nodes'.format(rel)] = branch_schema(
+                        ret_dict['{0}_nodes'.format(rel)] = branch_schema(
                             sub_node_id)
             return ret_dict
 
@@ -97,6 +96,16 @@ class Resource(models.Resource):
         for root_node_id in root_nodes:
             schema_dict.append(branch_schema(root_node_id))
         return schema_dict
+
+    def _get_schema(self, wfjt_id):
+        """
+        Returns a dictionary that represents the node network of the
+        workflow job template
+        """
+        node_res = get_resource('node')
+        node_results = node_res.list(workflow_job_template=wfjt_id,
+                                     all_pages=True)['results']
+        return self._workflow_node_structure(node_results)
 
     @resources.command(use_fields_as_options=False)
     @click.argument('wfjt', type=types.Related('workflow'))
@@ -114,7 +123,11 @@ class Resource(models.Resource):
         node_res = get_resource('node')
 
         def create_node_recursive(node_branch):
-            node_data = node_res.create(node_branch)
+            create_data = {}
+            for fd in NODE_STANDARD_FIELDS:
+                if fd in node_branch:
+                    create_data[fd] = node_branch[fd]
+            node_data = node_res.create(create_data)
             for key in node_branch:
                 for rel in ['success', 'failure', 'always']:
                     if key.startswith(rel):
@@ -123,6 +136,7 @@ class Resource(models.Resource):
                             node_res._assoc(
                                 'success_nodes', node_data['id'],
                                 sub_node_data['id'])
+                        break
             return node_data
 
         for base_node in node_network:
@@ -130,5 +144,3 @@ class Resource(models.Resource):
 
         settings.format = 'yaml'
         return self._get_schema(wfjt)
-
-        # return {'changed': True}
