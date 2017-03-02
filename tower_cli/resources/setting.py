@@ -62,23 +62,25 @@ class Resource(models.Resource):
         except StopIteration:
             raise exc.NotFound('The requested object could not be found.')
 
-    @resources.command(ignore_defaults=True)
-    def modify(self, pk, value, **kwargs):
+    @resources.command(use_fields_as_options=False)
+    @click.argument('setting')
+    @click.argument('value', default=None, required=False)
+    def modify(self, setting, value):
         """Modify an already existing object."""
-        prev_value = new_value = self.get(pk)['value']
+        prev_value = new_value = self.get(setting)['value']
         answer = OrderedDict()
         encrypted = '$encrypted$' in six.text_type(prev_value)
 
         if encrypted or six.text_type(prev_value) != six.text_type(value):
-            r = client.patch(self.endpoint, data={pk: value})
-            new_value = r.json()[pk]
+            r = client.patch(self.endpoint, data={setting: value})
+            new_value = r.json()[setting]
             answer.update(r.json())
 
         changed = encrypted or (prev_value != new_value)
 
         answer.update({
             'changed': changed,
-            'id': pk,
+            'id': setting,
             'value': new_value,
         })
         return answer

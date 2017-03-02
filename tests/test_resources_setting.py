@@ -127,7 +127,7 @@ class SettingTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', patched, method='PATCH')
-            r = self.res.modify('FIRST', value=new_val)
+            r = self.res.modify('FIRST', new_val)
             self.assertTrue(r['changed'])
 
             request = t.requests[0]
@@ -145,7 +145,7 @@ class SettingTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', patched, method='PATCH')
-            r = self.res.modify('FIRST', value=new_val)
+            r = self.res.modify('FIRST', new_val)
             self.assertTrue(r['changed'])
 
             request = t.requests[0]
@@ -160,7 +160,7 @@ class SettingTests(unittest.TestCase):
         all_settings = OrderedDict({'FIRST': 123})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
-            r = self.res.modify('FIRST', value='123')
+            r = self.res.modify('FIRST', '123')
             self.assertFalse(r['changed'])
 
             self.assertEqual(len(t.requests), 1)
@@ -174,7 +174,7 @@ class SettingTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', patched, method='PATCH')
-            r = self.res.modify('SECRET', value='SENSITIVE')
+            r = self.res.modify('SECRET', 'SENSITIVE')
             self.assertTrue(r['changed'])
 
             self.assertEqual(len(t.requests), 2)
@@ -191,5 +191,4 @@ class SettingTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', all_settings, method='PATCH')
-            self.assertRaises(exc.NotFound, self.res.modify, 'MISSING',
-                              value=456)
+            self.assertRaises(exc.NotFound, self.res.modify, 'MISSING', 456)
