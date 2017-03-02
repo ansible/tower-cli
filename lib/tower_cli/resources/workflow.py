@@ -17,6 +17,8 @@ from __future__ import absolute_import, unicode_literals
 
 from tower_cli import models, resources, get_resource
 from tower_cli.utils import types
+from tower_cli.utils.parser import string_to_dict
+from tower_cli.utils.exceptions import BadRequest
 from tower_cli.conf import settings
 from tower_cli.resources.node import NODE_STANDARD_FIELDS, JOB_TYPES
 
@@ -125,20 +127,40 @@ class Resource(models.Resource):
 
         def create_node_recursive(node_branch):
             create_data = {}
-            for fd in NODE_STANDARD_FIELDS:
+            for fd in NODE_STANDARD_FIELDS + JOB_TYPES.values():
                 if fd in node_branch:
-                    create_data[fd] = node_branch[fd]
-            node_data = node_res.create(create_data)
+                    if fd in JOB_TYPES.values():
+                        ujt_res = get_resource(fd)
+                        ujt_data = ujt_res.get(name=node_branch[fd])
+                        create_data[fd] = ujt_data['id']
+                    else:
+                        create_data[fd] = node_branch[fd]
+            create_data['workflow_job_template'] = wfjt
+            # TODO: handle case of pre-existing node
+            node_data = node_res.create(**create_data)
             for key in node_branch:
                 for rel in ['success', 'failure', 'always']:
                     if key.startswith(rel):
                         for sub_branch in node_branch[key]:
+                            if isinstance(sub_branch, basestring):
+                                raise BadRequest(
+                                    'Sublists in spec must be lists.'
+                                    'Encountered in {0} at {1}'.format(
+                                        key, sub_branch))
                             sub_node_data = create_node_recursive(sub_branch)
+                            print "\n".join(['success_nodes', str(node_data),
+                            str(sub_node_data)])
                             node_res._assoc(
-                                'success_nodes', node_data['id'],
+                                '{0}_nodes'.format(rel),
+                                node_data['id'],
                                 sub_node_data['id'])
                         break
             return node_data
+
+        if hasattr(node_network, 'read'):
+            node_network = node_network.read()
+        node_network = string_to_dict(
+            node_network, allow_kv=False, require_dict=False)
 
         for base_node in node_network:
             create_node_recursive(base_node)

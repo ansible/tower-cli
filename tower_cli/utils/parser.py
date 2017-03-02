@@ -68,7 +68,7 @@ def parse_kv(var_string):
     return return_dict
 
 
-def string_to_dict(var_string, allow_kv=True):
+def string_to_dict(var_string, allow_kv=True, require_dict=True):
     """Returns a dictionary given a string with yaml or json syntax.
     If data is not present in a key: value format, then it return
     an empty dictionary.
@@ -84,7 +84,8 @@ def string_to_dict(var_string, allow_kv=True):
     try:
         # Accept all JSON and YAML
         return_dict = yaml.load(var_string)
-        assert type(return_dict) is dict
+        if require_dict:
+            assert type(return_dict) is dict
     except (AttributeError, yaml.YAMLError, AssertionError):
         # if these fail, parse by key=value syntax
         try:

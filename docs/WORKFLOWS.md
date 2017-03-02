@@ -37,17 +37,28 @@ Auto-creation of the success node, only knowing the parent node id
 tower-cli node assocate_success 8 --job-template="Hello world"
 ```
 
-### Bulk Creation
+### Node Network Bulk Management
+
+To print out a YAML representation of the nodes of a workflow, you can
+use the following command:
+
+```
+tower-cli workflow schema my_workflow
+```
+
+where "my_workflow" is the name of the workflow.
 
 To bulk-create a workflow node network, use the workflow schema command
 the schema is JSON or YAML content, and can be passed in the CLI
-argument, or pointed to a file.
+argument, or pointed to a file. The schema is passed as a second positional
+argument, where the first argument references the workflow.
+
 ```
-tower-cli workflow schema @file.yml
+tower-cli workflow schema my_workflow @file.yml
 ```
 
 ```yaml
- - job template: hello world
-   - sucess:
-     - project: examples
+- job_template: Hello world
+  failure_nodes:
+    job_template: Followup job template
 ```

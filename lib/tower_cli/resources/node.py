@@ -54,7 +54,7 @@ class Resource(models.Resource):
 
     def __getattribute__(self, attr):
         method = super(Resource, self).__getattribute__(attr)
-        if attr in ['create', 'modify']:
+        if attr in ['create', 'modify', 'list']:
             return unified_job_template_options(method)
         return method
 
@@ -83,7 +83,7 @@ class Resource(models.Resource):
     def _assoc_or_create(self, relationship, parent, child, **kwargs):
         if child is None:
             child_data = self._get_or_create_child(parent, 'success', **kwargs)
-            child = child_data['id']
+            return child_data
         return self._assoc(relationship, parent, child)
 
     @resources.command
