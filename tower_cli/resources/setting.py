@@ -77,9 +77,9 @@ class Resource(models.Resource):
         changed = encrypted or (prev_value != new_value)
 
         answer.update({
-            ('changed', changed),
-            ('id', pk),
-            ('value', new_value)
+            'changed': changed,
+            'id': pk,
+            'value': new_value,
         })
         return answer
 
