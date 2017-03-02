@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright 2017, Ansible by Red Hat
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +15,8 @@
 # limitations under the License.
 
 import json
+
+import six
 
 import tower_cli
 from tower_cli.api import client
@@ -117,12 +121,13 @@ class SettingTests(unittest.TestCase):
 
     def test_update(self):
         """Establish that a setting's value can updated"""
+        new_val = 456
         all_settings = OrderedDict({'FIRST': 123})
-        patched = OrderedDict({'FIRST': 456})
+        patched = OrderedDict({'FIRST': new_val})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             t.register_json('/settings/all/', patched, method='PATCH')
-            r = self.res.modify('FIRST', value=456)
+            r = self.res.modify('FIRST', value=new_val)
             self.assertTrue(r['changed'])
 
             request = t.requests[0]
@@ -130,7 +135,25 @@ class SettingTests(unittest.TestCase):
 
             request = t.requests[1]
             self.assertEqual(request.method, 'PATCH')
-            self.assertEqual(request.body, json.dumps({'FIRST': 456}))
+            self.assertEqual(request.body, json.dumps({'FIRST': new_val}))
+
+    def test_update_with_unicode(self):
+        """Establish that a setting's value can updated with unicode"""
+        new_val = six.u('Iñtërnâtiônàlizætiøn')
+        all_settings = OrderedDict({'FIRST': 123})
+        patched = OrderedDict({'FIRST': new_val})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', patched, method='PATCH')
+            r = self.res.modify('FIRST', value=new_val)
+            self.assertTrue(r['changed'])
+
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+
+            request = t.requests[1]
+            self.assertEqual(request.method, 'PATCH')
+            self.assertEqual(request.body, json.dumps({'FIRST': new_val}))
 
     def test_idempotent_updates_ignored(self):
         """Don't PATCH a setting if the provided value didn't change"""
