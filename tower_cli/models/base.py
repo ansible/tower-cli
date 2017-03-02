@@ -802,7 +802,7 @@ class ResourceMethods(BaseResource):
                 read_params[field_name] = kwargs[field_name]
 
         # Special case of resources that only only addressable by id
-        if 'id' in self.identity:
+        if 'id' in self.identity and len(self.identity) == 1:
             return {}
 
         # Sanity check: Do we have any parameters?

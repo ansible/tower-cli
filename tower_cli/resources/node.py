@@ -23,8 +23,6 @@ from tower_cli.api import client
 
 import click
 
-from copy import copy
-
 
 NODE_STANDARD_FIELDS = [
     'unified_job_template', 'inventory', 'credential', 'job_type',
@@ -33,7 +31,7 @@ NODE_STANDARD_FIELDS = [
 JOB_TYPES = {
     'job': 'job_template',
     'project_update': 'project',
-    'inventory_update': 'inventory'
+    'inventory_update': 'inventory_source'
 }
 
 
@@ -98,7 +96,6 @@ class Resource(models.Resource):
         if len(response['results']) == 0:
             debug.log('Creating new workflow node.', header='details')
             return client.post(self.endpoint, data=kwargs).json()
-            # return self.write(**kwargs)
         else:
             return response['results'][0]
 
@@ -107,7 +104,8 @@ class Resource(models.Resource):
             child_data = self._get_or_create_child(
                 parent, relationship, **kwargs)
             return child_data
-        return self._assoc(relationship, parent, child)
+        return self._assoc(self._forward_rel_name(relationship),
+                           parent, child)
 
     @resources.command
     @unified_job_template_options

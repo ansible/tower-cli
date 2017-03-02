@@ -90,9 +90,11 @@ class Resource(models.Resource):
                     sub_node_id_list = node_dict['{0}_nodes'.format(rel)]
                     if len(sub_node_id_list) == 0:
                         continue
+                    relationship_name = '{0}_nodes'.format(rel)
+                    ret_dict[relationship_name] = []
                     for sub_node_id in sub_node_id_list:
-                        ret_dict['{0}_nodes'.format(rel)] = branch_schema(
-                            sub_node_id)
+                        ret_dict[relationship_name].append(
+                            branch_schema(sub_node_id))
             return ret_dict
 
         schema_dict = []
@@ -129,11 +131,12 @@ class Resource(models.Resource):
         def create_node_recursive(node_branch, parent, relationship):
             # Create node with data specified by top-level keys
             create_data = {}
+            FK_FIELDS = JOB_TYPES.values() + ['inventory', 'credential']
             for fd in NODE_STANDARD_FIELDS + JOB_TYPES.values():
                 if fd in node_branch:
                     if (
-                            fd in JOB_TYPES.values() and
-                            not node_branch[fd].isdigit()):
+                            fd in FK_FIELDS and
+                            not isinstance(node_branch[fd], int)):
                         # Node's template was given by name, do lookup
                         ujt_res = get_resource(fd)
                         ujt_data = ujt_res.get(name=node_branch[fd])
@@ -146,20 +149,19 @@ class Resource(models.Resource):
             # Repeat the process for all sub-branches
             for fd in node_branch:
                 for rel in ['success', 'failure', 'always']:
-                    relationship_name = node_res._forward_rel_name(rel)
                     if fd.startswith(rel):
                         sub_branch_list = node_branch[fd]
                         if not isinstance(sub_branch_list, list):
                             raise BadRequest(
                                 'Sublists in spec must be lists.'
                                 'Encountered in {0} at {1}'.format(
-                                    fd, sub_branch))
+                                    fd, sub_branch_list))
                         for sub_branch in sub_branch_list:
                             sub_node_data = create_node_recursive(
                                 sub_branch, parent=node_data['id'],
                                 relationship=rel)
                             node_res._assoc(
-                                relationship_name,
+                                node_res._forward_rel_name(rel),
                                 node_data['id'], sub_node_data['id'])
                         break
             return node_data

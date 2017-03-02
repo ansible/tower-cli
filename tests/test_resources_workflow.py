@@ -16,9 +16,7 @@
 import tower_cli
 from tower_cli.resources.workflow import Resource
 
-from tests.compat import unittest
-
-import mock
+from tests.compat import unittest, mock
 
 
 EXAMPLE_NODE_LIST = [
@@ -65,9 +63,11 @@ class SchemaTests(unittest.TestCase):
             [
                 {
                     'job_template': 48,
-                    'always_nodes': {
-                        'project': 98
-                    }
+                    'always_nodes': [
+                        {
+                            'project': 98
+                        }
+                    ]
                 }
             ]
         )
