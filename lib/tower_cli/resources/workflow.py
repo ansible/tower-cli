@@ -33,7 +33,8 @@ class Resource(models.Resource):
         type=types.Variables(), required=False, display=False,
         help_text='Extra playbook variables to pass to jobs run inside this '
                   'workflow, use "@" to get from file.')
-    organization = models.Field(type=types.Related('organization'))
+    organization = models.Field(type=types.Related('organization'),
+                                required=False)
 
     @staticmethod
     def _workflow_node_structure(node_results):
