@@ -52,8 +52,8 @@ class Resource(models.Resource):
             'results': [{'id': k, 'value': v} for k, v in result.items()]
         }
 
-    @resources.command(ignore_defaults=True)
-    def get(self, pk, **kwargs):
+    @resources.command(use_fields_as_options=False)
+    def get(self, pk):
         """Return one and exactly one object"""
         # The Tower API doesn't provide a mechanism for retrieving a single
         # setting value at a time, so fetch them all and filter
