@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import click
+import six
 
 from tower_cli import models, resources
 from tower_cli.api import client
@@ -64,15 +65,22 @@ class Resource(models.Resource):
     @resources.command(ignore_defaults=True)
     def modify(self, pk, value, **kwargs):
         """Modify an already existing object."""
-        prev_value = self.get(pk)['value']
-        r = client.patch(self.endpoint, data={pk: value})
-        new_value = r.json()[pk]
-        answer = OrderedDict((
-            ('changed', prev_value != new_value),
+        prev_value = new_value = self.get(pk)['value']
+        answer = OrderedDict()
+        encrypted = '$encrypted$' in six.text_type(prev_value)
+
+        if encrypted or six.text_type(prev_value) != six.text_type(value):
+            r = client.patch(self.endpoint, data={pk: value})
+            new_value = r.json()[pk]
+            answer.update(r.json())
+
+        changed = encrypted or (prev_value != new_value)
+
+        answer.update({
+            ('changed', changed),
             ('id', pk),
             ('value', new_value)
-        ))
-        answer.update(r.json())
+        })
         return answer
 
     @property

@@ -118,10 +118,12 @@ class SettingTests(unittest.TestCase):
     def test_update(self):
         """Establish that a setting's value can updated"""
         all_settings = OrderedDict({'FIRST': 123})
+        patched = OrderedDict({'FIRST': 456})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
-            t.register_json('/settings/all/', all_settings, method='PATCH')
+            t.register_json('/settings/all/', patched, method='PATCH')
             r = self.res.modify('FIRST', value=456)
+            self.assertTrue(r['changed'])
 
             request = t.requests[0]
             self.assertEqual(request.method, 'GET')
@@ -129,6 +131,36 @@ class SettingTests(unittest.TestCase):
             request = t.requests[1]
             self.assertEqual(request.method, 'PATCH')
             self.assertEqual(request.body, json.dumps({'FIRST': 456}))
+
+    def test_idempotent_updates_ignored(self):
+        """Don't PATCH a setting if the provided value didn't change"""
+        all_settings = OrderedDict({'FIRST': 123})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            r = self.res.modify('FIRST', value='123')
+            self.assertFalse(r['changed'])
+
+            self.assertEqual(len(t.requests), 1)
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+
+    def test_encrypted_updates_always_patch(self):
+        """Always PATCH a setting if it's an encrypted one"""
+        all_settings = OrderedDict({'SECRET': '$encrypted$'})
+        patched = OrderedDict({'SECRET': '$encrypted$'})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', patched, method='PATCH')
+            r = self.res.modify('SECRET', value='SENSITIVE')
+            self.assertTrue(r['changed'])
+
+            self.assertEqual(len(t.requests), 2)
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+
+            request = t.requests[1]
+            self.assertEqual(request.method, 'PATCH')
+            self.assertEqual(request.body, json.dumps({'SECRET': 'SENSITIVE'}))
 
     def test_update_invalid_setting_name(self):
         """Establish that a setting must exist to be updated"""
