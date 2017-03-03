@@ -87,6 +87,7 @@ class Resource(models.Resource):
         type=bool, required=False, display=False,
         help_text='Prompt user for machine credential on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
+    timeout = models.Field(type=int, required=False, display=False)
 
     @resources.command
     @click.option('--extra-vars', required=False, multiple=True,

@@ -77,6 +77,8 @@ class Resource(models.Resource):
                   'data from its source each time a job is run.')
     @click.option('--parent',
                   help='Parent group to nest this one inside of.')
+    @click.option('--job-timeout', type=int, help='Timeout value for '
+                  'underlying inventory source.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
@@ -96,7 +98,10 @@ class Resource(models.Resource):
         is_kwargs = {}
         for field in kwargs.copy():
             if field not in group_fields:
-                is_kwargs[field] = kwargs.pop(field)
+                if field == 'job_timeout':
+                    is_kwargs['timeout'] = kwargs.pop(field)
+                else:
+                    is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
         if is_kwargs.get('source', None) == 'manual':
@@ -137,7 +142,8 @@ class Resource(models.Resource):
 
     @resources.command
     @click.option('--credential', type=types.Related('credential'),
-                  required=False)
+                  required=False,
+                  help='The cloud credential to use.')
     @click.option('--source', type=click.Choice(INVENTORY_SOURCES),
                   help='The source to use for this group.')
     @click.option('--source-regions', help='Regions for your cloud provider.')
@@ -159,6 +165,8 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refersh inventory '
                   'data from its source each time a job is run.')
+    @click.option('--job-timeout', type=int, help='Timeout value for '
+                  'underlying inventory source.')
     def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
@@ -168,7 +176,10 @@ class Resource(models.Resource):
         is_kwargs = {}
         for field in kwargs.copy():
             if field not in group_fields:
-                is_kwargs[field] = kwargs.pop(field)
+                if field == 'job_timeout':
+                    is_kwargs['timeout'] = kwargs.pop(field)
+                else:
+                    is_kwargs[field] = kwargs.pop(field)
 
         # Handle alias for "manual" source
         if is_kwargs.get('source', None) == 'manual':
