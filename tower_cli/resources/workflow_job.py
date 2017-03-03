@@ -17,7 +17,7 @@ import click
 
 from tower_cli import models, resources
 from tower_cli.api import client
-from tower_cli.utils import debug, types, exceptions
+from tower_cli.utils import debug, types, parser
 
 
 class Resource(models.ExeResource):
@@ -27,11 +27,11 @@ class Resource(models.ExeResource):
     workflow_job_template = models.Field(
         key='-W',
         type=types.Related('workflow'),
-        required=False, display=True
+        display=True
     )
     extra_vars = models.Field(
-        key='-e',
-        type=types.Variables(), required=False, display=False
+        type=types.Variables(), required=False, display=False,
+        multiple=True
     )
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
@@ -53,10 +53,9 @@ class Resource(models.ExeResource):
         Creates a new workflow job in Ansible Tower, starts it, and
         returns back an ID in order for its status to be monitored.
         """
-        if workflow_job_template is None:
-            raise exceptions.BadRequest(
-                'Must specify a workflow job template with -W option.'
-            )
+        if extra_vars is not None:
+            kwargs['extra_vars'] = parser.process_extra_vars(extra_vars)
+
         debug.log('Launching the workflow job.', header='details')
         self._pop_none(kwargs)
         post_response = client.post('workflow_job_templates/{}/launch/'.format(

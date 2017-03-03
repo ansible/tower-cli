@@ -1,6 +1,10 @@
 These docs show how to populate an example workflow in Tower
 and how to automate the creation or copying of workflows.
 
+## Normal CRUD
+
+Workflows and workflow nodes can be managed as normal tower-cli resources.
+
 ### Workflow Creation
 
 Create an empty workflow:
@@ -62,7 +66,7 @@ tower-cli workflow schema workflow1
 
 Here, "workflow1" is the name of the workflow.
 
-### Writing a Schema Definition
+### Creating a Schema Definition
 
 To bulk-create a workflow node network, use the workflow schema command.
 The schema is JSON or YAML content, and can be passed in the CLI
@@ -109,9 +113,10 @@ tower-cli commands.
 
 ### Differences with Machine Formatted Schemas
 
-If you write the above example schema to a workflow, you may notice differences
-with how tower-cli will subsequently echo the schema definition back to you.
-The following is an example of what tower-cli might return in this case.
+After writing a workflow schema, you may notice differences
+in how tower-cli subsequently echos the schema definition back to you.
+The following is what tower-cli might return after
+writing the above example.
 
 ```yaml
 - failure_nodes:
@@ -126,11 +131,11 @@ The following is an example of what tower-cli might return in this case.
 
 ```
 
-Note that the root node definition starts with "failure_nodes", instead
+Note that the root node data starts with "failure_nodes", instead
 of the name of the job template. This will not impact functionality, and
 manually changing the order will not impact functionality either.
 
-Although this format is more harder to read, it does the same thing
+Although this format is harder to read, it does the same thing
 as the previous schema. The ability to both echo and create schemas can
 be used to copy the contents of one workflow to another.
 
@@ -146,8 +151,9 @@ tower-cli workflow schema workflow2 @schema.yml
 ### Idempotence
 
 The workflow schema feature populates the workflow node network based on the
-hierarchy structure, and at each point in the tree, it attempts to find an
-existing node with the specified properties inside of that point in the tree.
+hierarchy structure. Before creating each node, it attempts to find an
+existing node with the specified properties in that location in the
+tree, and will not create a new node if it exists.
 
 Thus, running the command multiple times should not change the workflow
 structure. To continue with the previous example, subsequent
@@ -163,3 +169,19 @@ should not change the network of workflow2.
 The schema command can not delete nodes, so running multiple commands with
 different schemas will result in creating multiple branches and/or
 sub-branches.
+
+## Launching Workflow Jobs
+
+Use the workflow_job resource to launch workflow jobs.
+This supports the use of extra_vars, which can contain answers to
+survey questions.
+A `--wait` flag is available to poll the server until workflow job
+reaches a completed status. Here is an example of using those features:
+
+```
+tower-cli workflow_job launch -W "echo Hello World" -e a=1 --wait
+```
+
+The `--wait` function will display temporary placeholder text.
+Tower-CLI does not yet offer any streaming updates of events within the
+workflow job.
