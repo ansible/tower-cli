@@ -33,7 +33,7 @@ RESOURCE_FIELDS = [
     'organization', 'project']
 
 ROLE_TYPES = [
-    'admin', 'read', 'member', 'owner', 'execute', 'adhoc', 'update',
+    'admin', 'read', 'member', 'execute', 'adhoc', 'update',
     'use', 'auditor']
 
 
