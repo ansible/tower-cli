@@ -41,7 +41,7 @@ class Resource(models.Resource):
     identity = ('id',)
 
     workflow_job_template = models.Field(
-        key='-W', type=types.Related('workflow'), required=False)
+        key='-W', type=types.Related('workflow'))
     unified_job_template = models.Field(required=False)
     inventory = models.Field(
         type=types.Related('inventory'), required=False, display=False)
@@ -52,11 +52,11 @@ class Resource(models.Resource):
     skip_tags = models.Field(required=False, display=False)
     limit = models.Field(required=False, display=False)
 
-    def __getattribute__(self, attr):
-        method = super(Resource, self).__getattribute__(attr)
-        if attr in ['create', 'modify', 'list']:
-            return unified_job_template_options(method)
-        return method
+    def __new__(cls, *args, **kwargs):
+        for attr in ['create', 'modify', 'list']:
+            setattr(cls, attr,
+                    unified_job_template_options(getattr(cls, attr)))
+        return super(Resource, cls).__new__(cls, *args, **kwargs)
 
     @staticmethod
     def _forward_rel_name(rel):
@@ -115,10 +115,10 @@ class Resource(models.Resource):
         """Add a node to run on success."""
         return self._assoc_or_create('success', parent, child, **kwargs)
 
-    @resources.command
+    @resources.command(use_fields_as_options=False)
     @click.argument('parent', type=types.Related('node'))
-    @click.argument('child', type=types.Related('node'), required=False)
-    def disassociate_success_node(self, parent, child=None, **kwargs):
+    @click.argument('child', type=types.Related('node'))
+    def disassociate_success_node(self, parent, child):
         """Remove success node.
         The resulatant 2 nodes will both become root nodes."""
         return self._disassoc(
@@ -132,10 +132,10 @@ class Resource(models.Resource):
         """Add a node to run on failure."""
         return self._assoc_or_create('failure', parent, child, **kwargs)
 
-    @resources.command
+    @resources.command(use_fields_as_options=False)
     @click.argument('parent', type=types.Related('node'))
-    @click.argument('child', type=types.Related('node'), required=False)
-    def disassociate_failure_node(self, parent, child=None, **kwargs):
+    @click.argument('child', type=types.Related('node'))
+    def disassociate_failure_node(self, parent, child):
         """Remove a failure node link.
         The resulatant 2 nodes will both become root nodes."""
         return self._disassoc(
@@ -149,10 +149,10 @@ class Resource(models.Resource):
         """Add a node to always run after the parent is finished."""
         return self._assoc_or_create('always', parent, child, **kwargs)
 
-    @resources.command
+    @resources.command(use_fields_as_options=False)
     @click.argument('parent', type=types.Related('node'))
-    @click.argument('child', type=types.Related('node'), required=False)
-    def disassociate_always_node(self, parent, child=None, **kwargs):
+    @click.argument('child', type=types.Related('node'))
+    def disassociate_always_node(self, parent, child):
         """Add a node to always run after the parent is finished.
         The resulatant 2 nodes will both become root nodes."""
         return self._disassoc(

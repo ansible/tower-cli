@@ -85,10 +85,12 @@ class NodeModelTests(unittest.TestCase):
         """
         Test application of additional decorator in __getattribute__
         """
-        with mock.patch('tower_cli.models.base.Resource.create') as mck:
+        with mock.patch('tower_cli.models.base.ResourceMethods.write') as mck:
             mck.return_value = {'id': 589}
             mck.__name__ = 'create'
             self.res.create(workflow_job_template=1,
                             job_template=5)
-            mck.assert_called_once_with(workflow_job_template=1,
-                                        unified_job_template=5)
+            mck.assert_called_once_with(
+                create_on_missing=True, fail_on_found=False,
+                force_on_exists=False, unified_job_template=5,
+                workflow_job_template=1)
