@@ -15,7 +15,7 @@
 
 import click
 
-from tower_cli import models, resources
+from tower_cli import models, resources, get_resource
 from tower_cli.api import client
 from tower_cli.utils import debug, types, parser
 
@@ -36,6 +36,54 @@ class Resource(models.ExeResource):
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
 
+    def lookup_stdout(self, pk=None, start_line=None, end_line=None):
+        """
+        Internal method that lies to our `monitor` method by returning
+        a scorecard for the workflow job where the standard out
+        would have been expected.
+        """
+        uj_res = get_resource('unified_jobs')
+        # Filters
+        #  - limit search to jobs spawned as part of this workflow job
+        #  - order in the order in which they should add to the list
+        #  - only include final job states
+        query_params = (('unified_job_node__workflow_job', pk),
+                        ('order_by', 'finished'),
+                        ('status__in', 'successful,failed,error'))
+        jobs_list = uj_res.list(all_pages=True, query=query_params)['results']
+        N = len(jobs_list)
+
+        start_range = start_line
+        if start_line is None:
+            start_range = 0
+        elif start_line > N:
+            start_range = N
+        
+        end_range = end_line
+        if end_line is None or end_line > N:
+            end_range = N
+
+        lines = []
+        for i in range(start_range, end_range):
+            job = jobs_list[i]
+            lines.append(
+                '{0: <20} {1: <10} at {2: <20} in {3: <10} seconds'.format(
+                job['name'][:20], job['status'][:10].upper(),
+                job['finished'][:20],
+                job['elapsed']
+            ))
+        return_content = '\n'.join(lines)
+        if len(lines) > 0:
+            return_content += '\n'
+        return return_content
+
+    @resources.command(use_fields_as_options=False)
+    @click.argument('workflow_job', type=types.Related('workflow_job'))
+    def scorecard(self, workflow_job):
+        """Print a summary of the outcomes of jobs in the workflow"""
+        click.echo(self.lookup_stdout(workflow_job))
+        return {'changed': False}
+
     @resources.command(
         use_fields_as_options=('workflow_job_template', 'extra_vars')
     )
@@ -53,7 +101,7 @@ class Resource(models.ExeResource):
         Creates a new workflow job in Ansible Tower, starts it, and
         returns back an ID in order for its status to be monitored.
         """
-        if extra_vars is not None:
+        if len(extra_vars) > 0:
             kwargs['extra_vars'] = parser.process_extra_vars(extra_vars)
 
         debug.log('Launching the workflow job.', header='details')

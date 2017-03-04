@@ -28,6 +28,7 @@ import click
 class Resource(models.Resource):
     cli_help = 'Manage workflow job templates.'
     endpoint = '/workflow_job_templates/'
+    unified_job_type = '/workflow_jobs/'
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
