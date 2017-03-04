@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2015, Ansible, Inc.
 # Alan Rominger <arominger@ansible.com>
 #
@@ -136,6 +137,13 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(return_str, "")
         return_str = parser.process_extra_vars([""], force_json=False)
         self.assertEqual(return_str, "")
+
+    def test_handling_unicode(self):
+        """Verify that unicode strings are correctly parsed and
+        converted to desired python objects"""
+        input_unicode = u"the_user_name='äöü ÄÖÜ'"
+        return_dict = parser.string_to_dict(input_unicode)
+        self.assertEqual(return_dict, {u'the_user_name': u'äöü ÄÖÜ'})
 
 
 class TestSplitter_Gen(unittest.TestCase):

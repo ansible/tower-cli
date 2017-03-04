@@ -41,13 +41,20 @@ def parse_kv(var_string):
         fix_encoding_26 = True
 
     # Also hedge against Click library giving non-string type
+    is_unicode = False
     if fix_encoding_26 or not isinstance(var_string, str):
-        var_string = str(var_string)
+        if isinstance(var_string, six.text_type):
+            var_string = var_string.encode('UTF-8')
+            is_unicode = True
+        else:
+            var_string = str(var_string)
 
     # Use shlex library to split string by quotes, whitespace, etc.
     for token in shlex.split(var_string):
 
         # Second part of fix to avoid passing shlex unicode in py2.6
+        if (is_unicode):
+            token = token.decode('UTF-8')
         if fix_encoding_26:
             token = six.text_type(token)
         # Look for key=value pattern, if not, process as raw parameter
@@ -68,7 +75,7 @@ def parse_kv(var_string):
     return return_dict
 
 
-def string_to_dict(var_string, allow_kv=True):
+def string_to_dict(var_string, allow_kv=True, require_dict=True):
     """Returns a dictionary given a string with yaml or json syntax.
     If data is not present in a key: value format, then it return
     an empty dictionary.
@@ -84,7 +91,8 @@ def string_to_dict(var_string, allow_kv=True):
     try:
         # Accept all JSON and YAML
         return_dict = yaml.load(var_string)
-        assert type(return_dict) is dict
+        if require_dict:
+            assert type(return_dict) is dict
     except (AttributeError, yaml.YAMLError, AssertionError):
         # if these fail, parse by key=value syntax
         try:
@@ -141,7 +149,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
                       header='decison', nl=2)
     if extra_vars == {}:
         return ""
-    return json.dumps(extra_vars)
+    return json.dumps(extra_vars, ensure_ascii=False)
 
 
 def ordered_dump(data, Dumper=yaml.Dumper, **kws):
