@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ast
+import json
 from distutils.util import strtobool
 
 import click
@@ -20,7 +21,7 @@ import six
 
 from tower_cli import models, resources
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import exceptions as exc, types
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.decorators import pop_option
 
@@ -29,7 +30,7 @@ class Resource(models.Resource):
     cli_help = 'Manage settings within Ansible Tower.'
     custom_category = None
 
-    value = models.Field(required=True)
+    value = models.Field(required=True, type=types.Variables())
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
     @click.option('category', '-c', '--category',
@@ -67,7 +68,8 @@ class Resource(models.Resource):
 
     @resources.command(use_fields_as_options=False)
     @click.argument('setting')
-    @click.argument('value', default=None, required=False)
+    @click.argument('value', default=None, required=False,
+                    type=types.Variables())
     def modify(self, setting, value):
         """Modify an already existing object."""
         prev_value = new_value = self.get(setting)['value']
@@ -75,11 +77,16 @@ class Resource(models.Resource):
         encrypted = '$encrypted$' in six.text_type(prev_value)
 
         if encrypted or six.text_type(prev_value) != six.text_type(value):
-            r = client.patch(
-                self.endpoint,
-                data={setting: self.coerce_type(setting, value)}
-            )
-            new_value = r.json()[setting]
+            if setting == 'LICENSE':
+                r = client.post('/config/',
+                                data=self.coerce_type(setting, value))
+                new_value = r.json()
+            else:
+                r = client.patch(
+                    self.endpoint,
+                    data={setting: self.coerce_type(setting, value)}
+                )
+                new_value = r.json()[setting]
             answer.update(r.json())
 
         changed = encrypted or (prev_value != new_value)
@@ -96,6 +103,8 @@ class Resource(models.Resource):
         return '/settings/%s/' % (self.custom_category or 'all')
 
     def coerce_type(self, key, value):
+        if key == 'LICENSE':
+            return json.loads(value)
         r = client.options(self.endpoint)
         to_type = r.json()['actions']['PUT'].get(key, {}).get('type')
         if to_type == 'integer':

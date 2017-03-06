@@ -25,6 +25,18 @@ from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest
 
+LICENSE_DATA = json.dumps({
+    "eula_accepted": True,
+    "contact_email": "bobby@example.org",
+    "features": {},
+    "license_type": "enterprise",
+    "company_name": "Fancy Pants, Inc.",
+    "contact_name": "Bobby Softwares",
+    "license_date": 10000000000,
+    "license_key": "60a888de5a23994c6d1e6406b7fd75c8",
+    "instance_count": 250
+})
+
 
 class SettingTests(unittest.TestCase):
     """A set of tests to establish that the setting resource functions in the
@@ -34,17 +46,17 @@ class SettingTests(unittest.TestCase):
         self.res = tower_cli.get_resource('setting')
 
     def test_create_method_is_disabled(self):
-        """Establish that the delete method properly disabled."""
+        """The delete method is properly disabled."""
         self.assertEqual(self.res.as_command().get_command(None, 'create'),
                          None)
 
     def test_delete_method_is_disabled(self):
-        """Establish that the create method properly disabled."""
+        """The create method is properly disabled."""
         self.assertEqual(self.res.as_command().get_command(None, 'delete'),
                          None)
 
     def test_list_all(self):
-        """Establish that all settings can be listed"""
+        """All settings can be listed"""
         all_settings = OrderedDict({
             'FIRST': 123,
             'SECOND': 'foo'
@@ -61,7 +73,7 @@ class SettingTests(unittest.TestCase):
             )
 
     def test_list_all_by_category(self):
-        """Establish that settings can be listed by category"""
+        """Settings can be listed by category"""
         system_settings = OrderedDict({'FEATURE_ENABLED': True})
         auth_settings = OrderedDict({'SOME_API_KEY': 'ABC123'})
         with client.test_mode as t:
@@ -81,7 +93,7 @@ class SettingTests(unittest.TestCase):
             )
 
     def test_list_invalid_category(self):
-        """Establish that settings can only be listed by valid categories"""
+        """Settings can only be listed by valid categories"""
         categories = {
             'results': [{
                 'url': '/api/v1/settings/all/',
@@ -105,7 +117,7 @@ class SettingTests(unittest.TestCase):
             )
 
     def test_get(self):
-        """Establish that individual settings can be retrieved"""
+        """Individual settings can be retrieved"""
         all_settings = OrderedDict({'FIRST': 123})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
@@ -113,14 +125,14 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(r, {'id': 'FIRST', 'value': 123})
 
     def test_get_invalid(self):
-        """Establish that invalid setting names throw an error"""
+        """Invalid setting names throw an error"""
         all_settings = OrderedDict({'FIRST': 123})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
             self.assertRaises(exc.NotFound, self.res.get, 'MISSING')
 
     def test_update(self):
-        """Establish that a setting's value can updated"""
+        """A setting's value can be updated"""
         options = {'actions': {'PUT': {'FIRST': {'type': 'integer'}}}}
         all_settings = OrderedDict({'FIRST': 123})
         patched = OrderedDict({'FIRST': 456})
@@ -139,8 +151,23 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.method, 'PATCH')
             self.assertEqual(request.body, json.dumps({'FIRST': 456}))
 
+    def test_license_update(self):
+        """The software license can be updated"""
+        all_settings = OrderedDict({'LICENSE': {}})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/config/', all_settings, method='POST')
+            self.res.modify('LICENSE', LICENSE_DATA)
+
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+            request = t.requests[1]
+            self.assertEqual(request.method, 'POST')
+            self.assertEqual(json.loads(request.body),
+                             json.loads(LICENSE_DATA))
+
     def test_update_with_unicode(self):
-        """Establish that a setting's value can updated with unicode"""
+        """A setting's value can be updated with unicode"""
         new_val = six.u('Iñtërnâtiônàlizætiøn')
         options = {'actions': {'PUT': {'FIRST': {'type': 'string'}}}}
         all_settings = OrderedDict({'FIRST': 'FOO'})
@@ -161,7 +188,7 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.body, json.dumps({'FIRST': new_val}))
 
     def test_update_with_boolean(self):
-        """Establish that a setting's value can updated with a boolean"""
+        """A setting's value can be updated with a boolean"""
         options = {'actions': {'PUT': {'FIRST': {'type': 'boolean'}}}}
         all_settings = OrderedDict({'FIRST': False})
         patched = OrderedDict({'FIRST': True})
@@ -181,7 +208,7 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.body, json.dumps({'FIRST': True}))
 
     def test_update_with_list(self):
-        """Establish that a setting's value can updated with a list"""
+        """A setting's value can be updated with a list"""
         options = {'actions': {'PUT': {'FIRST': {'type': 'list'}}}}
         all_settings = OrderedDict({'FIRST': []})
         patched = OrderedDict({'FIRST': ['abc']})
@@ -201,7 +228,7 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.body, json.dumps({'FIRST': ['abc']}))
 
     def test_update_with_dict(self):
-        """Establish that a setting's value can updated with a dict"""
+        """A setting's value can be updated with a dict"""
         options = {'actions': {'PUT': {'FIRST': {'type': 'nested object'}}}}
         all_settings = OrderedDict({'FIRST': []})
         patched = OrderedDict({'FIRST': {'abc': 'xyz'}})
@@ -257,7 +284,7 @@ class SettingTests(unittest.TestCase):
             self.assertEqual(request.body, json.dumps({'SECRET': 'SENSITIVE'}))
 
     def test_update_invalid_setting_name(self):
-        """Establish that a setting must exist to be updated"""
+        """A setting must exist to be updated"""
         all_settings = OrderedDict({'FIRST': 123})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
