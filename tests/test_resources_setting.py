@@ -121,39 +121,107 @@ class SettingTests(unittest.TestCase):
 
     def test_update(self):
         """Establish that a setting's value can updated"""
-        new_val = 456
+        options = {'actions': {'PUT': {'FIRST': {'type': 'integer'}}}}
         all_settings = OrderedDict({'FIRST': 123})
-        patched = OrderedDict({'FIRST': new_val})
+        patched = OrderedDict({'FIRST': 456})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
             t.register_json('/settings/all/', patched, method='PATCH')
-            r = self.res.modify('FIRST', new_val)
+            r = self.res.modify('FIRST', '456')
             self.assertTrue(r['changed'])
 
             request = t.requests[0]
             self.assertEqual(request.method, 'GET')
-
             request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
             self.assertEqual(request.method, 'PATCH')
-            self.assertEqual(request.body, json.dumps({'FIRST': new_val}))
+            self.assertEqual(request.body, json.dumps({'FIRST': 456}))
 
     def test_update_with_unicode(self):
         """Establish that a setting's value can updated with unicode"""
         new_val = six.u('Iñtërnâtiônàlizætiøn')
-        all_settings = OrderedDict({'FIRST': 123})
+        options = {'actions': {'PUT': {'FIRST': {'type': 'string'}}}}
+        all_settings = OrderedDict({'FIRST': 'FOO'})
         patched = OrderedDict({'FIRST': new_val})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
             t.register_json('/settings/all/', patched, method='PATCH')
             r = self.res.modify('FIRST', new_val)
             self.assertTrue(r['changed'])
 
             request = t.requests[0]
             self.assertEqual(request.method, 'GET')
-
             request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
             self.assertEqual(request.method, 'PATCH')
             self.assertEqual(request.body, json.dumps({'FIRST': new_val}))
+
+    def test_update_with_boolean(self):
+        """Establish that a setting's value can updated with a boolean"""
+        options = {'actions': {'PUT': {'FIRST': {'type': 'boolean'}}}}
+        all_settings = OrderedDict({'FIRST': False})
+        patched = OrderedDict({'FIRST': True})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
+            t.register_json('/settings/all/', patched, method='PATCH')
+            r = self.res.modify('FIRST', 'True')
+            self.assertTrue(r['changed'])
+
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+            request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
+            self.assertEqual(request.method, 'PATCH')
+            self.assertEqual(request.body, json.dumps({'FIRST': True}))
+
+    def test_update_with_list(self):
+        """Establish that a setting's value can updated with a list"""
+        options = {'actions': {'PUT': {'FIRST': {'type': 'list'}}}}
+        all_settings = OrderedDict({'FIRST': []})
+        patched = OrderedDict({'FIRST': ['abc']})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
+            t.register_json('/settings/all/', patched, method='PATCH')
+            r = self.res.modify('FIRST', "['abc']")
+            self.assertTrue(r['changed'])
+
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+            request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
+            self.assertEqual(request.method, 'PATCH')
+            self.assertEqual(request.body, json.dumps({'FIRST': ['abc']}))
+
+    def test_update_with_dict(self):
+        """Establish that a setting's value can updated with a dict"""
+        options = {'actions': {'PUT': {'FIRST': {'type': 'nested object'}}}}
+        all_settings = OrderedDict({'FIRST': []})
+        patched = OrderedDict({'FIRST': {'abc': 'xyz'}})
+        with client.test_mode as t:
+            t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
+            t.register_json('/settings/all/', patched, method='PATCH')
+            r = self.res.modify('FIRST', "{'abc': 'xyz'}")
+            self.assertTrue(r['changed'])
+
+            request = t.requests[0]
+            self.assertEqual(request.method, 'GET')
+            request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
+            self.assertEqual(request.method, 'PATCH')
+            self.assertEqual(
+                request.body,
+                json.dumps({'FIRST': {'abc': 'xyz'}})
+            )
 
     def test_idempotent_updates_ignored(self):
         """Don't PATCH a setting if the provided value didn't change"""
@@ -169,19 +237,22 @@ class SettingTests(unittest.TestCase):
 
     def test_encrypted_updates_always_patch(self):
         """Always PATCH a setting if it's an encrypted one"""
+        options = {'actions': {'PUT': {'SECRET': {'type': 'string'}}}}
         all_settings = OrderedDict({'SECRET': '$encrypted$'})
         patched = OrderedDict({'SECRET': '$encrypted$'})
         with client.test_mode as t:
             t.register_json('/settings/all/', all_settings)
+            t.register_json('/settings/all/', options, method='OPTIONS')
             t.register_json('/settings/all/', patched, method='PATCH')
             r = self.res.modify('SECRET', 'SENSITIVE')
             self.assertTrue(r['changed'])
 
-            self.assertEqual(len(t.requests), 2)
+            self.assertEqual(len(t.requests), 3)
             request = t.requests[0]
             self.assertEqual(request.method, 'GET')
-
             request = t.requests[1]
+            self.assertEqual(request.method, 'OPTIONS')
+            request = t.requests[2]
             self.assertEqual(request.method, 'PATCH')
             self.assertEqual(request.body, json.dumps({'SECRET': 'SENSITIVE'}))
 

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ast
+from distutils.util import strtobool
+
 import click
 import six
 
@@ -72,7 +75,10 @@ class Resource(models.Resource):
         encrypted = '$encrypted$' in six.text_type(prev_value)
 
         if encrypted or six.text_type(prev_value) != six.text_type(value):
-            r = client.patch(self.endpoint, data={setting: value})
+            r = client.patch(
+                self.endpoint,
+                data={setting: self.coerce_type(setting, value)}
+            )
             new_value = r.json()[setting]
             answer.update(r.json())
 
@@ -88,6 +94,17 @@ class Resource(models.Resource):
     @property
     def endpoint(self):
         return '/settings/%s/' % (self.custom_category or 'all')
+
+    def coerce_type(self, key, value):
+        r = client.options(self.endpoint)
+        to_type = r.json()['actions']['PUT'].get(key, {}).get('type')
+        if to_type == 'integer':
+            return int(value)
+        elif to_type == 'boolean':
+            return bool(strtobool(value))
+        elif to_type in ('list', 'nested object'):
+            return ast.literal_eval(value)
+        return value
 
     def __getattribute__(self, name):
         """Disable inherited methods that cannot be applied to this
