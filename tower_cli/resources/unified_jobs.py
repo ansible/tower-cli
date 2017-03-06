@@ -24,4 +24,3 @@ class Resource(models.Resource):
     status = models.Field(required=False, display=True)
     created = models.Field(required=False, display=True)
     elapsed = models.Field(required=False, display=True)
-

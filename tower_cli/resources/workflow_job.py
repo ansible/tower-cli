@@ -58,7 +58,7 @@ class Resource(models.ExeResource):
             start_range = 0
         elif start_line > N:
             start_range = N
-        
+
         end_range = end_line
         if end_line is None or end_line > N:
             end_range = N
@@ -68,10 +68,9 @@ class Resource(models.ExeResource):
             job = jobs_list[i]
             lines.append(
                 '{0: <20} {1: <10} at {2: <20} in {3: <10} seconds'.format(
-                job['name'][:20], job['status'][:10].upper(),
-                job['finished'][:20],
-                job['elapsed']
-            ))
+                    job['name'][:20], job['status'][:10].upper(),
+                    job['finished'][:20],
+                    job['elapsed']))
         return_content = '\n'.join(lines)
         if len(lines) > 0:
             return_content += '\n'
@@ -88,14 +87,17 @@ class Resource(models.ExeResource):
         use_fields_as_options=('workflow_job_template', 'extra_vars')
     )
     @click.option('--monitor', is_flag=True, default=False,
-                  help='If sent, immediately calls monitor on the newly '
+                  help='If used, immediately calls monitor on the newly '
                        'launched workflow job rather than exiting.')
+    @click.option('--wait', is_flag=True, default=False,
+                  help='Wait until completion to exit, displaying '
+                       'placeholder text while in progress.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided with --monitor, this command (not the job)'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    def launch(self, workflow_job_template=None, monitor=False, timeout=None,
-               extra_vars=None, **kwargs):
+    def launch(self, workflow_job_template=None, monitor=False, wait=False,
+               timeout=None, extra_vars=None, **kwargs):
         """Launch a new workflow job based on a workflow job template.
 
         Creates a new workflow job in Ansible Tower, starts it, and
@@ -114,5 +116,7 @@ class Resource(models.ExeResource):
 
         if monitor:
             return self.monitor(workflow_job_id, timeout=timeout)
+        elif wait:
+            return self.wait(workflow_job_id, timeout=timeout)
 
         return post_response
