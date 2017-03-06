@@ -36,13 +36,22 @@ class Resource(models.ExeResource):
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
 
-    def lookup_stdout(self, pk=None, start_line=None, end_line=None):
+    def __getattribute__(self, attr):
+        """Alias the stdout to `summary` specially for workflow"""
+        if attr == 'summary':
+            return object.__getattribute__(self, 'stdout')
+        elif attr == 'stdout':
+            raise AttributeError
+        return super(Resource, self).__getattribute__(attr)
+
+    def lookup_stdout(self, pk=None, start_line=None, end_line=None,
+                      full=True):
         """
         Internal method that lies to our `monitor` method by returning
         a scorecard for the workflow job where the standard out
         would have been expected.
         """
-        uj_res = get_resource('unified_jobs')
+        uj_res = get_resource('unified_job')
         # Filters
         #  - limit search to jobs spawned as part of this workflow job
         #  - order in the order in which they should add to the list
@@ -50,9 +59,16 @@ class Resource(models.ExeResource):
         query_params = (('unified_job_node__workflow_job', pk),
                         ('order_by', 'finished'),
                         ('status__in', 'successful,failed,error'))
-        jobs_list = uj_res.list(all_pages=True, query=query_params)['results']
-        N = len(jobs_list)
+        jobs_list = uj_res.list(all_pages=True, query=query_params)
+        if jobs_list['count'] == 0:
+            return ''
 
+        return_content = uj_res.as_command()._format_human(jobs_list)
+        lines = return_content.split('\n')
+        if not full:
+            lines = lines[:-1]
+
+        N = len(lines)
         start_range = start_line
         if start_line is None:
             start_range = 0
@@ -63,25 +79,17 @@ class Resource(models.ExeResource):
         if end_line is None or end_line > N:
             end_range = N
 
-        lines = []
-        for i in range(start_range, end_range):
-            job = jobs_list[i]
-            lines.append(
-                '{0: <20} {1: <10} at {2: <20} in {3: <10} seconds'.format(
-                    job['name'][:20], job['status'][:10].upper(),
-                    job['finished'][:20],
-                    job['elapsed']))
+        lines = lines[start_range:end_range]
         return_content = '\n'.join(lines)
         if len(lines) > 0:
             return_content += '\n'
+
         return return_content
 
-    @resources.command(use_fields_as_options=False)
-    @click.argument('workflow_job', type=types.Related('workflow_job'))
-    def scorecard(self, workflow_job):
-        """Print a summary of the outcomes of jobs in the workflow"""
-        click.echo(self.lookup_stdout(workflow_job))
-        return {'changed': False}
+    @resources.command
+    def summary(self):
+        """Placeholder to get swapped out for `stdout`."""
+        pass
 
     @resources.command(
         use_fields_as_options=('workflow_job_template', 'extra_vars')

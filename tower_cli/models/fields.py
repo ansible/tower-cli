@@ -27,7 +27,7 @@ class Field(object):
                  display=True, filterable=True, help_text=None,
                  is_option=True, password=False, read_only=False,
                  required=True, show_default=False, unique=False,
-                 multiple=False):
+                 multiple=False, col_width=None):
         # Init the name to blank.
         # What's going on here: This is set by the ResourceMeta metaclass
         # when the **resource** is instantiated.
@@ -50,6 +50,7 @@ class Field(object):
         self.unique = unique
         self.multiple = multiple
         self.no_lookup = False
+        self.col_width = col_width
 
         # If this is a password, display is always off.
         if self.password:

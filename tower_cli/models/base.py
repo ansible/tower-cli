@@ -352,6 +352,11 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                            field.name == 'description']
                 columns.insert(0, 'id')
 
+                # Save a dictionary-by-name of fields for later use
+                fields_by_name = {}
+                for field in self.resource.fields:
+                    fields_by_name[field.name] = field
+
                 # Sanity check: If there is a "changed" key in our payload
                 # and little else, we print a short message and not a table.
                 # this specifically applies to deletion
@@ -395,6 +400,9 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         *[len(six.text_type(i.get(col, 'N/A')))
                           for i in raw_rows]
                     )
+                    fd = fields_by_name.get(col, None)
+                    if fd is not None and fd.col_width is not None:
+                        widths[col] = fd.col_width
 
                 # It's possible that the column widths will exceed our terminal
                 # width; if so, reduce column widths accordingly.
@@ -426,6 +434,13 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                         if isinstance(raw_row.get(col, 'N/A'), bool):
                             template = template.replace('{0:', '{0:>')
                             value = six.text_type(value).lower()
+                        # Truncate the cell entry if exceeds manually
+                        # specified column width limit
+                        fd = fields_by_name.get(col, None)
+                        if fd is not None and fd.col_width is not None:
+                            str_value = template.format(value or '')
+                            if len(str_value) > fd.col_width:
+                                value = str_value[:fd.col_width]
                         data_row += template.format(value or '') + ' '
                     data_rows.append(data_row.rstrip())
 
@@ -864,7 +879,8 @@ class MonitorableResource(ResourceMethods):
         else:
             raise exc.NotFound('No related jobs or updates exist.')
 
-    def lookup_stdout(self, pk=None, start_line=None, end_line=None):
+    def lookup_stdout(self, pk=None, start_line=None, end_line=None,
+                      full=True):
         """
         Internal utility function to return standard out
         requires the pk of a unified job
@@ -891,9 +907,10 @@ class MonitorableResource(ResourceMethods):
     def stdout(self, pk, start_line=None, end_line=None, **kwargs):
         """
         Print out the standard out of a unified job to the command line.
-        For Projects, print the standard out of most recent update
-        For Inventory Sources, print standard out of most recent sync
-        For Jobs, print the job's standard out
+        For Projects, print the standard out of most recent update.
+        For Inventory Sources, print standard out of most recent sync.
+        For Jobs, print the job's standard out.
+        For Workflow Jobs, print a status table of its jobs.
         """
         # resource is Unified Job Template
         if self.unified_job_type != self.endpoint:
@@ -916,7 +933,7 @@ class MonitorableResource(ResourceMethods):
     @click.option('--timeout', required=False, type=int,
                   help='If provided, this command (not the job) will time out '
                        'after the given number of seconds.')
-    def monitor(self, pk, parent_pk=None, timeout=None, interval=0.2,
+    def monitor(self, pk, parent_pk=None, timeout=None, interval=0.5,
                 outfile=sys.stdout, **kwargs):
         """
         Stream the standard output from a
@@ -948,7 +965,7 @@ class MonitorableResource(ResourceMethods):
             time.sleep(interval)
 
             # Make request to get standard out
-            content = self.lookup_stdout(pk, start_line)
+            content = self.lookup_stdout(pk, start_line, full=False)
 
             # In the first moments of running the job, the standard out
             # may not be available yet
@@ -959,6 +976,10 @@ class MonitorableResource(ResourceMethods):
 
             if timeout and time.time() - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
+
+        # Special final line for closure with workflow jobs
+        if self.endpoint == '/workflow_jobs/':
+            click.echo(self.lookup_stdout(pk, start_line, full=True), nl=1)
 
         click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m',
                    nl=2, file=outfile)

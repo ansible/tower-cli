@@ -21,6 +21,8 @@ class Resource(models.Resource):
     endpoint = '/unified_jobs/'
     internal = True
 
-    status = models.Field(required=False, display=True)
-    created = models.Field(required=False, display=True)
-    elapsed = models.Field(required=False, display=True)
+    name = models.Field(required=False, display=True, col_width=24)
+    type = models.Field(required=False, display=True, col_width=14)
+    status = models.Field(required=False, display=True, col_width=10)
+    created = models.Field(required=False, display=True, col_width=24)
+    elapsed = models.Field(required=False, display=True, col_width=7)
