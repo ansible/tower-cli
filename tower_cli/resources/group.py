@@ -77,8 +77,8 @@ class Resource(models.Resource):
                   'data from its source each time a job is run.')
     @click.option('--parent',
                   help='Parent group to nest this one inside of.')
-    @click.option('--job-timeout', type=int, help='Timeout value for '
-                  'underlying inventory source.')
+    @click.option('--job-timeout', type=int, help='Timeout value (in seconds) '
+                  'for underlying inventory source.')
     def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
         """Create a group and, if necessary, modify the inventory source within
         the group.
@@ -165,8 +165,8 @@ class Resource(models.Resource):
                   'from the external source.')
     @click.option('--update-on-launch', type=bool, help='Refersh inventory '
                   'data from its source each time a job is run.')
-    @click.option('--job-timeout', type=int, help='Timeout value for '
-                  'underlying inventory source.')
+    @click.option('--job-timeout', type=int, help='Timeout value (in seconds) '
+                  'for underlying inventory source.')
     def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify a group and, if necessary, the inventory source within
         the group.
