@@ -635,6 +635,12 @@ class ResourceMethods(BaseResource):
         url = self.endpoint
         method = 'POST'
         if pk:
+            urlTokens = url.split('/')
+            if len(urlTokens) > 3:
+                # reconstruct url to prevent a rare corner case where resources
+                # cannot be constructed independently. Open to modification if
+                # API convention changes.
+                url = '/'.join(urlTokens[:1] + urlTokens[-2:])
             url += '%s/' % pk
             method = 'PATCH'
 
