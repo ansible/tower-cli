@@ -23,6 +23,7 @@ from tower_cli.utils import debug, exceptions as exc, types
 class Resource(models.Resource, models.MonitorableResource):
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
+    unified_job_type = '/project_updates/'
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -62,8 +63,8 @@ class Resource(models.Resource, models.MonitorableResource):
                   help='If provided with --monitor, the SCM update'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    def create(self, organization=None, monitor=False, timeout=None,
-               fail_on_found=False, force_on_exists=False,
+    def create(self, organization=None, monitor=False, wait=False,
+               timeout=None, fail_on_found=False, force_on_exists=False,
                **kwargs):
         """Create a new item of resource, with or w/o org.
         This would be a shared class with user, but it needs the ability
@@ -104,7 +105,9 @@ class Resource(models.Resource, models.MonitorableResource):
 
         # if the monitor flag is set, wait for the SCM to update
         if monitor and answer.get('changed', False):
-            return self.monitor(project_id, timeout=timeout)
+            return self.monitor(pk=None, parent_pk=project_id, timeout=timeout)
+        elif wait and answer.get('changed', False):
+            return self.wait(pk=None, parent_pk=project_id, timeout=timeout)
 
         return answer
 
@@ -143,7 +146,7 @@ class Resource(models.Resource, models.MonitorableResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     def update(self, pk=None, create_on_missing=False, monitor=False,
-               timeout=None, name=None, organization=None):
+               wait=False, timeout=None, name=None, organization=None):
         """Trigger a project update job within Ansible Tower.
         Only meaningful on non-manual projects.
         """
@@ -167,7 +170,12 @@ class Resource(models.Resource, models.MonitorableResource):
 
         # If we were told to monitor the project update's status, do so.
         if monitor:
-            return self.monitor(pk, timeout=timeout)
+            project_update_id = result.json()['project_update']
+            return self.monitor(project_update_id, parent_pk=pk,
+                                timeout=timeout)
+        elif wait:
+            project_update_id = result.json()['project_update']
+            return self.wait(project_update_id, parent_pk=pk, timeout=timeout)
 
         # Return the project update ID.
         return {
@@ -178,22 +186,9 @@ class Resource(models.Resource, models.MonitorableResource):
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
     def status(self, pk=None, detail=False, **kwargs):
-        """Print the current job status."""
-        # Get the job from Ansible Tower.
-        debug.log('Asking for project update status.', header='details')
-        project = client.get('/projects/%d/' % pk).json()
-
-        # Determine the appropriate project update.
-        if 'current_update' in project['related']:
-            debug.log('A current update exists; retrieving it.',
-                      header='details')
-            job = client.get(project['related']['current_update'][7:]).json()
-        elif project['related'].get('last_update', None):
-            debug.log('No current update exists; retrieving the most '
-                      'recent update.', header='details')
-            job = client.get(project['related']['last_update'][7:]).json()
-        else:
-            raise exc.NotFound('No project updates exist.')
+        """Print the status of the most recent update."""
+        # Obtain the most recent project update
+        job = self.last_job_data(pk, **kwargs)
 
         # In most cases, we probably only want to know the status of the job
         # and the amount of time elapsed. However, if we were asked for

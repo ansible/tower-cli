@@ -56,6 +56,9 @@ class Resource(models.ExeResource):
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
                        'launched job rather than exiting with a success.')
+    @click.option('--wait', is_flag=True, default=False,
+                  help='Monitor the status of the job, but do not print '
+                       'while job is in progress.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided with --monitor, this command (not the job)'
                        ' will time out after the given number of seconds. '
@@ -85,8 +88,8 @@ class Resource(models.ExeResource):
     @click.option('--use-job-endpoint', required=False, default=False,
                   is_flag=True, help='A flag that disable launching jobs'
                   ' from job template when set.')
-    def launch(self, job_template=None, monitor=False, timeout=None,
-               no_input=True, extra_vars=None, **kwargs):
+    def launch(self, job_template=None, monitor=False, wait=False,
+               timeout=None, no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
 
         Creates a new job in Ansible Tower, immediately starts it, and
@@ -233,5 +236,7 @@ class Resource(models.ExeResource):
         # monitor from here.
         if monitor:
             return self.monitor(job_id, timeout=timeout)
+        elif wait:
+            return self.wait(job_id, timeout=timeout)
 
         return result

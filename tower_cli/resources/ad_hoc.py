@@ -77,6 +77,9 @@ class Resource(models.ExeResource):
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `monitor` on the newly '
                        'launched command rather than exiting with a success.')
+    @click.option('--wait', is_flag=True, default=False,
+                  help='Monitor the status of the job, but do not print '
+                       'while job is in progress.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided with --monitor, this attempt'
                        ' will time out after the given number of seconds. '
@@ -84,7 +87,8 @@ class Resource(models.ExeResource):
     @click.option('--become', required=False, is_flag=True,
                   help='If used, privledge escalation will be enabled for '
                        'this command.')
-    def launch(self, monitor=False, timeout=None, become=False, **kwargs):
+    def launch(self, monitor=False, wait=False, timeout=None, become=False,
+               **kwargs):
         """Launch a new ad-hoc command.
 
         Runs a user-defined command from Ansible Tower, immediately starts it,
@@ -115,6 +119,8 @@ class Resource(models.ExeResource):
         # monitor from here.
         if monitor:
             return self.monitor(command_id, timeout=timeout)
+        elif wait:
+            return self.wait(command_id, timeout=timeout)
 
         # Return the command ID and other response data
         answer = OrderedDict((
