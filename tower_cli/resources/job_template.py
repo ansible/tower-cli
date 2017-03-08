@@ -18,14 +18,10 @@ from __future__ import absolute_import, unicode_literals
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import parser, debug, types
-from tower_cli.api import client
-from tower_cli.conf import settings
-
-import json
+from tower_cli.utils import types
 
 
-class Resource(models.Resource):
+class Resource(models.SurveyResource):
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
 
@@ -106,10 +102,7 @@ class Resource(models.Resource):
     @resources.command
     def create(self, fail_on_found=False, force_on_exists=False,
                extra_vars=None, **kwargs):
-        """Create a job template.
-        You may include multiple --extra-vars flags in order to combine
-        different sources of extra variables. Start this
-        with @ in order to indicate a filename."""
+        """Create a job template."""
         # Provide a default value for job_type, but only in creation of JT
         if not kwargs.get('job_type', False):
             kwargs['job_type'] = 'run'
@@ -117,41 +110,6 @@ class Resource(models.Resource):
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs
         )
-
-    def _survey_endpoint(self, pk):
-        return '{0}{1}/survey_spec/'.format(self.endpoint, pk)
-
-    def write(self, pk=None, **kwargs):
-        survey_input = kwargs.pop('survey_spec', None)
-        if kwargs.get('extra_vars', None):
-            kwargs['extra_vars'] = parser.process_extra_vars(
-                kwargs['extra_vars'])
-        ret = super(Resource, self).write(pk=pk, **kwargs)
-        if survey_input is not None and ret.get('id', None):
-            if not isinstance(survey_input, dict):
-                survey_input = json.loads(survey_input.strip(' '))
-            if survey_input == {}:
-                debug.log('Saving the survey_spec.', header='details')
-                r = client.delete(self._survey_endpoint(ret['id']))
-            else:
-                debug.log('Deleting the survey_spec.', header='details')
-                r = client.post(self._survey_endpoint(ret['id']),
-                                data=survey_input)
-            if r.status_code == 200:
-                ret['changed'] = True
-            if survey_input and not ret['survey_enabled']:
-                debug.log('For survey to take effect, set survey_enabled'
-                          ' field to True.', header='warning')
-        return ret
-
-    @resources.command(use_fields_as_options=False)
-    @click.argument('job_template', type=types.Related('job_template'))
-    def spec(self, job_template):
-        """GET the survey_spec endpoint for the job template and
-        return that."""
-        if settings.format == 'human':
-            settings.format = 'json'
-        return client.get(self._survey_endpoint(job_template)).json()
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
