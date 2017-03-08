@@ -25,18 +25,26 @@ from tower_cli.resources.node import NODE_STANDARD_FIELDS, JOB_TYPES
 import click
 
 
-class Resource(models.Resource):
+class Resource(models.SurveyResource):
     cli_help = 'Manage workflow job templates.'
     endpoint = '/workflow_job_templates/'
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
     extra_vars = models.Field(
-        type=types.Variables(), required=False, display=False,
-        help_text='Extra playbook variables to pass to jobs run inside this '
-                  'workflow, use "@" to get from file.')
+        type=types.Variables(), required=False, display=False, multiple=True,
+        help_text='Extra variables used by Ansible in YAML or key=value '
+                  'format. Use @ to get YAML from a file. Use the option '
+                  'multiple times to add multiple extra variables')
     organization = models.Field(type=types.Related('organization'),
                                 required=False)
+    survey_enabled = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job type on launch.')
+    survey_spec = models.Field(
+        type=types.Variables(), required=False, display=False,
+        help_text='On write commands, perform extra POST to the '
+                  'survey_spec endpoint.')
 
     @staticmethod
     def _workflow_node_structure(node_results):

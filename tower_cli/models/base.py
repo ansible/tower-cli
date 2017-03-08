@@ -36,12 +36,10 @@ from tower_cli import resources
 from tower_cli.api import client
 from tower_cli.conf import settings
 from tower_cli.models.fields import Field
-from tower_cli.utils import exceptions as exc
+from tower_cli.utils import exceptions as exc, parser, debug, secho
 from tower_cli.utils.command import Command
-from tower_cli.utils import debug, secho
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.decorators import command
-from tower_cli.utils.parser import ordered_dump
 
 
 class ResourceMeta(type):
@@ -337,8 +335,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 """Convert the payload into a YAML string with proper
                 indentation and return it.
                 """
-                return ordered_dump(payload, Dumper=yaml.SafeDumper,
-                                    default_flow_style=False)
+                return parser.ordered_dump(payload, Dumper=yaml.SafeDumper,
+                                           default_flow_style=False)
 
             def _format_human(self, payload):
                 """Convert the payload into an ASCII table suitable for
@@ -1208,3 +1206,45 @@ class Resource(ResourceMethods):
         """
         return self.write(pk, create_on_missing=create_on_missing,
                           force_on_exists=True, **kwargs)
+
+
+class SurveyResource(Resource):
+    """Contains utilities and commands common to "job template" models,
+    which take extra_vars and have a survey_spec."""
+    abstract = True
+
+    def _survey_endpoint(self, pk):
+        return '{0}{1}/survey_spec/'.format(self.endpoint, pk)
+
+    def write(self, pk=None, **kwargs):
+        survey_input = kwargs.pop('survey_spec', None)
+        if kwargs.get('extra_vars', None):
+            kwargs['extra_vars'] = parser.process_extra_vars(
+                kwargs['extra_vars'])
+        ret = super(SurveyResource, self).write(pk=pk, **kwargs)
+        if survey_input is not None and ret.get('id', None):
+            if not isinstance(survey_input, dict):
+                survey_input = json.loads(survey_input.strip(' '))
+            if survey_input == {}:
+                debug.log('Deleting the survey_spec.', header='details')
+                r = client.delete(self._survey_endpoint(ret['id']))
+            else:
+                debug.log('Saving the survey_spec.', header='details')
+                r = client.post(self._survey_endpoint(ret['id']),
+                                data=survey_input)
+            if r.status_code == 200:
+                ret['changed'] = True
+            if survey_input and not ret['survey_enabled']:
+                debug.log('For survey to take effect, set survey_enabled'
+                          ' field to True.', header='warning')
+        return ret
+
+    @resources.command
+    def survey(self, pk=None, **kwargs):
+        """Get the survey_spec for the job template.
+        To write a survey, use the modify command with the --survey-spec
+        parameter."""
+        job_template = self.get(pk=pk, **kwargs)
+        if settings.format == 'human':
+            settings.format = 'json'
+        return client.get(self._survey_endpoint(job_template['id'])).json()

@@ -19,10 +19,9 @@ import click
 
 from tower_cli import models, resources
 from tower_cli.utils import types
-from tower_cli.utils import parser
 
 
-class Resource(models.Resource):
+class Resource(models.SurveyResource):
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
 
@@ -61,7 +60,10 @@ class Resource(models.Resource):
     )
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
-    extra_vars = models.Field(required=False, display=False)
+    extra_vars = models.Field(
+        type=types.Variables(), required=False, display=False, multiple=True,
+        help_text='Extra variables used by Ansible in YAML or key=value '
+                  'format. Use @ to get YAML from a file.')
     host_config_key = models.Field(
         required=False, display=False,
         help_text='Allow Provisioning Callbacks using this host config key')
@@ -89,47 +91,24 @@ class Resource(models.Resource):
     become_enabled = models.Field(type=bool, required=False, display=False)
     timeout = models.Field(type=int, required=False, display=False,
                            help_text='The timeout field (in seconds).')
+    survey_enabled = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for job type on launch.')
+    survey_spec = models.Field(
+        type=types.Variables(), required=False, display=False,
+        help_text='On write commands, perform extra POST to the '
+                  'survey_spec endpoint.')
 
     @resources.command
-    @click.option('--extra-vars', required=False, multiple=True,
-                  help='Extra variables used by Ansible in YAML or key=value '
-                       'format. Use @ to get YAML from a file.')
     def create(self, fail_on_found=False, force_on_exists=False,
                extra_vars=None, **kwargs):
-        """Create a job template.
-        You may include multiple --extra-vars flags in order to combine
-        different sources of extra variables. Start this
-        with @ in order to indicate a filename."""
-        if extra_vars:
-            # combine sources of extra variables, if given
-            kwargs['extra_vars'] = parser.process_extra_vars(
-                extra_vars, force_json=False
-            )
+        """Create a job template."""
         # Provide a default value for job_type, but only in creation of JT
         if not kwargs.get('job_type', False):
             kwargs['job_type'] = 'run'
         return super(Resource, self).create(
             fail_on_found=fail_on_found, force_on_exists=force_on_exists,
             **kwargs
-        )
-
-    @resources.command
-    @click.option('--extra-vars', required=False, multiple=True,
-                  help='Extra variables used by Ansible in YAML or key=value '
-                       'format. Use @ to get YAML from a file.')
-    def modify(self, pk=None, create_on_missing=False,
-               extra_vars=None, **kwargs):
-        """Modify a job template.
-        You may include multiple --extra-vars flags in order to combine
-        different sources of extra variables. Start this
-        with @ in order to indicate a filename."""
-        if extra_vars:
-            # combine sources of extra variables, if given
-            kwargs['extra_vars'] = parser.process_extra_vars(
-                extra_vars, force_json=False
-            )
-        return super(Resource, self).modify(
-            pk=pk, create_on_missing=create_on_missing, **kwargs
         )
 
     @resources.command(use_fields_as_options=False)
