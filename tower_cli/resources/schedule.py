@@ -126,6 +126,15 @@ class Resource(models.Resource):
                               display=False, help_text='Extra data for '
                               'schedule rules in the form of a .json file.')
 
+    def _get_patch_url(self, url, pk):
+        urlTokens = url.split('/')
+        if len(urlTokens) > 3:
+            # reconstruct url to prevent a rare corner case where resources
+            # cannot be constructed independently. Open to modification if
+            # API convention changes.
+            url = '/'.join(urlTokens[:1] + urlTokens[-2:])
+        return super(Resource, self)._get_patch_url(url, pk)
+
 
 Resource.create = jt_aggregate(Resource.create, is_create=True)
 Resource.delete = jt_aggregate(Resource.delete, has_pk=True)

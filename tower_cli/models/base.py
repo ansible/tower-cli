@@ -543,6 +543,11 @@ class ResourceMethods(BaseResource):
         # Return the response.
         return resp
 
+    def _get_patch_url(self, url, pk):
+        """Overwrite this method to handle specific corner cases to
+        the url passed to PATCH method."""
+        return url + '%s/' % pk
+
     def write(self, pk=None, create_on_missing=False, fail_on_found=False,
               force_on_exists=True, **kwargs):
         """Modify the given object using the Ansible Tower API.
@@ -634,7 +639,7 @@ class ResourceMethods(BaseResource):
         url = self.endpoint
         method = 'POST'
         if pk:
-            url += '%s/' % pk
+            url = self._get_patch_url(url, pk)
             method = 'PATCH'
 
         # If debugging is on, print the URL and data being sent.
