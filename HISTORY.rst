@@ -2,12 +2,13 @@ Release History
 ===============
 
 3.1.0 (2017-03-08)
+------------------
 
 - Improved job monitoring functionality to enable standard out streaming, which
   displays real-time job output on command line.
 - Added workflow, workflow_job and node endpoints to manipulate workflow graph
   and manage workflow job resources. Reflecting workflows feature of Tower 3.1.
-- Added settings command to manage tower settings via Tower CLI. Reflecting
+- Added settings command to manage Tower settings via Tower CLI. Reflecting
   Configure Tower in Tower (CTiT) feature of Tower 3.1.
 - Included timeout option to certain unified job template resources. Reflecting
   job timeout feature of Tower 3.1.
