@@ -263,8 +263,7 @@ class GroupTests(unittest.TestCase):
                     'related': {'inventory_source': '/inventory_sources/42/'},
                 }, method='GET')
                 self.gr.sync(1)
-                isrc_sync.assert_called_once_with(42, monitor=False,
-                                                  timeout=None)
+                self.assertIn((42,), isrc_sync.call_args)
                 self.assertEqual(len(t.requests), 1)
 
     def test_set_child_endpoint_id(self):

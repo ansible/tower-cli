@@ -59,6 +59,8 @@ class Resource(models.Resource, models.MonitorableResource):
                   help='If sent, immediately calls `project monitor` on the '
                        'project rather than exiting with a success.'
                        'It polls for status until the SCM is updated.')
+    @click.option('--wait', is_flag=True, default=False,
+                  help='Polls server for status, exists when finished.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided with --monitor, the SCM update'
                        ' will time out after the given number of seconds. '
@@ -141,6 +143,8 @@ class Resource(models.Resource, models.MonitorableResource):
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
                        'launched job rather than exiting with a success.')
+    @click.option('--wait', is_flag=True, default=False,
+                  help='Polls server for status, exists when finished.')
     @click.option('--timeout', required=False, type=int,
                   help='If provided with --monitor, this command (not the job)'
                        ' will time out after the given number of seconds. '
