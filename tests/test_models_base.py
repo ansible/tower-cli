@@ -889,3 +889,40 @@ class MonitorableResourcesTests(unittest.TestCase):
         """
         with self.assertRaises(NotImplementedError):
             models.MonitorableResource().status(None)
+
+
+class SurveyResourceTests(unittest.TestCase):
+    """Test methods specific to survey models."""
+    def setUp(self):
+        self.res = models.SurveyResource()
+        self.res.endpoint = '/job_templates/'
+
+    def test_survey_no_op(self):
+        with mock.patch.object(models.base.ResourceMethods, 'write') as w:
+            self.res.modify(name='foobar')
+            w.assert_called_once_with(
+                create_on_missing=False, force_on_exists=True,
+                name='foobar', pk=None)
+
+    def test_survey_create(self):
+        with mock.patch.object(models.base.ResourceMethods, 'write') as w:
+            w.return_value = {'id': 42, 'survey_enabled': True}
+            survey_data = {'foobar': 'foo'}
+            with client.test_mode as t:
+                t.register_json(
+                    '/job_templates/42/survey_spec/', {},
+                    method='POST'
+                )
+                self.res.modify(survey_spec=survey_data, verbose=True)
+                self.assertEqual(t.requests[0].body, json.dumps(survey_data))
+
+    def test_survey_delete(self):
+        with mock.patch.object(models.base.ResourceMethods, 'write') as w:
+            w.return_value = {'id': 42, 'survey_enabled': True}
+            with client.test_mode as t:
+                t.register_json(
+                    '/job_templates/42/survey_spec/', {},
+                    method='DELETE'
+                )
+                self.res.modify(survey_spec={}, verbose=True)
+                self.assertEqual(t.requests[0].method, 'DELETE')
