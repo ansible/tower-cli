@@ -175,13 +175,11 @@ sub-branches.
 Use the workflow_job resource to launch workflow jobs.
 This supports the use of extra_vars, which can contain answers to
 survey questions.
-A `--wait` flag is available to poll the server until workflow job
-reaches a completed status. Here is an example of using those features:
+The `--monitor` and `--wait` flag are available to poll the server
+until workflow job reaches a completed status. The `--monitor` option
+will print rolling updates of the jobs that ran as part of the workflow.
+Here is an example of using those features:
 
 ```
-tower-cli workflow_job launch -W "echo Hello World" -e a=1 --wait
+tower-cli workflow_job launch -W "echo Hello World" -e a=1 --monitor
 ```
-
-The `--wait` function will display temporary placeholder text.
-Tower-CLI does not yet offer any streaming updates of events within the
-workflow job.
