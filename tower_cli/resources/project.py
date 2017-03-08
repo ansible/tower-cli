@@ -50,6 +50,8 @@ class Resource(models.Resource, models.MonitorableResource):
                                         display=False)
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
+    job_timeout = models.Field(type=int, required=False, display=False,
+                               help_text='The timeout field (in seconds).')
 
     @resources.command
     @click.option('--monitor', is_flag=True, default=False,
@@ -67,6 +69,8 @@ class Resource(models.Resource, models.MonitorableResource):
         This would be a shared class with user, but it needs the ability
         to monitor if the flag is set.
         """
+        if 'job_timeout' in kwargs and 'timeout' not in kwargs:
+            kwargs['timeout'] = kwargs.pop('job_timeout')
 
         post_associate = False
         if organization:
@@ -107,7 +111,7 @@ class Resource(models.Resource, models.MonitorableResource):
     @resources.command(use_fields_as_options=(
         'name', 'description', 'scm_type', 'scm_url', 'local_path',
         'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
-        'scm_update_on_launch'
+        'scm_update_on_launch', 'job_timeout'
     ))
     def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify an already existing.
@@ -123,6 +127,8 @@ class Resource(models.Resource, models.MonitorableResource):
         # Associated with issue #52, the organization can't be modified
         #    with the 'modify' command. This would create confusion about
         #    whether its flag is an identifier versus a field to modify.
+        if 'job_timeout' in kwargs and 'timeout' not in kwargs:
+            kwargs['timeout'] = kwargs.pop('job_timeout')
         return super(Resource, self).write(
             pk, create_on_missing=create_on_missing,
             force_on_exists=True, **kwargs
