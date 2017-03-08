@@ -1,6 +1,19 @@
 Release History
 ===============
 
+3.1.0 (2017-03-08)
+
+- Improved job monitoring functionality to enable standard out streaming, which
+  displays real-time job output on command line.
+- Added workflow, workflow_job and node endpoints to manipulate workflow graph
+  and manage workflow job resources. Reflecting workflows feature of Tower 3.1.
+- Added settings command to manage tower settings via Tower CLI. Reflecting
+  Configure Tower in Tower (CTiT) feature of Tower 3.1.
+- Included timeout option to certain unified job template resources. Reflecting
+  job timeout feature of Tower 3.1.
+- Added unicode support to extra_vars and variable types.
+- Several minor bug fixes to improve user experience.
+
 3.0.3 (2017-02-07)
 ------------------
 
@@ -28,7 +41,7 @@ Release History
 - Added resource role for tower3.0 and permission for previous tower versions
 - Added notification templates
 - Added labels
-- Added description display option 
+- Added description display option
 - Added deprecation warnings
 - Help text upgrades
 - Give indication of "changed" apart from color
@@ -47,12 +60,12 @@ Release History
 2.3.2 (2016-07-21)
 ------------------
 
-- Add RPM specfile and Makefile 
+- Add RPM specfile and Makefile
 - Tower compatibility fixes
 - Allow scan JTs as an option for "job_type"
-- Add ability to create group as subgroup of another group 
-- Add YAML output format against JSON and humanized output formats 
-- Add SSL corner case error handling and suggestion 
+- Add ability to create group as subgroup of another group
+- Add YAML output format against JSON and humanized output formats
+- Add SSL corner case error handling and suggestion
 - Allow resource disassociation with "null"
 
 2.3.1 (2015-12-10)
