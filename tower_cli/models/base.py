@@ -116,10 +116,11 @@ class ResourceMeta(type):
 
         # Ensure that the endpoint ends in a trailing slash, since we
         # expect this when we build URLs based on it.
-        if not newattrs['endpoint'].startswith('/'):
-            newattrs['endpoint'] = '/' + newattrs['endpoint']
-        if not newattrs['endpoint'].endswith('/'):
-            newattrs['endpoint'] += '/'
+        if isinstance(newattrs['endpoint'], six.string_types):
+            if not newattrs['endpoint'].startswith('/'):
+                newattrs['endpoint'] = '/' + newattrs['endpoint']
+            if not newattrs['endpoint'].endswith('/'):
+                newattrs['endpoint'] += '/'
 
         # Construct the class.
         return super_new(cls, name, bases, newattrs)
@@ -259,7 +260,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 code = six.get_function_code(method)
                 if 'pk' in code.co_varnames:
                     click.argument('pk', nargs=1, required=False,
-                                   type=int, metavar='[ID]')(cmd)
+                                   type=str, metavar='[ID]')(cmd)
 
                 # Done; return the command.
                 return cmd
@@ -506,7 +507,7 @@ class ResourceMethods(BaseResource):
         # Piece together the URL we will be hitting.
         url = self.endpoint
         if pk:
-            url += '%d/' % pk
+            url += '%s/' % pk
 
         # Pop the query parameter off of the keyword arguments; it will
         # require special handling (below).
@@ -650,7 +651,7 @@ class ResourceMethods(BaseResource):
         url = self.endpoint
         method = 'POST'
         if pk:
-            url += '%d/' % pk
+            url += '%s/' % pk
             method = 'PATCH'
 
         # If debugging is on, print the URL and data being sent.
@@ -751,7 +752,7 @@ class ResourceMethods(BaseResource):
         # Alter the "next" and "previous" to reflect simple integers,
         # rather than URLs, since this endpoint just takes integers.
         for key in ('next', 'previous'):
-            if not response[key]:
+            if not response.get(key):
                 continue
             match = re.search(r'page=(?P<num>[\d]+)', response[key])
             if match is None and key == 'previous':

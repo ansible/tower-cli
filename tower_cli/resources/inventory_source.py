@@ -48,6 +48,8 @@ class Resource(models.MonitorableResource):
     # Only used if update_on_launch is used
     update_cache_timeout = models.Field(type=int, required=False,
                                         display=False)
+    timeout = models.Field(type=int, required=False, display=False,
+                           help_text='The timeout field (in seconds).')
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @click.option('--monitor', is_flag=True, default=False,

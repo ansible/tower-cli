@@ -139,3 +139,16 @@ def with_global_options(method):
 
     # Okay, we're done adding options; return the method.
     return method
+
+
+def pop_option(function, name):
+    """
+    Used to remove an option applied by the @click.option decorator.
+
+    This is useful for when you want to subclass a decorated resource command
+    and *don't* want all of the options provided by the parent class'
+    implementation.
+    """
+    for option in getattr(function, '__click_params__', tuple()):
+        if option.name == name:
+            function.__click_params__.remove(option)
