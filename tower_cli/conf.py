@@ -71,6 +71,15 @@ class Settings(object):
     """
     _parser_names = ['runtime', 'local', 'user', 'global', 'defaults']
 
+    @staticmethod
+    def _new_parser(defaults=None):
+        if defaults:
+            p = Parser(defaults=defaults)
+        else:
+            p = Parser()
+        p.add_section('general')
+        return p
+
     def __init__(self):
         """Create the settings object, and read from appropriate files as
         well as from `sys.argv`.
@@ -90,12 +99,10 @@ class Settings(object):
             'description_on': 'false',
             'certificate': '',
         }
-        self._defaults = Parser(defaults=defaults)
-        self._defaults.add_section('general')
+        self._defaults = self._new_parser(defaults=defaults)
 
         # If there is a global settings file, initialize it.
-        self._global = Parser()
-        self._global.add_section('general')
+        self._global = self._new_parser()
         if os.path.isdir('/etc/tower/'):
             # Sanity check: Try to get a list of files in `/etc/tower/`.
             #
@@ -122,16 +129,14 @@ class Settings(object):
             self._global.read('/etc/tower/tower_cli.cfg')
 
         # Initialize a parser for the user settings file.
-        self._user = Parser()
-        self._user.add_section('general')
+        self._user = self._new_parser()
 
         # If there is a user settings file, read it into the parser object.
         user_filename = os.path.expanduser('~/.tower_cli.cfg')
         self._user.read(user_filename)
 
         # Initialize a parser for the local settings file.
-        self._local = Parser()
-        self._local.add_section('general')
+        self._local = self._new_parser()
 
         # If there is a local settings file in the current working directory
         # or any parent, read it into the parser object.
@@ -159,8 +164,7 @@ class Settings(object):
             self._local.read(local_filename)
 
         # Put a stubbed runtime parser in.
-        self._runtime = Parser()
-        self._runtime.add_section('general')
+        self._runtime = self._new_parser()
 
     def __getattr__(self, key):
         """Return the approprate value, intelligently type-casted in the
@@ -209,6 +213,24 @@ class Settings(object):
         `runtime_values` context manager.
         """
         return tuple([getattr(self, '_%s' % i) for i in self._parser_names])
+
+    def set_or_reset_runtime_param(self, key, value):
+        """Maintains the context of the runtime settings for invoking
+        a command.
+
+        This should be called by a click.option callback, and only
+        called once for each setting for each command invocation.
+
+        If the setting exists, it follows that the runtime settings are
+        stale, so the entire runtime settings are reset.
+        """
+        if self._runtime.has_option('general', key):
+            self._runtime = self._new_parser()
+
+        if value is None:
+            return
+        settings._runtime.set('general', key.replace('tower_', ''),
+                              six.text_type(value))
 
     @contextlib.contextmanager
     def runtime_values(self, **kwargs):

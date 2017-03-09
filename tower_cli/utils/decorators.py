@@ -15,52 +15,33 @@
 
 from __future__ import absolute_import
 
-import functools
-import types
-
 import click
+
+from functools import wraps
 
 from tower_cli.conf import settings
 
 
-def command(method=None, **kwargs):
-    """Cause the given function to become a click command, and add all
-    global options.
-    """
-    # Define the actual decorator.
-    # This is done in such a way as to allow @command, @command(), and
-    # @command(foo='bar') to all work.
-    def actual_decorator(method):
-        # Create a wrapper function that will "eat" the authentication
-        # if it's provided as keyword arguments and apply it to settings.
-        @with_global_options
-        @click.command(**kwargs)
-        @functools.wraps(method)
-        def answer(*inner_a, **inner_kw):
-            runtime_settings = {
-                'host': inner_kw.pop('tower_host', None),
-                'password': inner_kw.pop('tower_password', None),
-                'format': inner_kw.pop('format', None),
-                'username': inner_kw.pop('tower_username', None),
-                'verbose': inner_kw.pop('verbose', None),
-                'description_on': inner_kw.pop('description_on', None),
-                'insecure': inner_kw.pop('insecure', None),
-                'certificate': inner_kw.pop('certificate', None)
-            }
-            with settings.runtime_values(**runtime_settings):
-                return method(*inner_a, **inner_kw)
+def _apply_runtime_setting(ctx, param, value):
+    settings.set_or_reset_runtime_param(param.name, value)
 
-        # Done, return the wrapped-wrapped-wrapped-wrapped method.
-        # BECAUSE WE WRAP ALL THE THINGS!
-        return answer
 
-    # If we got the method straight-up, apply the decorator and return
-    # the decorated method; otherwise, return the actual decorator for
-    # the Python interpreter to apply.
-    if method and isinstance(method, types.FunctionType):
-        return actual_decorator(method)
-    else:
-        return actual_decorator
+SETTINGS_PARMS = set([
+    'tower_host', 'tower_password', 'format', 'tower_username', 'verbose',
+    'description_on', 'insecure', 'certificate'
+])
+
+
+def runtime_context_manager(method):
+    @wraps(method)
+    def method_with_context_managed(*args, **kwargs):
+        # Remove the settings before running the method
+        for key in SETTINGS_PARMS:
+            kwargs.pop(key, None)
+        method(*args, **kwargs)
+        # Destroy the runtime settings
+        settings._runtime = settings._new_parser()
+    return method_with_context_managed
 
 
 def with_global_options(method):
@@ -77,21 +58,24 @@ def with_global_options(method):
              'HTTPS is assumed as the protocol unless "http://" is explicitly '
              'provided. This will take precedence over a host provided to '
              '`tower config`, if any.',
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
     method = click.option(
         '-u', '--tower-username',
         help='Username to use to authenticate to Ansible Tower. '
              'This will take precedence over a username provided to '
              '`tower config`, if any.',
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
     method = click.option(
         '-p', '--tower-password',
         help='Password to use to authenticate to Ansible Tower. '
              'This will take precedence over a password provided to '
              '`tower config`, if any.',
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
 
     # Create a global verbose/debug option.
@@ -101,21 +85,24 @@ def with_global_options(method):
              'reading output on the CLI; the "json" and "yaml" formats '
              'provide more data.',
         type=click.Choice(['human', 'json', 'yaml']),
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
     method = click.option(
         '-v', '--verbose',
         default=None,
         help='Show information about requests being made.',
         is_flag=True,
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
     method = click.option(
         '--description-on',
         default=None,
         help='Show description in human-formatted output.',
         is_flag=True,
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
 
     # Create a global SSL warning option.
@@ -125,7 +112,8 @@ def with_global_options(method):
         help='Turn off insecure connection warnings. Set config verify_ssl '
              'to make this permanent.',
         is_flag=True,
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
 
     # Create a custom certificate specification option.
@@ -134,8 +122,12 @@ def with_global_options(method):
         default=None,
         help='Path to a custom certificate file that will be used throughout'
              ' the command. Overwritten by --insecure flag if set.',
-        required=False,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
     )(method)
+
+    # Manage the runtime settings context
+    method = runtime_context_manager(method)
 
     # Okay, we're done adding options; return the method.
     return method
