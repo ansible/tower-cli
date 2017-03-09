@@ -1,7 +1,7 @@
 Release History
 ===============
 
-3.1.0 (2017-03-08)
+3.1.0 (2017-03-09)
 ------------------
 
 - Improved job monitoring functionality to enable standard out streaming, which
