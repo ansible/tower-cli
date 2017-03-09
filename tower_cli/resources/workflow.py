@@ -23,6 +23,7 @@ from tower_cli.conf import settings
 from tower_cli.resources.node import NODE_STANDARD_FIELDS, JOB_TYPES
 
 import click
+from collections import deque
 
 
 class Resource(models.SurveyResource):
@@ -137,7 +138,7 @@ class Resource(models.SurveyResource):
 
         node_res = get_resource('node')
 
-        def create_node_recursive(node_branch, parent, relationship):
+        def create_node(node_branch, parent, relationship):
             # Create node with data specified by top-level keys
             create_data = {}
             FK_FIELDS = JOB_TYPES.values() + ['inventory', 'credential']
@@ -153,9 +154,11 @@ class Resource(models.SurveyResource):
                     else:
                         create_data[fd] = node_branch[fd]
             create_data['workflow_job_template'] = wfjt
-            node_data = node_res._get_or_create_child(
+            return node_res._get_or_create_child(
                 parent, relationship, **create_data)
-            # Repeat the process for all sub-branches
+
+        def get_adj_list(node_branch):
+            ret = {}
             for fd in node_branch:
                 for rel in ['success', 'failure', 'always']:
                     if fd.startswith(rel):
@@ -165,23 +168,34 @@ class Resource(models.SurveyResource):
                                 'Sublists in spec must be lists.'
                                 'Encountered in {0} at {1}'.format(
                                     fd, sub_branch_list))
-                        for sub_branch in sub_branch_list:
-                            sub_node_data = create_node_recursive(
-                                sub_branch, parent=node_data['id'],
-                                relationship=rel)
-                            node_res._assoc(
-                                node_res._forward_rel_name(rel),
-                                node_data['id'], sub_node_data['id'])
+                        ret[rel] = sub_branch_list
                         break
-            return node_data
+            return ret
+
+        def create_node_recursive(node_network):
+            queue = deque()
+            id_queue = deque()
+            for base_node in node_network:
+                queue.append(base_node)
+                id_queue.append(create_node(base_node, None, None)['id'])
+                while (len(queue) != 0):
+                    to_expand = queue.popleft()
+                    parent_id = id_queue.popleft()
+                    adj_list = get_adj_list(to_expand)
+                    for rel in adj_list:
+                        for sub_node in adj_list[rel]:
+                            id_queue.append(create_node(sub_node, parent_id,
+                                                        rel)['id'])
+                            queue.append(sub_node)
+                            node_res._assoc(node_res._forward_rel_name(rel),
+                                            parent_id, id_queue[-1])
 
         if hasattr(node_network, 'read'):
             node_network = node_network.read()
         node_network = string_to_dict(
             node_network, allow_kv=False, require_dict=False)
 
-        for base_node in node_network:
-            create_node_recursive(base_node, parent=None, relationship=None)
+        create_node_recursive(node_network)
 
         if settings.format == 'human':
             settings.format = 'yaml'
