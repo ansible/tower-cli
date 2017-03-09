@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import, division, unicode_literals
+from __future__ import absolute_import, division
 
 import functools
 import inspect
@@ -39,7 +39,7 @@ from tower_cli.models.fields import Field
 from tower_cli.utils import exceptions as exc, parser, debug, secho
 from tower_cli.utils.command import Command
 from tower_cli.utils.data_structures import OrderedDict
-from tower_cli.utils.decorators import command
+from tower_cli.utils.decorators import with_global_options
 
 
 class ResourceMeta(type):
@@ -187,7 +187,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
                 # Wrap the method, such that it outputs its final return
                 # value rather than returning it.
-                new_method = self._echo_method(method)
+                new_method = with_global_options(self._echo_method(method))
 
                 # Soft copy the "__click_params__", if any exist.
                 # This is the internal holding method that the click library
@@ -246,12 +246,14 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                             help=option_help,
                             type=field.type,
                             show_default=field.show_default,
-                            multiple=field.multiple
+                            multiple=field.multiple,
+                            is_eager=False
                         )(new_method)
 
                 # Make a click Command instance using this method
                 # as the callback, and return it.
-                cmd = command(name=name, cls=Command, **attrs)(new_method)
+                cmd = click.command(name=name, cls=Command, **attrs)(
+                    new_method)
 
                 # If this method has a `pk` positional argument,
                 # then add a click argument for it.
