@@ -694,7 +694,7 @@ class ResourceMethods(BaseResource):
         # If it turns out the record doesn't exist, handle the 404
         # appropriately (this is an okay response if `fail_on_missing` is
         # False).
-        url = '%s%d/' % (self.endpoint, pk)
+        url = '%s%s/' % (self.endpoint, pk)
         debug.log('DELETE %s' % url, fg='blue', bold=True)
         try:
             client.delete(url)
@@ -891,7 +891,7 @@ class MonitorableResource(ResourceMethods):
         Internal utility function to return standard out
         requires the pk of a unified job
         """
-        stdout_url = '%s%d/stdout/' % (self.unified_job_type, pk)
+        stdout_url = '%s%s/stdout/' % (self.unified_job_type, pk)
         payload = {
             'format': 'json', 'content_encoding': 'base64',
             'content_format': 'ansi'}
@@ -1145,7 +1145,7 @@ class ExeResource(MonitorableResource):
         # Get the job from Ansible Tower if pk given
         else:
             debug.log('Asking for job status.', header='details')
-            finished_endpoint = '%s%d/' % (self.endpoint, pk)
+            finished_endpoint = '%s%s/' % (self.endpoint, pk)
             job = client.get(finished_endpoint).json()
 
         # In most cases, we probably only want to know the status of the job
@@ -1175,7 +1175,7 @@ class ExeResource(MonitorableResource):
             existing_data = self.get(**kwargs)
             pk = existing_data['id']
 
-        cancel_endpoint = '%s%d/cancel/' % (self.endpoint, pk)
+        cancel_endpoint = '%s%s/cancel/' % (self.endpoint, pk)
         # Attempt to cancel the job.
         try:
             client.post(cancel_endpoint)
