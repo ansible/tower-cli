@@ -1,6 +1,12 @@
 Release History
 ===============
 
+3.1.1 (2017-03-13)
+------------------
+
+- Fixed a bug which blocks named resources from using runtime configure settings.
+- Fixed a bug in 3.1.0 which sometimes causes traceback when `pk` value is given.
+
 3.1.0 (2017-03-09)
 ------------------
 
