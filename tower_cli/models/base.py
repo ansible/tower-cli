@@ -187,7 +187,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
                 # Wrap the method, such that it outputs its final return
                 # value rather than returning it.
-                new_method = with_global_options(self._echo_method(method))
+                new_method = self._echo_method(method)
 
                 # Soft copy the "__click_params__", if any exist.
                 # This is the internal holding method that the click library
@@ -203,6 +203,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 # bottom-to-top.)
                 click_params = getattr(method, '__click_params__', [])
                 new_method.__click_params__ = copy(click_params)
+                new_method = with_global_options(new_method)
 
                 # Write options based on the fields available on this resource.
                 fao = attrs.pop('use_fields_as_options', True)
