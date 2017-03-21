@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.1.2 (2017-03-21)
+------------------
+
+- Fixed a bug where global flags are not added to some commands.
+
 3.1.1 (2017-03-13)
 ------------------
 
