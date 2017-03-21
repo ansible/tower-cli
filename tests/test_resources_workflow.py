@@ -90,7 +90,5 @@ class NodeModelTests(unittest.TestCase):
             mck.__name__ = 'create'
             self.res.create(workflow_job_template=1,
                             job_template=5)
-            mck.assert_called_once_with(
-                create_on_missing=True, fail_on_found=False,
-                force_on_exists=False, unified_job_template=5,
-                workflow_job_template=1)
+            self.assertEqual(mck.call_args[1]['unified_job_template'], 5)
+            self.assertEqual(mck.call_args[1]['workflow_job_template'], 1)

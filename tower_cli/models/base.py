@@ -484,7 +484,8 @@ class ResourceMethods(BaseResource):
         click is unfortunately bad at the way it sends through unspecified
         defaults."""
         for key, value in copy(kwargs).items():
-            if value is None:
+            # options with multiple=True return a tuple
+            if value is None or value == ():
                 kwargs.pop(key)
             if hasattr(value, 'read'):
                 kwargs[key] = value.read()
@@ -1204,18 +1205,14 @@ class Resource(ResourceMethods):
                   help='If used, if a match is found on unique fields, other '
                        'fields will be updated to the provided values. If '
                        'False, a match causes the request to be a no-op.')
-    def create(self, fail_on_found=False, force_on_exists=False, **kwargs):
+    def create(self, **kwargs):
         """Create an object.
 
         Fields in the resource's `identity` tuple are used for a lookup;
         if a match is found, then no-op (unless `force_on_exists` is set) but
         do not fail (unless `fail_on_found` is set).
         """
-        return super(Resource, self).write(
-            create_on_missing=True,
-            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
-            **kwargs
-        )
+        return self.write(create_on_missing=True, **kwargs)
 
     @resources.command(ignore_defaults=True)
     @click.option('--create-on-missing', default=False,

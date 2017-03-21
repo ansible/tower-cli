@@ -99,17 +99,12 @@ class Resource(models.SurveyResource):
         help_text='On write commands, perform extra POST to the '
                   'survey_spec endpoint.')
 
-    @resources.command
-    def create(self, fail_on_found=False, force_on_exists=False,
-               extra_vars=None, **kwargs):
-        """Create a job template."""
+    def write(self, *args, **kwargs):
         # Provide a default value for job_type, but only in creation of JT
-        if not kwargs.get('job_type', False):
+        if (kwargs.get('create_on_missing', False) and
+                (not kwargs.get('job_type', None))):
             kwargs['job_type'] = 'run'
-        return super(Resource, self).create(
-            fail_on_found=fail_on_found, force_on_exists=force_on_exists,
-            **kwargs
-        )
+        return super(Resource, self).write(*args, **kwargs)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
