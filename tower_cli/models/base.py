@@ -1189,6 +1189,33 @@ class ExeResource(MonitorableResource):
         # Return a success.
         return {'status': 'canceled', 'changed': changed}
 
+    @resources.command
+    def relaunch(self, pk=None, **kwargs):
+        """Relaunch a stopped job.
+
+        Fails with a non-zero exit status if the job cannot be relaunched.
+        You must provide either a pk or parameters in the job's identity.
+        """
+        # Search for the record if pk not given
+        if not pk:
+            existing_data = self.get(**kwargs)
+            pk = existing_data['id']
+
+        relaunch_endpoint = '%s%s/relaunch/' % (self.endpoint, pk)
+        data = {}
+        # Attempt to relaunch the job.
+        answer = {}
+        try:
+            result = client.post(relaunch_endpoint, data=data).json()
+            if 'id' in result:
+                answer.update(result)
+            answer['changed'] = True
+        except exc.MethodNotAllowed:
+            answer['changed'] = False
+
+        # Return the answer.
+        return answer
+
 
 class Resource(ResourceMethods):
     """This is the parent class for all standard resources."""
