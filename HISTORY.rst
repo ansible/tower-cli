@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.1.3 (2017-03-22)
+------------------
+
+- Fixed a bug where extra_vars were dropped in some commands.
+
 3.1.2 (2017-03-21)
 ------------------
 
