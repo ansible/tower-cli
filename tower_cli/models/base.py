@@ -1215,6 +1215,26 @@ class Resource(ResourceMethods):
         return self.write(create_on_missing=True, **kwargs)
 
     @resources.command(ignore_defaults=True)
+    def copy(self, pk=None, **kwargs):
+        """Copy an object.
+
+        Only the ID is used for the lookup. All provided fields are used
+        to override the old data from the copied resource.
+        """
+        orig = self.read(pk, fail_on_no_results=True,
+                         fail_on_multiple_results=True)
+        orig = orig['results'][0]
+        # Remove default values (anything where the value is None).
+        self._pop_none(kwargs)
+
+        newresource = copy(orig)
+        newresource.pop('id')
+        basename = newresource['name'].split('@', 1)[0].strip()
+        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+        newresource.update(kwargs)
+        return self.write(create_on_missing=True, **newresource)
+
+    @resources.command(ignore_defaults=True)
     @click.option('--create-on-missing', default=False,
                   show_default=True, type=bool, is_flag=True,
                   help='If used, and if options rather than a primary key are '

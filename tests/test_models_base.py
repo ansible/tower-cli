@@ -77,7 +77,8 @@ class ResourceMetaTests(unittest.TestCase):
 
         # Establish it has the commands we expect.
         self.assertEqual(set(MyResource.commands),
-                         set(['create', 'modify', 'list', 'get', 'delete']))
+                         set(['create', 'copy', 'modify', 'list', 'get',
+                              'delete']))
 
     def test_subclassed_commands(self):
         """Establish that commands overridden in subclasses retain their
