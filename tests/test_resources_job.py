@@ -667,3 +667,22 @@ class CancelTests(unittest.TestCase):
             t.register('/jobs/42/cancel/', '', method='POST', status_code=405)
             with self.assertRaises(exc.TowerCLIError):
                 self.res.cancel(42, fail_if_not_running=True)
+
+
+class RelaunchTests(unittest.TestCase):
+    """A set of tasks to establish that the job relaunch command works in the
+    way that we expect.
+    """
+    def setUp(self):
+        self.res = tower_cli.get_resource('job')
+
+    def test_standard_relaunch(self):
+        """Establish that a standard relaunch command works in the way
+        we expect.
+        """
+        with client.test_mode as t:
+            data = {'id': 43}
+            t.register_json('/jobs/42/relaunch/', data, method='POST')
+            result = self.res.relaunch(42)
+            self.assertTrue(t.requests[0].url.endswith('/jobs/42/relaunch/'))
+            self.assertTrue(result['changed'])
