@@ -1,13 +1,14 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%global srcname tower-cli
 
-Name:           ansible-tower-cli
+Name:           ansible-%{srcname}
 Version:        3.1.3
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Commandline interface for Ansible Tower
 Group:          Development/Tools
 License:        ASL 2.0
 URL:            https://github.com/ansible/tower-cli
-Source0:        https://pypi.python.org/packages/f7/7d/ee885225933bb498c34e2ad704194ed188662489a4ca4936a2d82248b6e8/%{name}-%{version}.tar.gz
+Source0:        https://pypi.python.org/packages/f7/7d/ee885225933bb498c34e2ad704194ed188662489a4ca4936a2d82248b6e8/%{srcname}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
@@ -29,7 +30,7 @@ used as a client library for other python apps, or as a reference for
 others developing API interactions with Tower's REST API.
 
 %prep
-%setup -q
+%setup -q -n %{srcname}-%{version}
 
 %build
 %{__python} setup.py build
@@ -53,5 +54,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/*
 
 %changelog
+* Sun Mar 26 2017 Satoru SATOH <satoru.satoh@gmail.com> - 3.1.3-2
+- Fix the source archive name
+
 * Fri Jun 17 2016 Bill Nottingham <notting@ansible.com> - 2.3.1-1
 - initial spec file
