@@ -19,7 +19,6 @@
 import re
 import sys
 from distutils.core import setup
-from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -131,8 +130,9 @@ setup(
     scripts=[
         'bin/tower-cli',
     ],
-    packages=find_packages(),
-
+    packages=[
+        'tower_cli',
+    ],
     # How to do the tests
     tests_require=['tox'],
     cmdclass={'test': Tox},
