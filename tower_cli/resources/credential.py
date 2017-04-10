@@ -53,9 +53,9 @@ class Resource(models.Resource):
         display=True,
         help_text='The type of credential being added. '
                   'Valid options are: ssh, net, scm, aws, rax, vmware,'
-                  ' foreman, cloudforms, gce, azure, azure_rm, openstack.',
+                  ' satellite6, cloudforms, gce, azure, azure_rm, openstack.',
         type=click.Choice(['ssh', 'net', 'scm', 'aws', 'rax', 'vmware',
-                           'foreman', 'cloudforms', 'gce', 'azure',
+                           'satellite6', 'cloudforms', 'gce', 'azure',
                            'azure_rm', 'openstack']),
     )
 
