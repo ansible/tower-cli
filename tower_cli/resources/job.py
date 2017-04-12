@@ -218,7 +218,10 @@ class Resource(models.ExeResource):
 
         # If returning json indicates any ignored fields, display it in
         # verbose mode.
-        ignored_fields = job_started.json().get('ignored_fields', {})
+        if job_started.text == '':
+            ignored_fields = {}
+        else:
+            ignored_fields = job_started.json().get('ignored_fields', {})
         has_ignored_fields = False
         for key, value in ignored_fields.items():
             if value and value != '{}':
