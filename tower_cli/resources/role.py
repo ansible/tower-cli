@@ -30,7 +30,7 @@ ACTOR_FIELDS = ['user', 'team']
 
 RESOURCE_FIELDS = [
     'target_team', 'credential', 'inventory', 'job_template',
-    'organization', 'project']
+    'organization', 'project', 'workflow']
 
 ROLE_TYPES = [
     'admin', 'read', 'member', 'execute', 'adhoc', 'update',
@@ -79,6 +79,8 @@ class Resource(models.Resource):
                                 required=False, display=False)
     project = models.Field(type=types.Related('project'),
                            required=False, display=False)
+    workflow = models.Field(type=types.Related('workflow'),
+                            required=False, display=False)
 
     def __getattribute__(self, name):
         """Disable inherited methods that cannot be applied to this
@@ -93,6 +95,8 @@ class Resource(models.Resource):
     def pluralize(kind):
         if kind == 'inventory':
             return 'inventories'
+        elif kind == 'workflow':
+            return 'workflow_job_templates'
         else:
             return '%ss' % kind
 
