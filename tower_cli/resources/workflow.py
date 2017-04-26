@@ -200,3 +200,43 @@ class Resource(models.SurveyResource):
         if settings.format == 'human':
             settings.format = 'yaml'
         return self._get_schema(wfjt)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--workflow', type=types.Related('workflow'))
+    @click.option('--label', type=types.Related('label'))
+    def associate_label(self, workflow, label):
+        """Associate an label with this workflow."""
+        return self._assoc('labels', workflow, label)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--workflow', type=types.Related('workflow'))
+    @click.option('--label', type=types.Related('label'))
+    def disassociate_label(self, workflow, label):
+        """Disassociate an label from this workflow."""
+        return self._disassoc('labels', workflow, label)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--workflow', type=types.Related('workflow'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of job template to relate to.')
+    def associate_notification_template(self, workflow,
+                                        notification_template, status):
+        """Associate a notification template from this workflow."""
+        return self._assoc('notification_templates_%s' % status,
+                           workflow, notification_template)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--workflow', type=types.Related('workflow'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of job template to relate to.')
+    def disassociate_notification_template(self, workflow,
+                                           notification_template, status):
+        """Disassociate a notification template from this workflow."""
+        return self._disassoc('notification_templates_%s' % status,
+                              workflow, notification_template)
