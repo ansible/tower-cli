@@ -34,12 +34,11 @@ from click._compat import isatty as is_tty
 
 from tower_cli import resources
 from tower_cli.api import client
-from tower_cli.conf import settings
+from tower_cli.conf import settings, with_global_options
 from tower_cli.models.fields import Field
 from tower_cli.utils import exceptions as exc, parser, debug, secho
 from tower_cli.utils.command import Command
 from tower_cli.utils.data_structures import OrderedDict
-from tower_cli.utils.decorators import with_global_options
 
 
 class ResourceMeta(type):
