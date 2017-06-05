@@ -106,6 +106,7 @@ class Settings(object):
             'verbose': 'false',
             'description_on': 'false',
             'certificate': '',
+            'use_token': 'false',
         }
         self._defaults = self._new_parser(defaults=defaults)
 
@@ -288,7 +289,8 @@ def config_from_environment(kwargs):
     careful not to override config values that were explicitly passed in.
     """
     CONFIG_OPTIONS = ('host', 'username', 'password', 'verify_ssl', 'format',
-                      'color', 'verbose', 'description_on', 'certificate')
+                      'color', 'verbose', 'description_on', 'certificate',
+                      'use_token')
     kwargs = copy.copy(kwargs)
     for k in CONFIG_OPTIONS:
         if k not in kwargs or kwargs[k] is None:
@@ -310,7 +312,7 @@ def _apply_runtime_setting(ctx, param, value):
 
 SETTINGS_PARMS = set([
     'tower_host', 'tower_password', 'format', 'tower_username', 'verbose',
-    'description_on', 'insecure', 'certificate'
+    'description_on', 'insecure', 'certificate', 'use_token'
 ])
 
 
@@ -408,6 +410,15 @@ def with_global_options(method):
         is_eager=True
     )(method)
 
+    method = click.option(
+        '--use-token',
+        default=None,
+        help='Turn on Tower\'s token-based authentication. Set config'
+             ' use_token to make this permanent.',
+        is_flag=True,
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
+    )(method)
     # Manage the runtime settings context
     method = runtime_context_manager(method)
 
