@@ -227,7 +227,11 @@ class APIResponse(Response):
     """
     def json(self, **kwargs):
         kwargs.setdefault('object_pairs_hook', data_structures.OrderedDict)
-        return super(APIResponse, self).json(**kwargs)
+        try:
+            return super(APIResponse, self).json(**kwargs)
+        except Exception:
+            kwargs.pop('object_pairs_hook', None)
+            return super(APIResponse, self).json(**kwargs)
 
 
 client = Client()
