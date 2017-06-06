@@ -41,8 +41,10 @@ class Parser(configparser.ConfigParser):
         # other users, raise a warning
         if os.path.isfile(fpname):
             file_permission = os.stat(fpname)
-            if (file_permission.st_mode & stat.S_IRGRP) or \
-               (file_permission.st_mode & stat.S_IROTH):
+            if fpname != '/etc/tower/tower_cli.cfg' and (
+                (file_permission.st_mode & stat.S_IRGRP) or
+                (file_permission.st_mode & stat.S_IROTH)
+            ):
                 warnings.warn('File {0} readable by group or others.'
                               .format(fpname), RuntimeWarning)
         # If it doesn't work because there's no section header, then
