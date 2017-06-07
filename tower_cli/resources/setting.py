@@ -21,9 +21,9 @@ import six
 
 from tower_cli import models, resources
 from tower_cli.api import client
+from tower_cli.conf import pop_option
 from tower_cli.utils import exceptions as exc, types
 from tower_cli.utils.data_structures import OrderedDict
-from tower_cli.utils.decorators import pop_option
 
 
 class Resource(models.Resource):

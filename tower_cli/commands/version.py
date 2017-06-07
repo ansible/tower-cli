@@ -20,7 +20,7 @@ from requests.exceptions import RequestException
 
 from tower_cli import __version__
 from tower_cli.api import client
-from tower_cli.utils.decorators import with_global_options
+from tower_cli.conf import with_global_options
 from tower_cli.utils.exceptions import TowerCLIError
 
 

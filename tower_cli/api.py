@@ -13,19 +13,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import contextlib
 import copy
 import functools
 import json
 import warnings
+from datetime import datetime as dt
 
 from requests.exceptions import ConnectionError, SSLError
 from requests.sessions import Session
 from requests.models import Response
 from requests.packages import urllib3
+from requests.auth import AuthBase
 
 from tower_cli.conf import settings
 from tower_cli.utils import data_structures, debug, secho, exceptions as exc
+
+
+TOWER_DATETIME_FMT = r'%Y-%m-%dT%H:%M:%S.%fZ'
+
+
+class TowerTokenAuth(AuthBase):
+
+    def __init__(self, username, password, cli_client):
+        self.username = username
+        self.password = password
+        self.cli_client = cli_client
+
+    def _acquire_token(self):
+        return self.cli_client._make_request(
+            'POST', self.cli_client.prefix + 'authtoken/', [],
+            {'data': json.dumps({'username': self.username, 'password': self.password}),
+             'headers': {'Content-Type': 'application/json'}}
+        ).json()
+
+    def _get_auth_token(self):
+        filename = os.path.expanduser('~/.tower_cli_token.json')
+        try:
+            with open(filename) as f:
+                token_json = json.load(f)
+            if not isinstance(token_json, dict) or 'token' not in token_json or 'expires' not in token_json or \
+                    dt.utcnow() > dt.strptime(token_json['expires'], TOWER_DATETIME_FMT):
+                raise Exception("Current token expires.")
+            return 'Token ' + token_json['token']
+        except Exception as e:
+            debug.log('Acquiring and caching auth token due to:\n%s' % str(e), fg='blue', bold=True)
+            token_json = self._acquire_token()
+            if not isinstance(token_json, dict) or 'token' not in token_json or 'expires' not in token_json:
+                raise exc.AuthError('Invalid Tower auth token format: %s' % json.dumps(token_json))
+            with open(filename, 'w') as f:
+                json.dump(token_json, f)
+            return 'Token ' + token_json['token']
+
+    def __call__(self, r):
+        r.headers['Authorization'] = self._get_auth_token()
+        return r
 
 
 class Client(Session):
@@ -44,55 +87,7 @@ class Client(Session):
         for adapter in self.adapters.values():
             adapter.max_retries = 3
 
-    @property
-    def prefix(self):
-        """Return the appropriate URL prefix to prepend to requests,
-        based on the host provided in settings.
-        """
-        host = settings.host
-        if '://' not in host:
-            host = 'https://%s' % host.strip('/')
-        elif host.startswith('http://') and settings.verify_ssl:
-            raise exc.TowerCLIError(
-                'Can not verify ssl with non-https protocol. Change the '
-                'verify_ssl configuration setting to continue.'
-            )
-        return '%s/api/v1/' % host.rstrip('/')
-
-    @functools.wraps(Session.request)
-    def request(self, method, url, *args, **kwargs):
-        """Make a request to the Ansible Tower API, and return the
-        response.
-        """
-        # Piece together the full URL.
-        url = '%s%s' % (self.prefix, url.lstrip('/'))
-
-        # Ansible Tower expects authenticated requests; add the authentication
-        # from settings if it's provided.
-        kwargs.setdefault('auth', (settings.username, settings.password))
-
-        # POST and PUT requests will send JSON by default; make this
-        # the content_type by default.  This makes it such that we don't have
-        # to constantly write that in our code, which gets repetitive.
-        headers = kwargs.get('headers', {})
-        if method.upper() in ('PATCH', 'POST', 'PUT'):
-            headers.setdefault('Content-Type', 'application/json')
-            kwargs['headers'] = headers
-
-        # If debugging is on, print the URL and data being sent.
-        debug.log('%s %s' % (method, url), fg='blue', bold=True)
-        if method in ('POST', 'PUT', 'PATCH'):
-            debug.log('Data: %s' % kwargs.get('data', {}),
-                      fg='blue', bold=True)
-        if method == 'GET' or kwargs.get('params', None):
-            debug.log('Params: %s' % kwargs.get('params', {}),
-                      fg='blue', bold=True)
-        debug.log('')
-
-        # If this is a JSON request, encode the data value.
-        if headers.get('Content-Type', '') == 'application/json':
-            kwargs['data'] = json.dumps(kwargs.get('data', {}))
-
+    def _make_request(self, method, url, args, kwargs):
         # Decide whether to require SSL verification
         verify_ssl = True
         if (settings.verify_ssl is False) or hasattr(settings, 'insecure'):
@@ -105,7 +100,7 @@ class Client(Session):
             with warnings.catch_warnings():
                 warnings.simplefilter(
                     "ignore", urllib3.exceptions.InsecureRequestWarning)
-                r = super(Client, self).request(
+                return super(Client, self).request(
                     method, url, *args, verify=verify_ssl, **kwargs)
         except SSLError as ex:
             # Throw error if verify_ssl not set to false and server
@@ -136,6 +131,65 @@ class Client(Session):
                 'issue; is your "host" value in `tower-cli config` correct?\n'
                 'Right now it is: "%s".' % settings.host
             )
+
+    @property
+    def prefix(self):
+        """Return the appropriate URL prefix to prepend to requests,
+        based on the host provided in settings.
+        """
+        host = settings.host
+        if '://' not in host:
+            host = 'https://%s' % host.strip('/')
+        elif host.startswith('http://') and settings.verify_ssl:
+            raise exc.TowerCLIError(
+                'Can not verify ssl with non-https protocol. Change the '
+                'verify_ssl configuration setting to continue.'
+            )
+        return '%s/api/v1/' % host.rstrip('/')
+
+    @functools.wraps(Session.request)
+    def request(self, method, url, *args, **kwargs):
+        """Make a request to the Ansible Tower API, and return the
+        response.
+        """
+        # Piece together the full URL.
+        url = '%s%s' % (self.prefix, url.lstrip('/'))
+
+        # Ansible Tower expects authenticated requests; add the authentication
+        # from settings if it's provided.
+        kwargs.setdefault(
+            'auth',
+            TowerTokenAuth(
+                settings.username,
+                settings.password,
+                self
+            ) if settings.use_token else (settings.username,
+                                          settings.password)
+        )
+
+        # POST and PUT requests will send JSON by default; make this
+        # the content_type by default.  This makes it such that we don't have
+        # to constantly write that in our code, which gets repetitive.
+        headers = kwargs.get('headers', {})
+        if method.upper() in ('PATCH', 'POST', 'PUT'):
+            headers.setdefault('Content-Type', 'application/json')
+            kwargs['headers'] = headers
+
+        # If debugging is on, print the URL and data being sent.
+        debug.log('%s %s' % (method, url), fg='blue', bold=True)
+        if method in ('POST', 'PUT', 'PATCH'):
+            debug.log('Data: %s' % kwargs.get('data', {}),
+                      fg='blue', bold=True)
+        if method == 'GET' or kwargs.get('params', None):
+            debug.log('Params: %s' % kwargs.get('params', {}),
+                      fg='blue', bold=True)
+        debug.log('')
+
+        # If this is a JSON request, encode the data value.
+        if headers.get('Content-Type', '') == 'application/json':
+            kwargs['data'] = json.dumps(kwargs.get('data', {}))
+
+        r = self._make_request(method, url, args, kwargs)
 
         # Sanity check: Did the server send back some kind of internal error?
         # If so, bubble this up.

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import click
+
 import os
 import os.path
 import stat
@@ -20,7 +22,7 @@ import warnings
 
 from six.moves import StringIO
 
-from tower_cli.conf import Parser, Settings
+from tower_cli.conf import Parser, Settings, runtime_context_manager
 
 from tests.compat import unittest, mock
 
@@ -129,3 +131,30 @@ class ConfigFromEnvironmentTests(unittest.TestCase):
                 self.assertEqual(settings.username, 'myuser')
                 self.assertEqual(settings.password, 'mypass')
                 self.assertEqual(settings.verify_ssl, False)
+
+
+class CommandTests(unittest.TestCase):
+    """Establish that the @command decorator works as I expect,
+    with and without a call signature.
+    """
+    def test_command_with_call_signature(self):
+        """Establish that if we call the @click.command decorator with a call
+        signature, that it decorates the function appropriately.
+        """
+        # Define a command
+        @click.command()
+        def foo():
+            pass
+
+        # Ensure that it's a command.
+        self.assertIsInstance(foo, click.core.Command)
+
+    def test_runtime_context_manager(self):
+        """Test that the kwargs from settings are removed before
+        running the command from the resource itself.
+        """
+        def foo(**kwargs):
+            self.assertEqual(kwargs, {})
+
+        foo = runtime_context_manager(foo)
+        foo(tower_username='foobear')
