@@ -976,7 +976,7 @@ class MonitorableResource(ResourceMethods):
 
             # In the first moments of running the job, the standard out
             # may not be available yet
-            if not content.startswith("Waiting for results"):
+            if not content.startswith(b"Waiting for results"):
                 line_count = len(content.splitlines())
                 start_line += line_count
                 click.echo(content, nl=0)
