@@ -1,6 +1,21 @@
 Release History
 ===============
 
+3.1.4 (2017-06-07)
+------------------
+
+- Support resource copy subcommand.
+- Support auth-token-based authentication for Tower CLI requests.
+- Support managing workflow roles, labels and notifications via Tower CLI.
+- Several fixes on RPM spec file.
+- Name change from 'foreman' to 'satellite6' in credential kind choices.
+- Fixed a bug where creating job templates with --extra-vars did not work after
+  3.1.0 upgrade.
+- Fixed traceback when launching job with --use-job-endpoint.
+- Enhanced json library usage to prevent traceback when using earlier python 2.6
+  versions.
+- Prevent throwing unnecessary warning when reading from global configuration file.
+
 3.1.3 (2017-03-22)
 ------------------
 
