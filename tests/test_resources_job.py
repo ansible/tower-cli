@@ -23,6 +23,7 @@ import click
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
+from tower_cli.cli.resource import ResSubcommand
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
@@ -109,7 +110,7 @@ class LaunchTests(unittest.TestCase):
             result = self.res.launch(1)
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
-            f = self.res.as_command()._echo_method(self.res.launch)
+            f = ResSubcommand(self.res)._echo_method(self.res.launch)
             with mock.patch.object(click, 'secho'):
                 with settings.runtime_values(format='human'):
                     f(job_template=1)

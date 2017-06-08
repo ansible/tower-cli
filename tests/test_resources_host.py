@@ -56,13 +56,13 @@ class HostTests(unittest.TestCase):
     def test_list_under_group(self):
         """Establish that a group flag is converted into query string."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             self.host_resource.list(group=78)
             mock_list.assert_called_once_with(query=(('groups__in', 78),))
 
     def test_normal_list(self):
         """Establish that the group flag doesn't break the normal list."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             self.host_resource.list(name="foobar")
             mock_list.assert_called_once_with(name="foobar")

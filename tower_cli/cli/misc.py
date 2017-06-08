@@ -1,5 +1,4 @@
-# Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2017, Ansible by Red Hat
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +16,46 @@ import os
 import stat
 import warnings
 
+import click
 import six
 
-import click
+from requests.exceptions import RequestException
 
-from tower_cli.conf import Parser, settings
+from tower_cli import __version__
+from tower_cli.api import client
+from tower_cli.conf import with_global_options, Parser, settings
 from tower_cli.utils import exceptions as exc, secho
+
+__all__ = ['version', 'config']
+
+
+@click.command()
+@with_global_options
+def version(**kwargs):
+    """Display version information."""
+
+    # Print out the current version of Tower CLI.
+    click.echo('Tower CLI %s' % __version__)
+
+    # Attempt to connect to the Ansible Tower server.
+    # If we succeed, print a version; if not, generate a failure.
+    try:
+        r = client.get('/config/')
+        click.echo('Ansible Tower %s' % r.json()['version'])
+    except RequestException as ex:
+        raise exc.TowerCLIError('Could not connect to Ansible Tower.\n%s' %
+                                six.text_type(ex))
+
+
+def _echo_setting(key):
+    """Echo a setting to the CLI."""
+    value = getattr(settings, key)
+    secho('%s: ' % key, fg='magenta', bold=True, nl=False)
+    secho(
+        six.text_type(value),
+        bold=True,
+        fg='white' if isinstance(value, six.text_type) else 'cyan',
+    )
 
 
 # Note: This uses `click.command`, not `tower_cli.utils.decorators.command`,
@@ -101,7 +134,7 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
             for option in parser.options('general'):
                 if option in seen:
                     continue
-                echo_setting(option)
+                _echo_setting(option)
                 seen.add(option)
 
             # Print a nice newline, for formatting.
@@ -122,7 +155,7 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
     # If a key was provided but no value was provided, then just
     # print the current value for that key.
     if key and not value and not unset:
-        echo_setting(key)
+        _echo_setting(key)
         return
 
     # Okay, so we're *writing* a key. Let's do this.
@@ -157,14 +190,3 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
             UserWarning
             )
     click.echo('Configuration updated successfully.')
-
-
-def echo_setting(key):
-    """Echo a setting to the CLI."""
-    value = getattr(settings, key)
-    secho('%s: ' % key, fg='magenta', bold=True, nl=False)
-    secho(
-        six.text_type(value),
-        bold=True,
-        fg='white' if isinstance(value, six.text_type) else 'cyan',
-    )

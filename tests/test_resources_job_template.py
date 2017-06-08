@@ -18,6 +18,7 @@ from tower_cli.api import client
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
+from tower_cli.cli.resource import ResSubcommand
 
 import click
 import json
@@ -75,7 +76,7 @@ class TemplateTests(unittest.TestCase):
             self.res.create(name='bar', job_type='run', inventory=1,
                             project=1, playbook='foobar.yml', credential=1)
 
-            f = self.res.as_command()._echo_method(self.res.create)
+            f = ResSubcommand(self.res)._echo_method(self.res.create)
             with mock.patch.object(click, 'secho'):
                 with settings.runtime_values(format='human'):
                     f(name='bar', job_type='run', inventory=1,

@@ -299,7 +299,7 @@ class GroupTests(unittest.TestCase):
     def test_list_under_parent(self):
         """Establish that listing with a parent specified works."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             with mock.patch(
                     'tower_cli.resources.group.Resource.lookup_with_inventory'
                     ):
@@ -309,7 +309,7 @@ class GroupTests(unittest.TestCase):
     def test_associate(self):
         """Establish that associate commands work."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods._assoc') as mock_assoc:
+                'tower_cli.models.base.BaseResource._assoc') as mock_assoc:
             with mock.patch(
                     'tower_cli.resources.group.Resource.lookup_with_inventory'
                     ) as mock_lookup:
@@ -320,7 +320,7 @@ class GroupTests(unittest.TestCase):
     def test_disassociate(self):
         """Establish that associate commands work."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods._disassoc'
+                'tower_cli.models.base.BaseResource._disassoc'
                 ) as mock_assoc:
             with mock.patch(
                     'tower_cli.resources.group.Resource.lookup_with_inventory'

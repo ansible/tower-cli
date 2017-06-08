@@ -19,11 +19,49 @@ import warnings
 
 import click
 from click.testing import CliRunner
+import requests
 
-from tower_cli.commands.config import config, echo_setting
+import tower_cli
+from tower_cli.api import client
+from tower_cli.cli.misc import config, version, _echo_setting
 from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
+
+
+class VersionTests(unittest.TestCase):
+    """A set of tests to ensure that the version command runs in the way
+    that we expect.
+    """
+    def setUp(self):
+        self.runner = CliRunner()
+
+    def test_version_command(self):
+        """Establish that the version command returns the output we
+        expect.
+        """
+        # Set up output from the /config/ endpoint in Tower and
+        # invoke the command.
+        with client.test_mode as t:
+            t.register_json('/config/', {'version': '4.21'})
+            result = self.runner.invoke(version)
+
+            # Verify that we got the output we expected.
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                result.output.strip(),
+                'Tower CLI %s\nAnsible Tower 4.21' % tower_cli.__version__,
+            )
+
+    def test_cannot_connect(self):
+        """Establish that the version command gives a nice error in cases
+        where it cannot connect to Tower.
+        """
+        with mock.patch.object(client, 'get') as get:
+            get.side_effect = requests.exceptions.RequestException
+            result = self.runner.invoke(version)
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn('Could not connect to Ansible Tower.', result.output)
 
 
 class ConfigTests(unittest.TestCase):
@@ -68,7 +106,7 @@ class ConfigTests(unittest.TestCase):
         # so we don't plow over real things.
         mock_open = mock.mock_open()
         filename = os.path.expanduser('~/.tower_cli.cfg')
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os, 'chmod') as chmod:
                 result = self.runner.invoke(config, ['username', 'luke'])
@@ -91,7 +129,7 @@ class ConfigTests(unittest.TestCase):
         # Try to set permissions on file that does not exist, expecting warning
         mock_open = mock.mock_open()
         filename = '.tower_cli.cfg'
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os, 'chmod') as chmod:
                 chmod.side_effect = OSError
@@ -115,7 +153,7 @@ class ConfigTests(unittest.TestCase):
         # so we don't plow over real things.
         filename = '/etc/tower/tower_cli.cfg'
         mock_open = mock.mock_open()
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os.path, 'isdir') as isdir:
                 with mock.patch.object(os, 'chmod') as chmod:
@@ -144,7 +182,7 @@ class ConfigTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os, 'chmod') as chmod:
                 result = self.runner.invoke(
@@ -171,7 +209,7 @@ class ConfigTests(unittest.TestCase):
         # Invoke the command, but trap the file-write at the end
         # so we don't plow over real things.
         mock_open = mock.mock_open()
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os, 'chmod'):
                 result = self.runner.invoke(config, ['username', '--unset'])
@@ -228,7 +266,7 @@ class SupportTests(unittest.TestCase):
         """
         with settings.runtime_values(host='20.12.4.21'):
             with mock.patch.object(click, 'secho') as secho:
-                echo_setting('host')
+                _echo_setting('host')
                 self.assertEqual(secho.mock_calls, [
                     mock.call('host: ', fg='magenta', bold=True, nl=False),
                     mock.call('20.12.4.21', fg='white', bold=True),
@@ -251,7 +289,7 @@ class DeprecationTests(unittest.TestCase):
         mock_open = mock.mock_open()
         warning_text = 'The `--global` option is deprecated and will be '\
                        'removed. Use `--scope=global` to get the same effect.'
-        with mock.patch('tower_cli.commands.config.open', mock_open,
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
                         create=True):
             with mock.patch.object(os.path, 'isdir') as isdir:
                 with mock.patch.object(os, 'chmod'):

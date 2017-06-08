@@ -20,6 +20,7 @@ import tower_cli
 from tower_cli.resources.role import Resource as Role
 from tower_cli.utils import exceptions as exc
 from tower_cli.conf import settings
+from tower_cli.cli.resource import ResSubcommand
 
 from tests.compat import unittest, mock
 from copy import copy
@@ -104,7 +105,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_removed_methods(self):
         """Test that None is returned from removed methods."""
         self.assertEqual(
-            self.res.as_command().get_command(None, 'delete'), None)
+            ResSubcommand(self.res).get_command(None, 'delete'), None)
 
     def test_configure_write_display(self):
         """Test that output configuration for writing to role works."""
@@ -116,7 +117,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_list_user(self):
         """Assure that super method is called with right parameters"""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             mock_list.return_value = {'results': [example_role_data]}
             self.res.list(user=1)
             mock_list.assert_called_once_with(members__in=1)
@@ -124,7 +125,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_list_team(self):
         """Teams can not be passed as a parameter, check use of sublist"""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             mock_list.return_value = {'results': []}
             self.res.list(team=1, inventory=3, type='read')
             mock_list.assert_called_once_with(
@@ -134,7 +135,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_list_resource(self):
         """Listing based on a resource the role applies to"""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.list') as mock_list:
+                'tower_cli.models.base.BaseResource.list') as mock_list:
             mock_list.return_value = {'results': []}
             self.res.list(inventory=3, type='read')
             mock_list.assert_called_once_with(role_field='read_role')
@@ -143,7 +144,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_get_user(self):
         """Assure that super method is called with right parameters"""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {'results': [copy(example_role_data)]}
             with settings.runtime_values(format='human'):
                 self.res.get(user=1)
@@ -154,7 +155,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_get_user_json(self):
         """Test internal use with json format, no debug"""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {'results': [{
                 'name': 'arole', 'summary_fields': {}}]}
             with settings.runtime_values(format='json'):
@@ -183,7 +184,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_role_write_user_exists(self):
         """Simulate granting user permission where they already have it."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {'results': [copy(example_role_data)],
                                       'count': 1}
             r = self.res.role_write(user=2, inventory=3, type='admin')
@@ -192,7 +193,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_role_write_user_exists_FOF(self):
         """Simulate granting user permission where they already have it."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {'results': [copy(example_role_data)],
                                       'count': 1}
             with mock.patch('tower_cli.api.Client.post'):
@@ -203,7 +204,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_role_write_user_does_not_exist(self):
         """Simulate revoking user permission where they already lack it."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {'results': [copy(example_role_data)],
                                       'count': 0}
             r = self.res.role_write(user=2, inventory=3, type='admin',
@@ -213,7 +214,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_role_grant_user(self):
         """Simulate granting user permission."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {
                 'results': [copy(example_role_data)], 'count': 0}
             with mock.patch('tower_cli.api.Client.post') as mock_post:
@@ -224,7 +225,7 @@ class RoleMethodTests(unittest.TestCase):
     def test_role_revoke_user(self):
         """Simulate granting user permission."""
         with mock.patch(
-                'tower_cli.models.base.ResourceMethods.read') as mock_read:
+                'tower_cli.models.base.BaseResource.read') as mock_read:
             mock_read.return_value = {
                 'results': [copy(example_role_data)], 'count': 1}
             with mock.patch('tower_cli.api.Client.post') as mock_post:
