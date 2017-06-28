@@ -85,7 +85,7 @@ class Resource(models.ExeResource):
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
     @click.option('--become', required=False, is_flag=True,
-                  help='If used, privledge escalation will be enabled for '
+                  help='If used, privilege escalation will be enabled for '
                        'this command.')
     def launch(self, monitor=False, wait=False, timeout=None, become=False,
                **kwargs):

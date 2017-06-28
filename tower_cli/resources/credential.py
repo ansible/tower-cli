@@ -127,10 +127,10 @@ class Resource(models.Resource):
         required=False, display=False,
     )
 
-    # Method with which to esclate
+    # Method with which to escalate
     become_method = models.Field(
         display=False,
-        help_text='Privledge escalation method. ',
+        help_text='Privilege escalation method. ',
         type=types.MappedChoice([
             ('', 'None'),
             ('sudo', 'sudo'),
