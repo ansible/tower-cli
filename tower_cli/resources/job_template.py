@@ -18,7 +18,8 @@ from __future__ import absolute_import, unicode_literals
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import types
+from tower_cli.utils import types, parser
+from tower_cli.api import client
 
 
 class Resource(models.SurveyResource):
@@ -145,3 +146,18 @@ class Resource(models.SurveyResource):
         """Disassociate a notification template from this job template."""
         return self._disassoc('notification_templates_%s' % status,
                               job_template, notification_template)
+
+    @resources.command(use_fields_as_options=('extra_vars'))
+    @click.option('--host-config-key', help='Job-template-specific string used to authenticate '
+                  'host during provisioning callback.')
+    def callback(self, pk=None, host_config_key='', extra_vars=None):
+        """Contact Tower and request a configuration update using this job template."""
+        url = self.endpoint + '%s/callback/' % pk
+        if not host_config_key:
+            host_config_key = client.get(url).json()['host_config_key']
+        post_data = {'host_config_key': host_config_key}
+        if extra_vars:
+            post_data['extra_vars'] = parser.process_extra_vars(list(extra_vars), force_json=True)
+        r = client.post(url, data=post_data, auth=None)
+        if r.status_code == 201:
+            return {'changed': True}

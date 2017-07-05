@@ -182,3 +182,12 @@ class TemplateTests(unittest.TestCase):
             self.res.disassociate_notification_template(5, 3, 'any')
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 3}))
+
+    def test_callback(self):
+        """Establish that a job template should be able to conduct provisioning callback
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/5/callback/', {'host_config_key': 'foobar'})
+            t.register_json('/job_templates/5/callback/', {}, method='POST')
+            self.res.callback(5)
+            self.assertEqual(t.requests[1].body, json.dumps({"host_config_key": "foobar"}))
