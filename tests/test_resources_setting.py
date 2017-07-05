@@ -22,6 +22,7 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
+from tower_cli.cli.resource import ResSubcommand
 
 from tests.compat import unittest
 
@@ -47,12 +48,12 @@ class SettingTests(unittest.TestCase):
 
     def test_create_method_is_disabled(self):
         """The delete method is properly disabled."""
-        self.assertEqual(self.res.as_command().get_command(None, 'create'),
+        self.assertEqual(ResSubcommand(self.res).get_command(None, 'create'),
                          None)
 
     def test_delete_method_is_disabled(self):
         """The create method is properly disabled."""
-        self.assertEqual(self.res.as_command().get_command(None, 'delete'),
+        self.assertEqual(ResSubcommand(self.res).get_command(None, 'delete'),
                          None)
 
     def test_list_all(self):

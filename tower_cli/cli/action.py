@@ -1,5 +1,5 @@
-# Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2017, Ansible by Red Hat
+# Alan Rominger <arominge@redhat.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 import click
 
 
-class Command(click.Command):
+class ActionSubcommand(click.Command):
     """A Command subclass that adds support for the concept that invocation
     without arguments assumes `--help`.
 
@@ -25,7 +25,7 @@ class Command(click.Command):
     """
     def __init__(self, name=None, no_args_is_help=True, **kwargs):
         self.no_args_is_help = no_args_is_help
-        super(Command, self).__init__(name=name, **kwargs)
+        super(ActionSubcommand, self).__init__(name=name, **kwargs)
 
     def parse_args(self, ctx, args):
         """Parse arguments sent to this command.
@@ -40,4 +40,4 @@ class Command(click.Command):
         if not args and self.no_args_is_help and not ctx.resilient_parsing:
             click.echo(ctx.get_help())
             ctx.exit()
-        return super(Command, self).parse_args(ctx, args)
+        return super(ActionSubcommand, self).parse_args(ctx, args)

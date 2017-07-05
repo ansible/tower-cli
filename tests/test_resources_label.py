@@ -16,6 +16,7 @@
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import exceptions as exc
+from tower_cli.cli.resource import ResSubcommand
 
 from tests.compat import unittest
 
@@ -30,7 +31,7 @@ class LabelTests(unittest.TestCase):
     def test_delete_method_is_disabled(self):
         """Establish that delete method of a label is properly disabled.
         """
-        self.assertEqual(self.res.as_command().get_command(None, 'delete'),
+        self.assertEqual(ResSubcommand(self.res).get_command(None, 'delete'),
                          None)
 
     def test_create_with_jt(self):

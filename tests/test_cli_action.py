@@ -16,12 +16,12 @@
 import click
 from click.testing import CliRunner
 
-from tower_cli.utils.command import Command
+from tower_cli.cli.action import ActionSubcommand
 
 from tests.compat import unittest
 
 
-class CommandTests(unittest.TestCase):
+class ActionCommandTests(unittest.TestCase):
     """A set of tests to ensure that the tower_cli Command class works
     in the way we expect.
     """
@@ -33,7 +33,7 @@ class CommandTests(unittest.TestCase):
         and an exit.
         """
         # Create a command with which to test.
-        @click.command(no_args_is_help=True, cls=Command)
+        @click.command(no_args_is_help=True, cls=ActionSubcommand)
         @click.argument('parrot')
         def foo(parrot):
             click.echo(parrot)
