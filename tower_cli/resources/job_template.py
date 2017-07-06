@@ -89,6 +89,7 @@ class Resource(models.SurveyResource):
         type=bool, required=False, display=False,
         help_text='Prompt user for machine credential on launch.')
     become_enabled = models.Field(type=bool, required=False, display=False)
+    allow_simultaneous = models.Field(type=bool, required=False, display=False)
     timeout = models.Field(type=int, required=False, display=False,
                            help_text='The timeout field (in seconds).')
     survey_enabled = models.Field(
