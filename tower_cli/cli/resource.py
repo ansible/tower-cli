@@ -187,8 +187,7 @@ class ResSubcommand(click.MultiCommand):
         for col in columns:
             widths[col] = max(
                 len(col),
-                *[len(six.text_type(i.get(col, 'N/A')))
-                  for i in raw_rows]
+                *[len(six.text_type(i.get(col, 'N/A'))) for i in raw_rows]
             )
             fd = fields_by_name.get(col, None)
             if fd is not None and fd.col_width is not None:
@@ -327,10 +326,10 @@ class ResSubcommand(click.MultiCommand):
                 option_help = field.help
                 if field.required:
                     option_help = '[REQUIRED] ' + option_help
+                option_help = '[FIELD]' + option_help
                 click.option(
                     *args,
-                    default=field.default if not ignore_defaults
-                    else None,
+                    default=field.default if not ignore_defaults else None,
                     help=option_help,
                     type=field.type,
                     show_default=field.show_default,
@@ -340,15 +339,13 @@ class ResSubcommand(click.MultiCommand):
 
         # Make a click Command instance using this method
         # as the callback, and return it.
-        cmd = click.command(name=name, cls=ActionSubcommand, **attrs)(
-            new_method)
+        cmd = click.command(name=name, cls=ActionSubcommand, **attrs)(new_method)
 
         # If this method has a `pk` positional argument,
         # then add a click argument for it.
         code = six.get_function_code(method)
         if 'pk' in code.co_varnames:
-            click.argument('pk', nargs=1, required=False,
-                           type=str, metavar='[ID]')(cmd)
+            click.argument('pk', nargs=1, required=False, type=str, metavar='[ID]')(cmd)
 
         # Done; return the command.
         return cmd

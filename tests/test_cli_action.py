@@ -21,6 +21,22 @@ from tower_cli.cli.action import ActionSubcommand
 from tests.compat import unittest
 
 
+CATEGORIZED_OUTPUT = """Usage: foo [OPTIONS]
+
+Field Options:
+  --bar TEXT  foobar
+
+Local Options:
+  --foo TEXT  foobar
+
+Global Options:
+  --tower-host TEXT  foobar
+
+Other Options:
+  --help  Show this message and exit.
+"""
+
+
 class ActionCommandTests(unittest.TestCase):
     """A set of tests to ensure that the tower_cli Command class works
     in the way we expect.
@@ -45,3 +61,23 @@ class ActionCommandTests(unittest.TestCase):
         result = self.runner.invoke(foo)
         self.assertIn('--help', result.output)
         self.assertIn('Show this message and exit.\n', result.output)
+
+    def test_categorize_options(self):
+        """Establish that options in help text are correctly categorized.
+        """
+        @click.command(cls=ActionSubcommand)
+        @click.option('--foo', help='foobar')
+        @click.option('--bar', help='[FIELD]foobar')
+        @click.option('--tower-host', help='foobar')
+        def foo():
+            pass
+
+        result = self.runner.invoke(foo)
+        self.assertEqual(result.output, CATEGORIZED_OUTPUT)
+
+        @click.command(cls=ActionSubcommand, add_help_option=False)
+        def bar():
+            pass
+
+        result = self.runner.invoke(bar)
+        self.assertEqual(result.output, 'Usage: bar [OPTIONS]\n')
