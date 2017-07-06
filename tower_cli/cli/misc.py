@@ -21,10 +21,10 @@ import six
 
 from requests.exceptions import RequestException
 
-from tower_cli import __version__
+from tower_cli import __version__, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import with_global_options, Parser, settings
-from tower_cli.utils import exceptions as exc, secho
+from tower_cli.utils import secho
 
 __all__ = ['version', 'config']
 

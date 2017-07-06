@@ -14,9 +14,8 @@
 # limitations under the License.
 
 import tower_cli
-from tower_cli import models
+from tower_cli import models, exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc
 
 from tests.compat import unittest, mock
 

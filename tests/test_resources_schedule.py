@@ -15,8 +15,8 @@
 
 import tower_cli
 
+from tower_cli import exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc
 from tower_cli.models.base import Resource
 
 from tests.compat import unittest

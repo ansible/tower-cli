@@ -19,8 +19,9 @@ from six.moves import StringIO
 
 import click
 
+from tower_cli import exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc, types
+from tower_cli.cli import types
 from tower_cli import get_resource
 
 from tests.compat import unittest, mock

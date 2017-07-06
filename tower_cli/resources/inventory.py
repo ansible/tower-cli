@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from tower_cli import models
-from tower_cli.utils import types
+from tower_cli.cli import types
 
 
 class Resource(models.Resource):

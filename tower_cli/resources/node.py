@@ -15,10 +15,10 @@
 
 from __future__ import absolute_import, unicode_literals
 
-from tower_cli import models, resources
-from tower_cli.utils import types
+from tower_cli import models, resources, exceptions
+from tower_cli.cli import types
 from tower_cli.utils.resource_decorators import unified_job_template_options
-from tower_cli.utils import exceptions, debug
+from tower_cli.utils import debug
 from tower_cli.api import client
 
 import click

@@ -16,9 +16,9 @@
 from __future__ import absolute_import, unicode_literals
 
 from tower_cli import models, resources, get_resource
-from tower_cli.utils import types
+from tower_cli.cli import types
 from tower_cli.utils.parser import string_to_dict
-from tower_cli.utils.exceptions import BadRequest
+from tower_cli.exceptions import BadRequest
 from tower_cli.conf import settings
 from tower_cli.resources.node import NODE_STANDARD_FIELDS, JOB_TYPES
 

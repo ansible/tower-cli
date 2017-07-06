@@ -17,9 +17,9 @@ import json
 
 from six.moves import StringIO
 
-from tower_cli import models, resources
+from tower_cli import models, resources, exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import debug, exceptions as exc
+from tower_cli.utils import debug
 
 from tests.compat import unittest, mock
 

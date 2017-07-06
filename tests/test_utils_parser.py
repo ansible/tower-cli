@@ -16,8 +16,8 @@
 
 import yaml
 
+from tower_cli import exceptions as exc
 from tower_cli.utils import parser
-from tower_cli.utils import exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest, mock

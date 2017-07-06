@@ -15,9 +15,10 @@
 
 import click
 
-from tower_cli import models, get_resource, resources
+from tower_cli import models, get_resource, resources, exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import debug, exceptions as exc, types
+from tower_cli.cli import types
+from tower_cli.utils import debug
 
 
 class Resource(models.Resource, models.MonitorableResource):
