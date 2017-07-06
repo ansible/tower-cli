@@ -164,6 +164,19 @@ class SubcommandTests(unittest.TestCase):
         self.assertEqual(opt.name, 'internal_name')
         self.assertEqual(opt.opts, ['--option-name'])
 
+    def test_field_help_text_has_prefix(self):
+        """Establish that resource field help text is properly prefixed.
+        """
+        class FieldHelpTextResource(models.Resource):
+            endpoint = '/foobar/'
+
+            option_name = models.Field('internal_name', help_text='foobar', required=False)
+
+        cmd = ResSubcommand(FieldHelpTextResource()).get_command(None, 'get')
+
+        opt = cmd.params[0]
+        self.assertEqual(opt.help, '[FIELD]foobar')
+
     def test_docstring_replacement_an(self):
         """Establish that for resources with names beginning with vowels,
         that the automatic docstring replacement is gramatically correct.
