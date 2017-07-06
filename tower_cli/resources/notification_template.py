@@ -124,6 +124,11 @@ class Resource(models.Resource):
                                             'gray', 'random']),
                          help_text='[{0}]The notification color.'.
                          format('hipchat'))
+    rooms = models.Field(required=False, display=False, default=False,
+                         help_text='[{0}]Rooms to send notification to. '
+                         'Use multiple flags to send to multiple rooms, ex '
+                         '--rooms=A --rooms=B'.
+                         format('hipchat'), multiple=True)
     notify = models.Field(required=False, display=False, default=False,
                           help_text='[{0}]The notify channel trigger.'.
                           format('hipchat'))
