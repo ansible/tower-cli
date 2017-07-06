@@ -162,3 +162,17 @@ class StatusTests(unittest.TestCase):
             })
             with self.assertRaises(exc.NotFound):
                 self.res.status(1)
+
+
+class NameTests(unittest.TestCase):
+
+    def setUp(self):
+        self.res = tower_cli.get_resource('inventory_source')
+
+    def test_valid_name(self):
+        assert self.res._is_full_v1_name('foo bar (In Space - 873928)')
+
+    def test_invalid_names(self):
+        assert not self.res._is_full_v1_name('foo bar (In Space  873928)')
+        assert not self.res._is_full_v1_name('foo bar (In Space - 873928')
+        assert not self.res._is_full_v1_name('foo bar (In Space - )')

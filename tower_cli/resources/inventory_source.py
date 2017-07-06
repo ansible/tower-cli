@@ -19,6 +19,8 @@ from tower_cli import models, resources
 from tower_cli.api import client
 from tower_cli.utils import debug, types, exceptions as exc
 
+import re
+
 
 class Resource(models.MonitorableResource):
     cli_help = 'Manage inventory sources within Ansible Tower.'
@@ -26,6 +28,7 @@ class Resource(models.MonitorableResource):
     internal = True
     unified_job_type = '/inventory_updates/'
 
+    name = models.Field(unique=True)
     credential = models.Field(type=types.Related('credential'), required=False)
     source = models.Field(
         default=None,
@@ -40,7 +43,7 @@ class Resource(models.MonitorableResource):
     instance_filters = models.Field(required=False, display=False)
     group_by = models.Field(required=False, display=False)
     source_script = models.Field(type=types.Related('inventory_script'),
-                                 required=False)
+                                 required=False, display=False)
     # Boolean variables
     overwrite = models.Field(type=bool, required=False, display=False)
     overwrite_vars = models.Field(type=bool, required=False, display=False)
@@ -50,6 +53,9 @@ class Resource(models.MonitorableResource):
                                         display=False)
     timeout = models.Field(type=int, required=False, display=False,
                            help_text='The timeout field (in seconds).')
+
+    def _is_full_v1_name(self, name):
+        return bool(re.match(r'^.+\s\(.+\s-\s\d+\)$', name))
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @click.option('--monitor', is_flag=True, default=False,
