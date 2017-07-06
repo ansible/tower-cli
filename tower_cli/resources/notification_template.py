@@ -225,8 +225,8 @@ class Resource(models.Resource):
                     debug.log('Notification template already exists, '
                               'associating with job template.',
                               header='details')
-                    return jt.associate_notification(jt_id, nt_id,
-                                                     status=status)
+                    return jt.associate_notification_template(
+                        jt_id, nt_id, status=status)
             self.endpoint = '/job_templates/%d/notification_templates_%s/' %\
                             (jt_id, status)
         self._configuration(kwargs, config_item)
