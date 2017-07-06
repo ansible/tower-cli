@@ -61,10 +61,10 @@ is provided.
 
 ```bash
 # Create a notification template in isolation.
-tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey
+tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey --organization Default
 
 # Create a notification template under an existing job template.
-tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey --job-template 5
+tower-cli notification_template create --name foo --description bar --notification-type slack --channels a --channels b --token hey --job-template 5 --organization Default
 
 # Get exactly one notification template.
 tower-cli notification_template get --name foo
