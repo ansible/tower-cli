@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tower_cli.utils import compat
+from tower_cli import compat
 
 
 class OrderedDict(compat.OrderedDict):

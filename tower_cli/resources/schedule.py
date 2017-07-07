@@ -15,8 +15,8 @@
 
 import click
 
-from tower_cli import models
-from tower_cli.utils import types, exceptions as exc
+from tower_cli import models, exceptions as exc
+from tower_cli.cli import types
 
 
 UNIFIED_JT = {

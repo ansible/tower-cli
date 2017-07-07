@@ -15,9 +15,9 @@
 
 import click
 
-from tower_cli import get_resource, models, resources
+from tower_cli import get_resource, models, resources, exceptions as exc
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc, types
+from tower_cli.cli import types
 
 INVENTORY_SOURCES = ['manual', 'file', 'ec2', 'rax', 'vmware',
                      'gce', 'azure', 'azure_rm', 'openstack',

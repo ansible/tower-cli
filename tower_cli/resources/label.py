@@ -15,8 +15,9 @@
 
 import click
 
-from tower_cli import get_resource, resources, models
-from tower_cli.utils import types, debug, exceptions as exc
+from tower_cli import get_resource, resources, models, exceptions as exc
+from tower_cli.utils import debug
+from tower_cli.cli import types
 
 
 class Resource(models.Resource):

@@ -16,7 +16,7 @@
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import types
+from tower_cli.cli import types
 
 
 class Resource(models.Resource):

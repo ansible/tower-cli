@@ -18,7 +18,7 @@ import tower_cli
 
 # used to test static methods
 from tower_cli.resources.role import Resource as Role
-from tower_cli.utils import exceptions as exc
+from tower_cli import exceptions as exc
 from tower_cli.conf import settings
 from tower_cli.cli.resource import ResSubcommand
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import functools
-from tower_cli.utils import types
+from tower_cli.cli import types
 
 import click
 

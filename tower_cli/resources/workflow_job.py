@@ -17,7 +17,8 @@ import click
 
 from tower_cli import models, resources, get_resource
 from tower_cli.api import client
-from tower_cli.utils import debug, types, parser
+from tower_cli.cli import types
+from tower_cli.utils import debug, parser
 
 
 class Resource(models.ExeResource):

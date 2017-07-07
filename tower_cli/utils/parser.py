@@ -21,7 +21,8 @@ import shlex
 import sys
 import six
 
-from tower_cli.utils import exceptions as exc, debug
+from tower_cli import exceptions as exc
+from tower_cli.utils import debug
 from tower_cli.utils.data_structures import OrderedDict
 
 

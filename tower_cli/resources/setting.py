@@ -19,10 +19,10 @@ from distutils.util import strtobool
 import click
 import six
 
-from tower_cli import models, resources
+from tower_cli import models, resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import pop_option
-from tower_cli.utils import exceptions as exc, types
+from tower_cli.cli import types
 from tower_cli.utils.data_structures import OrderedDict
 
 

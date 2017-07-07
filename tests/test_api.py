@@ -21,8 +21,9 @@ from requests.sessions import Session
 
 from tower_cli.api import APIResponse, client, TowerTokenAuth,\
         TOWER_DATETIME_FMT
+from tower_cli import exceptions as exc
 from tower_cli.conf import settings
-from tower_cli.utils import debug, exceptions as exc
+from tower_cli.utils import debug
 from tower_cli.utils.data_structures import OrderedDict
 
 from tests.compat import unittest, mock

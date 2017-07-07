@@ -22,8 +22,8 @@ import click
 
 from tower_cli import models, get_resource, resources
 from tower_cli.api import client
-from tower_cli.utils import debug, types
-from tower_cli.utils import parser
+from tower_cli.cli import types
+from tower_cli.utils import debug, parser
 
 
 PROMPT_LIST = [

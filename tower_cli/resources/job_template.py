@@ -18,8 +18,9 @@ from __future__ import absolute_import, unicode_literals
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import types, parser
+from tower_cli.utils import parser
 from tower_cli.api import client
+from tower_cli.cli import types
 
 
 class Resource(models.SurveyResource):

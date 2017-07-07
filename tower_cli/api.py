@@ -27,8 +27,9 @@ from requests.models import Response
 from requests.packages import urllib3
 from requests.auth import AuthBase
 
+from tower_cli import exceptions as exc
 from tower_cli.conf import settings
-from tower_cli.utils import data_structures, debug, secho, exceptions as exc
+from tower_cli.utils import data_structures, debug, secho
 
 
 TOWER_DATETIME_FMT = r'%Y-%m-%dT%H:%M:%S.%fZ'

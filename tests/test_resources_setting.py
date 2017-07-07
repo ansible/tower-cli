@@ -20,7 +20,7 @@ import six
 
 import tower_cli
 from tower_cli.api import client
-from tower_cli.utils import exceptions as exc
+from tower_cli import exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.cli.resource import ResSubcommand
 

@@ -21,8 +21,9 @@ import six
 import click
 
 import tower_cli
-from tower_cli.utils import debug, exceptions as exc
-from tower_cli.utils.compat import OrderedDict
+from tower_cli import exceptions as exc
+from tower_cli.utils import debug
+from tower_cli.compat import OrderedDict
 
 
 class File(click.File):

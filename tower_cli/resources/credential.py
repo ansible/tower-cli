@@ -16,8 +16,9 @@
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import types, debug
+from tower_cli.utils import debug
 from tower_cli.api import client
+from tower_cli.cli import types
 
 
 PROMPT = '[Type "ASK" to make this field promptable]'
