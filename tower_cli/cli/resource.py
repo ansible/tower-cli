@@ -29,6 +29,7 @@ import click
 from tower_cli.conf import settings, with_global_options
 from tower_cli.utils import parser, debug, secho
 from tower_cli.cli.action import ActionSubcommand
+from tower_cli.exceptions import MultipleRelatedError
 
 
 class ResSubcommand(click.MultiCommand):
@@ -128,6 +129,15 @@ class ResSubcommand(click.MultiCommand):
         """
         return parser.ordered_dump(payload, Dumper=yaml.SafeDumper,
                                    default_flow_style=False)
+
+    def _format_id(self, payload):
+        """Echos only the id"""
+        if 'id' in payload:
+            return str(payload['id'])
+        if 'results' in payload and payload['count'] == 1:
+            return str(payload['results'][0]['id'])
+        raise MultipleRelatedError(
+            'Can not use id format when multiple objects are returned.')
 
     def _format_human(self, payload):
         """Convert the payload into an ASCII table suitable for

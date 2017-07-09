@@ -369,8 +369,8 @@ def with_global_options(method):
         '-f', '--format',
         help='Output format. The "human" format is intended for humans '
              'reading output on the CLI; the "json" and "yaml" formats '
-             'provide more data.',
-        type=click.Choice(['human', 'json', 'yaml']),
+             'provide more data, and "id" echos the object id only.',
+        type=click.Choice(['human', 'json', 'yaml', 'id']),
         required=False, callback=_apply_runtime_setting,
         is_eager=True
     )(method)
