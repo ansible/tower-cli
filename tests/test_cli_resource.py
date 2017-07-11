@@ -352,3 +352,11 @@ class SubcommandTests(unittest.TestCase):
         self.assertIn('spam', output)
         self.assertIn('bar', output)
         self.assertIn('eggs', output)
+
+    def test_echo_id(self):
+        func = self.command._echo_method(lambda: {'id': 5})
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(format='id'):
+                func()
+            output = secho.mock_calls[-1][1][0]
+        self.assertEqual('5', output)
