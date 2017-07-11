@@ -18,6 +18,7 @@ import click
 from tower_cli import models, resources, get_resource
 from tower_cli.api import client
 from tower_cli.cli import types
+from tower_cli.cli.resource import ResSubcommand
 from tower_cli.utils import debug, parser
 
 
@@ -64,7 +65,7 @@ class Resource(models.ExeResource):
         if jobs_list['count'] == 0:
             return ''
 
-        return_content = uj_res.as_command()._format_human(jobs_list)
+        return_content = ResSubcommand(uj_res)._format_human(jobs_list)
         lines = return_content.split('\n')
         if not full:
             lines = lines[:-1]
@@ -112,12 +113,12 @@ class Resource(models.ExeResource):
         Creates a new workflow job in Ansible Tower, starts it, and
         returns back an ID in order for its status to be monitored.
         """
-        if len(extra_vars) > 0:
+        if extra_vars is not None and len(extra_vars) > 0:
             kwargs['extra_vars'] = parser.process_extra_vars(extra_vars)
 
         debug.log('Launching the workflow job.', header='details')
         self._pop_none(kwargs)
-        post_response = client.post('workflow_job_templates/{}/launch/'.format(
+        post_response = client.post('workflow_job_templates/{0}/launch/'.format(
             workflow_job_template), data=kwargs).json()
 
         workflow_job_id = post_response['id']
