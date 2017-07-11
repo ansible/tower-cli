@@ -1,6 +1,22 @@
 Release History
 ===============
 
+3.1.5 (2017-07-12)
+------------------
+
+- Major code base file structure refactor. Now all click-related logics are moved to `tower_cli/cli/` directory,
+  and `exceptions.py` as well as `compat.py` are moved out of utils directory into base directory.
+- Categorize help text options for resource action commands (like `update`) to increase readability.
+- Behavior change of workflow schema command. Now schema will both create new nodes and delete existing nodes when
+  needed to make the resulting workflow topology exactly the same as described in schema file.
+- Add command `job_template callback` to enable conducting provisioning callback via Tower CLI.
+- Add new format option to just echo id.
+- Expand some resource fields, including hipchat rooms for notification template and allow_simultaneous for job
+  templates.
+- Lookup related inventory sources with "starts with" logic if its name is not fully qualified.
+- Fixed a python 3.5 compatibility issue that causes job monitor traceback.
+- Minor typo and help text updates.
+
 3.1.4 (2017-06-07)
 ------------------
 
