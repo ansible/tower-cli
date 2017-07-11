@@ -1,0 +1,9 @@
+- job_template: workflow JT
+  failure:
+  - inventory_source: tower script1 (workflow demo
+  success:
+  - project: Ansible Examples
+    always:
+    - job_template: workflow JT
+      success:
+      - job_template: workflow JT

@@ -1,0 +1,25 @@
+# Branch that has deeply nested content removed  going to schema B
+- job_template: workflow JT
+  failure_nodes:
+    - inventory_source: tower script1 (workflow demo
+  success_nodes:
+  - project: Ansible Examples
+    always_nodes:
+    - job_template: workflow JT
+      success_nodes:
+      - job_template: workflow JT
+
+# Branch that is modified going to schema B
+- job_template: workflow JT2
+  failure_nodes:
+  - job_template: workflow JT2
+  - job_template: workflow JT
+  success_nodes:
+  - job_template: workflow JT2
+  - job_template: workflow JT
+
+# Branch that is deleted going to schema B
+- project: Ansible Examples
+  always_nodes:
+  - inventory_source: tower script1 (workflow demo
+  - inventory_source: tower script2 (workflow demo
