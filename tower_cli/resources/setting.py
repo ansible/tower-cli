@@ -71,7 +71,11 @@ class Resource(models.Resource):
     @click.argument('value', default=None, required=False,
                     type=types.Variables())
     def modify(self, setting, value):
-        """Modify an already existing object."""
+        """Modify an already existing object.
+
+        Positional argument SETTING is the setting name and VALUE is its value,
+        which can be provided directly or obtained from a file name if prefixed with '@'.
+        """
         prev_value = new_value = self.get(setting)['value']
         answer = OrderedDict()
         encrypted = '$encrypted$' in six.text_type(prev_value)
