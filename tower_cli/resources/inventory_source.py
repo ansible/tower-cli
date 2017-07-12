@@ -58,6 +58,19 @@ class Resource(models.MonitorableResource):
     def _is_full_v1_name(self, name):
         return bool(re.match(r'^.+\s\(.+\s-\s\d+\)$', name))
 
+    def read(self, pk=None, fail_on_no_results=False,
+             fail_on_multiple_results=False, **kwargs):
+        # Special case to look up inventory sources by partial name
+        # TODO: Remove with v1 deprecation
+        if (kwargs.get('name', None) and not kwargs.get('group', None) and
+                not self._is_full_v1_name(kwargs['name'])):
+            kwargs.setdefault('query', [])
+            kwargs['query'] += [('name__startswith', kwargs['name'])]
+            kwargs.pop('name')
+        return super(Resource, self).read(
+            pk, fail_on_no_results=fail_on_no_results,
+            fail_on_multiple_results=fail_on_multiple_results, **kwargs)
+
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `monitor` on the newly '

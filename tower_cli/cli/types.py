@@ -137,13 +137,6 @@ class Related(click.types.ParamType):
             debug.log('The %s field is given as a name; '
                       'looking it up.' % param.name, header='details')
             lookup_data = {resource.identity[-1]: value}
-            # Special case to look up inventory sources by partial name
-            # TODO: Remove with v1 deprecation
-            if (self.resource_name == 'inventory_source' and
-                    not resource._is_full_v1_name(value)):
-                lookup_data = {
-                    "query": [('name__startswith', value)]
-                }
             rel = resource.get(**lookup_data)
         except exc.MultipleResults as ex:
             raise exc.MultipleRelatedError(

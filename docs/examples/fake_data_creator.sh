@@ -37,8 +37,6 @@ echo " current configuration settings:"
 echo $hostval
 echo $userval
 
-tower-cli config verify_ssl false
-
 echo "Tower-CLI DATA FAKER: creating orgs and teams"
 # Data regarding Hyrule Ventures was taken from
 # https://github.com/jsmartin/tower_populator
