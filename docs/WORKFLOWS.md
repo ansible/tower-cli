@@ -66,9 +66,9 @@ tower-cli workflow schema workflow1
 
 Here, "workflow1" is the name of the workflow.
 
-### Creating a Schema Definition
+### Creating/updating a Schema Definition
 
-To bulk-create a workflow node network, use the workflow schema command.
+To bulk-create or buld-update a workflow node network, use the workflow schema command.
 The schema is JSON or YAML content, and can be passed in the CLI
 argument, or pointed to a file. The schema is passed as a second positional
 argument, where the first argument references the workflow.
@@ -153,22 +153,27 @@ tower-cli workflow schema workflow2 @schema.yml
 The workflow schema feature populates the workflow node network based on the
 hierarchy structure. Before creating each node, it attempts to find an
 existing node with the specified properties in that location in the
-tree, and will not create a new node if it exists.
+tree, and will not create a new node if it exists. Also, if an existing node
+has no correspondence in the schema, the entire sub-tree based on that node will
+be deleted.
 
-Thus, running the command multiple times should not change the workflow
-structure. To continue with the previous example, subsequent
-invocations of:
+Thus, after running the schema command, the resulting workflow topology will always
+be exactly the same as what is specified in the given schema file. To continue with
+the previous example, subsequent invocations of:
 
 ```bash
 tower-cli workflow schema workflow2 @schema.yml
 tower-cli workflow schema workflow2 @schema.yml
 ```
 
-should not change the network of workflow2.
+should not change the network of workflow2, since `schema.yml` file itself remains
+unchanged. However
 
-The schema command can not delete nodes, so running multiple commands with
-different schemas will result in creating multiple branches and/or
-sub-branches.
+```bash
+tower-cli workflow schema workflow2 @new_schema.yml
+```
+
+will modify topology of workflow2 to exactly the same as what is specified in `new_schema.yml`.
 
 ## Launching Workflow Jobs
 
