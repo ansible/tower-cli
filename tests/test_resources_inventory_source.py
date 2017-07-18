@@ -16,6 +16,7 @@
 import tower_cli
 from tower_cli.api import client
 from tower_cli import exceptions as exc
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 
@@ -84,7 +85,7 @@ class StatusTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/', {
                 'id': 1,
-                'related': {'last_update': '/api/v1%s' % self.detail_uri},
+                'related': {'last_update': '/api/%s%s' % (CUR_API_VERSION, self.detail_uri)},
             })
             t.register_json(self.detail_uri, {
                 'elapsed': 1335024000.0,
@@ -107,7 +108,7 @@ class StatusTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/inventory_sources/1/', {
                 'id': 1,
-                'related': {'last_update': '/api/v1%s' % self.detail_uri},
+                'related': {'last_update': '/api/%s%s' % (CUR_API_VERSION, self.detail_uri)},
             })
             t.register_json(self.detail_uri, {
                 'elapsed': 1335024000.0,
@@ -132,9 +133,8 @@ class StatusTests(unittest.TestCase):
             t.register_json('/inventory_sources/1/', {
                 'id': 1,
                 'related': {
-                    'current_update': '/api/v1%s' % self.detail_uri,
-                    'last_update': '/api/v1%s' %
-                                   self.detail_uri.replace('42', '41'),
+                    'current_update': '/api/%s%s' % (CUR_API_VERSION, self.detail_uri),
+                    'last_update': '/api/%s%s' % (CUR_API_VERSION, self.detail_uri.replace('42', '41')),
                 },
             })
             t.register_json(self.detail_uri, {

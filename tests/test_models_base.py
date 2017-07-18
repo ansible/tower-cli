@@ -20,6 +20,7 @@ from six.moves import StringIO
 from tower_cli import models, resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.utils import debug
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 
@@ -166,7 +167,7 @@ class ResourceTests(unittest.TestCase):
             ], 'next': None, 'previous': None})
             result = self.res.list()
             self.assertEqual(t.requests[0].url,
-                             'https://20.12.4.21/api/v1/foo/')
+                             'https://20.12.4.21/api/%s/foo/' % CUR_API_VERSION)
             self.assertEqual(result['count'], 2)
             self.assertEqual(result['results'][0]['id'], 1)
 
@@ -294,7 +295,7 @@ class ResourceTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/foo/', {'count': 10, 'results': [
                 {'id': 1, 'name': 'bar'},
-            ], 'next': '/api/v1/foo/?page=2', 'previous': None})
+            ], 'next': '/api/%s/foo/?page=2' % CUR_API_VERSION, 'previous': None})
             result = self.res.list()
             self.assertEqual(result['next'], 2)
 

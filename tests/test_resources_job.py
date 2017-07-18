@@ -24,6 +24,7 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli import exceptions as exc
 from tower_cli.cli.resource import ResSubcommand
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
@@ -330,7 +331,7 @@ class LaunchTests(unittest.TestCase):
         """
         jt = {
             'related': {
-                'launch': '/api/v1/job_templates/1/launch/'
+                'launch': '/api/%s/job_templates/1/launch/' % CUR_API_VERSION
             },
             'id': 1,
             'name': 'demo'

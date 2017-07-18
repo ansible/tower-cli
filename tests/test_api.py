@@ -25,6 +25,7 @@ from tower_cli import exceptions as exc
 from tower_cli.conf import settings
 from tower_cli.utils import debug
 from tower_cli.utils.data_structures import OrderedDict
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 import click
@@ -42,14 +43,14 @@ class ClientTests(unittest.TestCase):
         URL prefix given a host with no specified protocol.
         """
         with settings.runtime_values(host='33.33.33.33'):
-            self.assertEqual(client.prefix, 'https://33.33.33.33/api/v1/')
+            self.assertEqual(client.prefix, 'https://33.33.33.33/api/%s/' % CUR_API_VERSION)
 
     def test_prefix_explicit_protocol(self):
         """Establish that the prefix property returns the appropriate
         URL prefix and don't clobber over an explicit protocol.
         """
         with settings.runtime_values(host='bogus://33.33.33.33/'):
-            self.assertEqual(client.prefix, 'bogus://33.33.33.33/api/v1/')
+            self.assertEqual(client.prefix, 'bogus://33.33.33.33/api/%s/' % CUR_API_VERSION)
 
     def test_request_ok(self):
         """Establish that a request that returns a valid JSON response

@@ -16,6 +16,7 @@
 import tower_cli
 from tower_cli.api import client
 from tower_cli import exceptions as exc
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 
@@ -116,7 +117,9 @@ class CreateTests(unittest.TestCase):
             t.register_json(
                 '/projects/42/', {
                     'status': 'successful',
-                    'related': {'last_update': '/api/v1/project_updates/21/'}
+                    'related': {
+                        'last_update': '/api/%s/project_updates/21/' % CUR_API_VERSION
+                    }
                 },
                 method='GET'
             )
@@ -162,7 +165,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'name': 'frobnicate',
-                'related': {'update': '/api/v1/projects/1/update/'},
+                'related': {'update': '/api/%s/projects/1/update/' % CUR_API_VERSION},
             })
             t.register_json('/projects/1/update/', {'can_update': True},
                             method='GET')
@@ -179,7 +182,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'name': 'frobnicate',
-                'related': {'update': '/api/v1/projects/1/update/'},
+                'related': {'update': '/api/%s/projects/1/update/' % CUR_API_VERSION},
             })
             t.register_json('/projects/1/update/', {'can_update': True},
                             method='GET')
@@ -201,7 +204,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'name': 'frobnicate',
-                'related': {'update': '/api/v1/projects/1/update/'},
+                'related': {'update': '/api/%s/projects/1/update/' % CUR_API_VERSION},
             })
             t.register_json('/projects/1/update/', {'can_update': False},
                             method='GET')
@@ -224,7 +227,7 @@ class StatusTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'related': {'last_update':
-                            '/api/v1/projects/1/project_updates/42/'},
+                            '/api/%s/projects/1/project_updates/42/' % CUR_API_VERSION},
             })
             t.register_json('/projects/1/project_updates/42/', {
                 'elapsed': 1335024000.0,
@@ -248,7 +251,7 @@ class StatusTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'related': {'last_update':
-                            '/api/v1/projects/1/project_updates/42/'},
+                            '/api/%s/projects/1/project_updates/42/' % CUR_API_VERSION},
             })
             t.register_json('/projects/1/project_updates/42/', {
                 'elapsed': 1335024000.0,
@@ -273,8 +276,8 @@ class StatusTests(unittest.TestCase):
             t.register_json('/projects/1/', {
                 'id': 1,
                 'related': {
-                    'current_update': '/api/v1/projects/1/project_updates/42/',
-                    'last_update': '/api/v1/projects/1/project_updates/41/',
+                    'current_update': '/api/%s/projects/1/project_updates/42/' % CUR_API_VERSION,
+                    'last_update': '/api/%s/projects/1/project_updates/41/' % CUR_API_VERSION,
                 },
             })
             t.register_json('/projects/1/project_updates/42/', {
