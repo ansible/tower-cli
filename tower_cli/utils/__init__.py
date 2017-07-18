@@ -18,6 +18,7 @@ import functools
 import click
 
 from tower_cli.conf import settings
+from tower_cli import exceptions # NOQA
 
 
 @functools.wraps(click.secho)
