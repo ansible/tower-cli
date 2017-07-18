@@ -30,6 +30,7 @@ from requests.auth import AuthBase
 from tower_cli import exceptions as exc
 from tower_cli.conf import settings
 from tower_cli.utils import data_structures, debug, secho
+from tower_cli.constants import CUR_API_VERSION
 
 
 TOWER_DATETIME_FMT = r'%Y-%m-%dT%H:%M:%S.%fZ'
@@ -146,7 +147,7 @@ class Client(Session):
                 'Can not verify ssl with non-https protocol. Change the '
                 'verify_ssl configuration setting to continue.'
             )
-        return '%s/api/v1/' % host.rstrip('/')
+        return '%s/api/%s/' % (host.rstrip('/'), CUR_API_VERSION)
 
     @functools.wraps(Session.request)
     def request(self, method, url, *args, **kwargs):

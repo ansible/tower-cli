@@ -23,6 +23,7 @@ from tower_cli.api import client
 from tower_cli import exceptions as exc
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.cli.resource import ResSubcommand
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest
 
@@ -97,11 +98,11 @@ class SettingTests(unittest.TestCase):
         """Settings can only be listed by valid categories"""
         categories = {
             'results': [{
-                'url': '/api/v1/settings/all/',
+                'url': '/api/%s/settings/all/' % CUR_API_VERSION,
                 'name': 'All',
                 'slug': 'all'
             }, {
-                'url': '/api/v1/settings/logging/',
+                'url': '/api/%s/settings/logging/' % CUR_API_VERSION,
                 'name': 'Logging',
                 'slug': 'logging'
             }]

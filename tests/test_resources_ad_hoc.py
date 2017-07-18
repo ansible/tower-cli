@@ -17,6 +17,7 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli import exceptions as exc
 from tower_cli.cli.resource import ResSubcommand
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
@@ -38,7 +39,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
             t.register_json('/', {
-                'ad_hoc_commands': '/api/v1/ad_hoc_commands/'
+                'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json('/ad_hoc_commands/', {'id': 42}, method='POST')
             result = self.res.launch(inventory="foobar", machine_credential=2)
@@ -50,7 +51,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
             t.register_json('/', {
-                'ad_hoc_commands': '/api/v1/ad_hoc_commands/'
+                'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json('/ad_hoc_commands/', {'id': 42}, method='POST')
             self.res.launch(inventory="foobar", machine_credential=2,
@@ -70,7 +71,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
             t.register_json('/', {
-                'ad_hoc_commands': '/api/v1/ad_hoc_commands/'
+                'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json(
                 '/ad_hoc_commands/',
@@ -95,7 +96,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
             t.register_json('/', {
-                'ad_hoc_commands': '/api/v1/ad_hoc_commands/'
+                'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json('/ad_hoc_commands/', {'id': 42}, method='POST')
             result = self.res.launch(inventory="foobar", machine_credential=2,
@@ -121,7 +122,7 @@ class LaunchTests(unittest.TestCase):
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
             t.register_json('/', {
-                'ad_hoc_commands': '/api/v1/ad_hoc_commands/'
+                'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json('/ad_hoc_commands/', {'id': 42}, method='POST')
 

@@ -21,14 +21,15 @@ from tower_cli.resources.role import Resource as Role
 from tower_cli import exceptions as exc
 from tower_cli.conf import settings
 from tower_cli.cli.resource import ResSubcommand
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 from copy import copy
 
 example_role_data = {
-    "id": 1, "type": "role", "url": "/api/v1/roles/1/",
-    "related": {"users": "/api/v1/roles/1/users/",
-                "teams": "/api/v1/roles/1/teams/"},
+    "id": 1, "type": "role", "url": "/api/%s/roles/1/" % CUR_API_VERSION,
+    "related": {"users": "/api/%s/roles/1/users/" % CUR_API_VERSION,
+                "teams": "/api/%s/roles/1/teams/" % CUR_API_VERSION},
     "summary_fields": {},
     "name": "System Administrator",
     "description": "Can manage all aspects of the system"}
