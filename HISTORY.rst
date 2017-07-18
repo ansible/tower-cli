@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.1.6 (2017-07-18)
+------------------
+
+- Fix a usage compatibility issue for Ansible Tower modules.
+
 3.1.5 (2017-07-12)
 ------------------
 
