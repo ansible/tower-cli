@@ -336,6 +336,8 @@ class ResSubcommand(click.MultiCommand):
                 option_help = field.help
                 if field.required:
                     option_help = '[REQUIRED] ' + option_help
+                if field.read_only:
+                    option_help = '[READ ONLY] ' + option_help
                 option_help = '[FIELD]' + option_help
                 click.option(
                     *args,

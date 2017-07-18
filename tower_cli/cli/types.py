@@ -16,6 +16,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 import re
+import json
 import six
 
 import click
@@ -36,6 +37,22 @@ class File(click.File):
             return value
         value = os.path.expanduser(value)
         return super(File, self).convert(value, param, ctx)
+
+
+class JSONFile(File):
+    """A subclass of File that deserializes JSON file content."""
+    name = 'JSON_file'
+    __name__ = 'JSON_file'
+
+    def convert(self, value, param, ctx):
+        f = super(JSONFile, self).convert(value, param, ctx)
+        try:
+            return json.load(f)
+        except Exception:
+            raise exc.UsageError(
+                'Error loading JSON file given by %s parameter. Please '
+                'check the validity of your JSON file content.' % param.name
+            )
 
 
 class Variables(click.File):

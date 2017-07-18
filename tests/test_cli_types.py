@@ -73,6 +73,24 @@ class FileTests(unittest.TestCase):
         self.assertEqual(foo_converted, 54)
 
 
+class JSONFileTests(unittest.TestCase):
+    """A set of tests to establish that the JSONFile class works in the way that we expect.
+    """
+    def test_deserialize_valid_json(self):
+        sio = StringIO('{"foo": "bar"}')
+        p = click.Option(('name', '-n'))
+        f = types.JSONFile()
+        f_converted = f.convert(sio, p, None)
+        self.assertEqual(f_converted, {'foo': 'bar'})
+
+    def test_invalid_json_raises_exception(self):
+        sio = StringIO('not valid')
+        p = click.Option(('name', '-n'))
+        f = types.JSONFile()
+        with self.assertRaises(exc.UsageError):
+            f.convert(sio, p, None)
+
+
 class MappedChoiceTests(unittest.TestCase):
     """A set of tests to establish that the MappedChoice class works in the
     way that we expect.
