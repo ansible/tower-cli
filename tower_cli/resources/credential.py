@@ -33,11 +33,15 @@ class Resource(models.Resource):
     organization = models.Field(display=False, type=types.Related('organization'), required=False)
 
     credential_type = models.Field(type=types.Related('credential_type'))
-    inputs = models.Field(type=types.JSONFile(), required=False, display=False)
+    inputs = models.Field(type=types.StructuredInput(), required=False, display=False)
 
     @resources.command
     def create(self, **kwargs):
         """Create a credential.
+
+        Fields in the resource's `identity` tuple are used for a lookup;
+        if a match is found, then no-op (unless `force_on_exists` is set) but
+        do not fail (unless `fail_on_found` is set).
         """
         if (kwargs.get('user', False) or kwargs.get('team', False) or
                 kwargs.get('organization', False)):

@@ -26,15 +26,15 @@ class Resource(models.Resource):
     description = models.Field(required=False, display=False)
     kind = models.Field(
         help_text='The type of credential type being added. Valid options are: ssh, vault, net, scm, '
-                  'cloud and insights.',
+                  'cloud and insights. Note only cloud and net can be used for creating credential types.',
         type=click.Choice(['ssh', 'vault', 'net', 'scm', 'cloud', 'insights']),
     )
     managed_by_tower = models.Field(
         type=bool, required=False, read_only=True,
         help_text='Indicating if the credential type is a tower built-in type.')
     inputs = models.Field(
-        type=types.JSONFile(), required=False, display=False,
+        type=types.StructuredInput(), required=False, display=False,
     )
     injectors = models.Field(
-        type=types.JSONFile(), required=False, display=False,
+        type=types.StructuredInput(), required=False, display=False,
     )

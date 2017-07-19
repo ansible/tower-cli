@@ -73,22 +73,22 @@ class FileTests(unittest.TestCase):
         self.assertEqual(foo_converted, 54)
 
 
-class JSONFileTests(unittest.TestCase):
+class StructuredInputTests(unittest.TestCase):
     """A set of tests to establish that the JSONFile class works in the way that we expect.
     """
-    def test_deserialize_valid_json(self):
-        sio = StringIO('{"foo": "bar"}')
+    def test_deserialize_valid_input(self):
+        s = '{"foo": "bar"}'
         p = click.Option(('name', '-n'))
-        f = types.JSONFile()
-        f_converted = f.convert(sio, p, None)
+        f = types.StructuredInput()
+        f_converted = f.convert(s, p, None)
         self.assertEqual(f_converted, {'foo': 'bar'})
 
     def test_invalid_json_raises_exception(self):
-        sio = StringIO('not valid')
+        s = 'not valid{"foo":}'
         p = click.Option(('name', '-n'))
-        f = types.JSONFile()
+        f = types.StructuredInput()
         with self.assertRaises(exc.UsageError):
-            f.convert(sio, p, None)
+            f.convert(s, p, None)
 
 
 class MappedChoiceTests(unittest.TestCase):
