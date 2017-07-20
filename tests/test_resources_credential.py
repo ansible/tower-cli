@@ -28,8 +28,7 @@ class CredentialTests(unittest.TestCase):
 
     def test_create_without_special_fields(self):
         """Establish that a create without user, team, or credential works"""
-        with mock.patch(
-                'tower_cli.models.base.Resource.create') as mock_create:
+        with mock.patch('tower_cli.models.base.Resource.create') as mock_create:
             cred_res = tower_cli.get_resource('credential')
             cred_res.create(name="foobar")
             mock_create.assert_called_once_with(name="foobar")
@@ -38,45 +37,38 @@ class CredentialTests(unittest.TestCase):
         """Establish that creating with special fields passes through as-is
         if the API does not support this use mode."""
         with client.test_mode as t:
-            t.register_json('/credentials/', {'actions': {'POST': {}}},
-                            method='OPTIONS')
-            with mock.patch(
-                    'tower_cli.models.base.Resource.create') as mock_create:
+            t.register_json('/credentials/', {'actions': {'POST': {}}}, method='OPTIONS')
+            with mock.patch('tower_cli.models.base.Resource.create') as mock_create:
                 cred_res = tower_cli.get_resource('credential')
                 cred_res.create(name="foobar", organization="Foo Ops")
-                mock_create.assert_called_once_with(
-                    name="foobar", organization="Foo Ops")
+                mock_create.assert_called_once_with(name="foobar", organization="Foo Ops")
 
     def test_create_with_special_fields_new(self):
         """Establish that creating with special fields uses special no_lookup
         tool if given special fields and the API supports that use case."""
         with client.test_mode as t:
-            t.register_json(
-                '/credentials/', {'actions': {'POST': {
-                    'organization': 'information'}}}, method='OPTIONS')
-            with mock.patch(
-                    'tower_cli.models.base.Resource.create') as mock_create:
+            t.register_json('/credentials/', {'actions': {'POST': {'organization': 'information'}}},
+                            method='OPTIONS')
+            with mock.patch('tower_cli.models.base.Resource.create') as mock_create:
                 cred_res = tower_cli.get_resource('credential')
                 cred_res.create(name="foobar", organization="Foo Ops")
-                mock_create.assert_called_once_with(
-                    name="foobar", organization="Foo Ops")
+                mock_create.assert_called_once_with(name="foobar", organization="Foo Ops")
                 self.assertTrue(cred_res.fields[2].no_lookup)
 
     def test_create_with_special_fields_new_functional(self):
         """Establish that the correct GET data is used with the new
         method for creating credentials."""
         with client.test_mode as t:
-            t.register_json(
-                '/credentials/', {'actions': {'POST': {
-                    'organization': 'information'}}}, method='OPTIONS')
-            t.register_json('/credentials/', {'count': 0, 'results': [],
-                            'next': None, 'previous': None}, method='GET')
-            t.register_json('/credentials/', {'count': 0, 'results': [],
-                            'next': None, 'previous': None}, method='GET')
+            t.register_json('/credentials/', {'actions': {'POST': {'organization': 'information'}}},
+                            method='OPTIONS')
+            t.register_json('/credentials/', {'count': 0, 'results': [], 'next': None, 'previous': None},
+                            method='GET')
+            t.register_json('/credentials/', {'count': 0, 'results': [], 'next': None, 'previous': None},
+                            method='GET')
             t.register_json('/credentials/', {'id': 42}, method='POST')
 
             cred_res = tower_cli.get_resource('credential')
-            cred_res.create(name="foobar", user=1, kind="ssh")
+            cred_res.create(name="foobar", user=1, credential_type=1)
             self.assertTrue(cred_res.fields[2].no_lookup)
             self.assertTrue(cred_res.fields[3].no_lookup)
 

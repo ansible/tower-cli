@@ -30,6 +30,7 @@ from tower_cli.conf import settings, with_global_options
 from tower_cli.utils import parser, debug, secho
 from tower_cli.cli.action import ActionSubcommand
 from tower_cli.exceptions import MultipleRelatedError
+from tower_cli.cli.types import StructuredInput
 
 
 class ResSubcommand(click.MultiCommand):
@@ -334,8 +335,12 @@ class ResSubcommand(click.MultiCommand):
 
                 # Apply the option to the method.
                 option_help = field.help
+                if isinstance(field.type, StructuredInput):
+                    option_help += ' Use @ to get JSON or YAML from a file.'
                 if field.required:
                     option_help = '[REQUIRED] ' + option_help
+                elif field.read_only:
+                    option_help = '[READ ONLY] ' + option_help
                 option_help = '[FIELD]' + option_help
                 click.option(
                     *args,

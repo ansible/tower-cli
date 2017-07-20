@@ -5,6 +5,7 @@ import click
 
 from tower_cli import models, resources
 from tower_cli.cli.resource import ResSubcommand
+from tower_cli.cli.types import StructuredInput
 from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
@@ -176,6 +177,19 @@ class SubcommandTests(unittest.TestCase):
 
         opt = cmd.params[0]
         self.assertEqual(opt.help, '[FIELD]foobar')
+
+    def test_field_help_text_has_suffix_for_structured_input(self):
+        """Establish that resource field help text is properly suffixed if field type is StructuredInput.
+        """
+        class FieldHelpTextResource(models.Resource):
+            endpoint = '/foobar/'
+
+            option_name = models.Field('internal_name', type=StructuredInput(), help_text='foobar', required=False)
+
+        cmd = ResSubcommand(FieldHelpTextResource()).get_command(None, 'get')
+
+        opt = cmd.params[0]
+        self.assertEqual(opt.help.endswith(' Use @ to get JSON or YAML from a file.'), True)
 
     def test_docstring_replacement_an(self):
         """Establish that for resources with names beginning with vowels,
@@ -354,9 +368,10 @@ class SubcommandTests(unittest.TestCase):
         self.assertIn('eggs', output)
 
     def test_echo_id(self):
-        func = self.command._echo_method(lambda: {'id': 5})
-        with mock.patch.object(click, 'secho') as secho:
-            with settings.runtime_values(format='id'):
-                func()
-            output = secho.mock_calls[-1][1][0]
-        self.assertEqual('5', output)
+        for input_format in [{'id': 5}, {'count': 1, 'results': [{'id': 5}]}]:
+            func = self.command._echo_method(lambda: input_format)
+            with mock.patch.object(click, 'secho') as secho:
+                with settings.runtime_values(format='id'):
+                    func()
+                output = secho.mock_calls[-1][1][0]
+            self.assertEqual('5', output)

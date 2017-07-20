@@ -23,6 +23,7 @@ import click
 import tower_cli
 from tower_cli import exceptions as exc
 from tower_cli.utils import debug
+from tower_cli.utils.parser import string_to_dict
 from tower_cli.compat import OrderedDict
 
 
@@ -64,6 +65,22 @@ class Variables(click.File):
 
         # No file, use given string
         return value
+
+
+class StructuredInput(Variables):
+    """A subclass of Variables that deserializes JSON/YAML-formatted string/file content into python objects."""
+    name = 'structured_input'
+    __name__ = 'structured_input'
+
+    def convert(self, value, param, ctx):
+        s = super(StructuredInput, self).convert(value, param, ctx)
+        try:
+            return string_to_dict(s, allow_kv=False)
+        except Exception:
+            raise exc.UsageError(
+                'Error loading structured input given by %s parameter. Please '
+                'check the validity of your JSON/YAML format.' % param.name
+            )
 
 
 class MappedChoice(click.Choice):
