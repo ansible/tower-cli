@@ -20,56 +20,39 @@ from tower_cli.api import client
 from tower_cli.cli import types
 from tower_cli.utils import debug
 
-import re
 
-
-class Resource(models.MonitorableResource):
+class Resource(models.Resource, models.MonitorableResource):
     cli_help = 'Manage inventory sources within Ansible Tower.'
     endpoint = '/inventory_sources/'
-    internal = True
     unified_job_type = '/inventory_updates/'
+    identity = ('inventory', 'name')
 
     name = models.Field(unique=True)
-    credential = models.Field(type=types.Related('credential'), required=False)
+    description = models.Field(required=False, display=False)
+    inventory = models.Field(type=types.Related('inventory'))
     source = models.Field(
-        default=None,
-        help_text='The type of inventory source in use.',
-        type=click.Choice(['', 'file', 'ec2', 'rax', 'vmware',
-                           'gce', 'azure', 'azure_rm', 'openstack',
+        default=None, help_text='The type of inventory source in use.',
+        type=click.Choice(['', 'file', 'scm', 'ec2', 'rax', 'vmware', 'gce', 'azure', 'azure_rm', 'openstack',
                            'satellite6', 'cloudforms', 'custom']),
     )
-    source_regions = models.Field(required=False, display=False)
-    # Variables not shared by all cloud providers
+    credential = models.Field(type=types.Related('credential'), required=False, display=False)
     source_vars = models.Field(required=False, display=False)
+    timeout = models.Field(type=int, required=False, display=False, help_text='The timeout field (in seconds).')
+    # Variables not shared by all cloud providers
+    source_project = models.Field(type=types.Related('project'), required=False, display=False,
+                                  help_text='Use project files as source for inventory.')
+    source_path = models.Field(required=False, display=False, help_text='File in SCM Project to use as source.')
+    update_on_project_update = models.Field(type=bool, required=False, display=False)
+    source_regions = models.Field(required=False, display=False)
     instance_filters = models.Field(required=False, display=False)
     group_by = models.Field(required=False, display=False)
-    source_script = models.Field(type=types.Related('inventory_script'),
-                                 required=False, display=False)
+    source_script = models.Field(type=types.Related('inventory_script'), required=False, display=False)
     # Boolean variables
     overwrite = models.Field(type=bool, required=False, display=False)
     overwrite_vars = models.Field(type=bool, required=False, display=False)
     update_on_launch = models.Field(type=bool, required=False, display=False)
     # Only used if update_on_launch is used
-    update_cache_timeout = models.Field(type=int, required=False,
-                                        display=False)
-    timeout = models.Field(type=int, required=False, display=False,
-                           help_text='The timeout field (in seconds).')
-
-    def _is_full_v1_name(self, name):
-        return bool(re.match(r'^.+\s\(.+\s-\s\d+\)$', name))
-
-    def read(self, pk=None, fail_on_no_results=False,
-             fail_on_multiple_results=False, **kwargs):
-        # Special case to look up inventory sources by partial name
-        # TODO: Remove with v1 deprecation
-        if (kwargs.get('name', None) and not kwargs.get('group', None) and
-                not self._is_full_v1_name(kwargs['name'])):
-            kwargs.setdefault('query', [])
-            kwargs['query'] += [('name__startswith', kwargs['name'])]
-            kwargs.pop('name')
-        return super(Resource, self).read(
-            pk, fail_on_no_results=fail_on_no_results,
-            fail_on_multiple_results=fail_on_multiple_results, **kwargs)
+    update_cache_timeout = models.Field(type=int, required=False, display=False)
 
     @click.argument('inventory_source', type=types.Related('inventory_source'))
     @click.option('--monitor', is_flag=True, default=False,
@@ -88,31 +71,23 @@ class Resource(models.MonitorableResource):
 
         # Establish that we are able to update this inventory source
         # at all.
-        debug.log('Asking whether the inventory source can be updated.',
-                  header='details')
+        debug.log('Asking whether the inventory source can be updated.', header='details')
         r = client.get('%s%d/update/' % (self.endpoint, inventory_source))
         if not r.json()['can_update']:
-            raise exc.BadRequest('Tower says it cannot run an update against '
-                                 'this inventory source.')
+            raise exc.BadRequest('Tower says it cannot run an update against this inventory source.')
 
         # Run the update.
         debug.log('Updating the inventory source.', header='details')
-        r = client.post('%s%d/update/' % (self.endpoint, inventory_source))
+        r = client.post('%s%d/update/' % (self.endpoint, inventory_source), data={})
 
         # If we were told to monitor the project update's status, do so.
         if monitor or wait:
             inventory_update_id = r.json()['inventory_update']
             if monitor:
-                result = self.monitor(
-                    inventory_update_id, parent_pk=inventory_source,
-                    timeout=timeout)
+                result = self.monitor(inventory_update_id, parent_pk=inventory_source, timeout=timeout)
             elif wait:
-                result = self.wait(
-                    inventory_update_id, parent_pk=inventory_source,
-                    timeout=timeout)
-            inventory = client.get('/inventory_sources/%d/' %
-                                   result['inventory_source'])\
-                              .json()['inventory']
+                result = self.wait(inventory_update_id, parent_pk=inventory_source, timeout=timeout)
+            inventory = client.get('/inventory_sources/%d/' % result['inventory_source']).json()['inventory']
             result['inventory'] = int(inventory)
             return result
 
