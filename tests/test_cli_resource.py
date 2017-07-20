@@ -227,6 +227,19 @@ class SubcommandTests(unittest.TestCase):
                 func()
             secho.assert_called_once_with(json.dumps({'foo': 'bar'}, indent=2))
 
+    def test_echo_method_format_freezer(self):
+        """Establish that the _echo_method subcommand class respects format_freezer
+        attribute of inner method.
+        """
+        def inner_func():
+            return {'foo': 'bar'}
+        inner_func.format_freezer = 'json'
+        func = self.command._echo_method(inner_func)
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(format='human'):
+                func()
+            secho.assert_called_once_with(json.dumps({'foo': 'bar'}, indent=2))
+
     def test_echo_method_changed_false(self):
         """Establish that the _echo_method subcommand decorator works
         in the way we expect if we get an unchanged designation.

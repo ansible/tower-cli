@@ -17,6 +17,7 @@ import click
 
 from tower_cli import models, resources
 from tower_cli.cli import types
+from tower_cli.api import client
 
 
 class Resource(models.Resource):
@@ -28,9 +29,8 @@ class Resource(models.Resource):
     description = models.Field(required=False, display=False)
     inventory = models.Field(type=types.Related('inventory'))
     enabled = models.Field(type=bool, required=False)
-    variables = models.Field(
-        type=types.Variables(), required=False, display=False,
-        help_text='Host variables, use "@" to get from file.')
+    variables = models.Field(type=types.Variables(), required=False, display=False,
+                             help_text='Host variables, use "@" to get from file.')
 
     @resources.command(use_fields_as_options=False)
     @click.option('--host', type=types.Related('host'))
@@ -47,12 +47,25 @@ class Resource(models.Resource):
         return self._disassoc('groups', host, group)
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
-    @click.option('--group', type=types.Related('group'),
-                  help='List hosts that are children of this group.')
-    def list(self, group=None, **kwargs):
+    @click.option('--group', type=types.Related('group'), help='List hosts that are children of this group.')
+    @click.option('--host-filter', help='List hosts filtered by this fact search query string.')
+    def list(self, group=None, host_filter=None, **kwargs):
         """Return a list of hosts.
         """
         if group:
-            kwargs['query'] = (kwargs.get('query', ()) +
-                               (('groups__in', group),))
+            kwargs['query'] = kwargs.get('query', ()) + (('groups__in', group),)
+        if host_filter:
+            kwargs['query'] = kwargs.get('query', ()) + (('host_filter', host_filter),)
         return super(Resource, self).list(**kwargs)
+
+    @resources.command(ignore_defaults=True)
+    def list_facts(self, pk=None, **kwargs):
+        """Return a JSON object of all available facts of the given host.
+
+        Note global option --format is not available here, as the output would always be JSON-formatted.
+        """
+        res = self.get(pk=pk, **kwargs)
+        url = self.endpoint + '%d/%s/' % (res['id'], 'ansible_facts')
+        return client.get(url, params={}).json()
+
+    list_facts.format_freezer = 'json'
