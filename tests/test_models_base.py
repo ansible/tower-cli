@@ -131,6 +131,27 @@ class ResourceMetaTests(unittest.TestCase):
             endpoint = 'foo'
         self.assertEqual(MyResource.endpoint, '/foo/')
 
+    def test_disabled_property(self):
+        """Establish that disabled_methods of derived classes disable specified
+        attributes derived from base classes.
+        """
+        class MyRes(models.Resource):
+            endpoint = 'foo'
+            foobar = 'baz'
+
+        class MyDerivedRes(MyRes):
+            endpoint = 'bar'
+            disabled_methods = set(['foobar'])
+
+        res = MyDerivedRes()
+        with self.assertRaises(AttributeError):
+            getattr(res, 'foobar')
+        res.foobar = 'hey'
+        self.assertEqual(res.foobar, 'hey')
+        del res.foobar
+        with self.assertRaises(AttributeError):
+            getattr(res, 'foobar')
+
 
 class ResourceTests(unittest.TestCase):
     """A set of tests to establish that the Resource class works in the
