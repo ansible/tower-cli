@@ -75,3 +75,10 @@ class HostTests(unittest.TestCase):
             t.register_json('/hosts/42/', {'id': 42})
             t.register_json('/hosts/42/ansible_facts/', {'foo': 'bar'})
             self.assertEqual(self.host_resource.list_facts(pk=42), {'foo': 'bar'})
+
+    def test_insights(self):
+        """Establish that the insights command runs as it is supposed."""
+        with client.test_mode as t:
+            t.register_json('/hosts/42/', {'id': 42})
+            t.register_json('/hosts/42/insights/', {'foo': 'bar'})
+            self.assertEqual(self.host_resource.insights(pk=42), {'foo': 'bar'})

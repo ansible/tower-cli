@@ -34,6 +34,7 @@ class Resource(models.Resource):
                         help_text='The kind field. Cannot be modified after created.')
     host_filter = models.Field(required=False, display=False,
                                help_text='The host_filter field. Only useful when kind=smart.')
+    insights_credential = models.Field(display=False, required=False, type=types.Related('credential'))
 
     @resources.command(ignore_defaults=True)
     def batch_update(self, pk=None, **kwargs):

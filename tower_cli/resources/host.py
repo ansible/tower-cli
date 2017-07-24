@@ -31,6 +31,7 @@ class Resource(models.Resource):
     enabled = models.Field(type=bool, required=False)
     variables = models.Field(type=types.Variables(), required=False, display=False,
                              help_text='Host variables, use "@" to get from file.')
+    insights_system_id = models.Field(required=False, display=False)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--host', type=types.Related('host'))
@@ -69,3 +70,15 @@ class Resource(models.Resource):
         return client.get(url, params={}).json()
 
     list_facts.format_freezer = 'json'
+
+    @resources.command(ignore_defaults=True)
+    def insights(self, pk=None, **kwargs):
+        """Return a JSON object of host insights.
+
+        Note global option --format is not available here, as the output would always be JSON-formatted.
+        """
+        res = self.get(pk=pk, **kwargs)
+        url = self.endpoint + '%d/%s/' % (res['id'], 'insights')
+        return client.get(url, params={}).json()
+
+    insights.format_freezer = 'json'
