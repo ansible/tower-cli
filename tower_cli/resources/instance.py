@@ -1,5 +1,4 @@
-# Copyright 2015, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2017, Ansible by Red Hat.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# flake8: noqa
 
-from __future__ import absolute_import, unicode_literals
+from tower_cli import models
+from tower_cli.cli import types
 
-from tower_cli.models.base import (Resource, MonitorableResource, ExeResource, BaseResource, SurveyResource,
-                                   ReadOnlyResource)
-from tower_cli.models.fields import Field
-from tower_cli.cli.types import File
+
+class Resource(models.ReadOnlyResource):
+    cli_help = 'Check instances within Ansible Tower.'
+    endpoint = '/instances/'
+
+    uuid = models.Field(required=False, display=False)
+    hostname = models.Field(required=False)
+    version = models.Field(required=False, display=False)
+    capacity = models.Field(type=int, required=False)
+    consumed_capacity = models.Field(type=int, required=False)

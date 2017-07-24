@@ -34,6 +34,7 @@ from tower_cli.conf import settings
 from tower_cli.models.fields import Field
 from tower_cli.utils import parser, debug, secho
 from tower_cli.utils.data_structures import OrderedDict
+from tower_cli.utils.resource_decorators import disabled_getter, disabled_setter, disabled_deleter
 
 
 class ResourceMeta(type):
@@ -58,36 +59,37 @@ class ResourceMeta(type):
                 if key in deprecates:
                     setattr(value, 'deprecated', True)
 
-            # If this method has been overwritten from the superclass, copy
-            # any click options or arguments from the superclass implementation
-            # down to the subclass implementation.
+            # If this method has been overwritten from the superclass, copy any click options or arguments from
+            # the superclass implementation down to the subclass implementation.
             if not len(bases):
                 continue
             superclass = bases[0]
             super_method = getattr(superclass, key, None)
             if super_method and getattr(super_method, '_cli_command', False):
-                # Copy the click parameters from the parent method to the
-                # child.
+                # Copy the click parameters from the parent method to the child.
                 cp = getattr(value, '__click_params__', [])
                 cp = getattr(super_method, '__click_params__', []) + cp
                 value.__click_params__ = cp
 
-                # Copy the command attributes from the parent to the child,
-                # if the child has not overridden them.
+                # Copy the command attributes from the parent to the child, if the child has not overridden them.
                 for attkey, attval in super_method._cli_command_attrs.items():
                     value._cli_command_attrs.setdefault(attkey, attval)
-        attrs['commands'] = sorted(commands)
 
-        # Sanity check: Only perform remaining initialization for subclasses
-        # actual resources, not abstract ones.
+        disabled_methods = attrs.pop('disabled_methods', set())
+        commands -= disabled_methods
+        attrs['commands'] = sorted(commands)
+        for method in disabled_methods:
+            attrs[method] = property(disabled_getter(method), disabled_setter(method), disabled_deleter(method))
+
+        # Sanity check: Only perform remaining initialization for subclasses actual resources, not abstract ones.
         if attrs.pop('abstract', False):
             return super_new(cls, name, bases, attrs)
 
         # Initialize a new attributes dictionary.
         newattrs = {}
 
-        # Iterate over each of the fields and move them into a
-        # `fields` list; port remaining attrs unchanged into newattrs.
+        # Iterate over each of the fields and move them into a `fields` list;
+        # port remaining attrs unchanged into newattrs.
         fields = []
         unique_fields = set()
         for k, v in attrs.items():
@@ -101,13 +103,11 @@ class ResourceMeta(type):
         newattrs['fields'] = sorted(fields)
         newattrs['unique_fields'] = unique_fields
 
-        # Cowardly refuse to create a Resource with no endpoint
-        # (unless it's the base class).
+        # Cowardly refuse to create a Resource with no endpoint (unless it's the base class).
         if not newattrs.get('endpoint', None):
             raise TypeError('Resource subclasses must have an `endpoint`.')
 
-        # Ensure that the endpoint ends in a trailing slash, since we
-        # expect this when we build URLs based on it.
+        # Ensure that the endpoint ends in a trailing slash, since we expect this when we build URLs based on it.
         if isinstance(newattrs['endpoint'], six.string_types):
             if not newattrs['endpoint'].startswith('/'):
                 newattrs['endpoint'] = '/' + newattrs['endpoint']
@@ -119,14 +119,12 @@ class ResourceMeta(type):
 
 
 class BaseResource(six.with_metaclass(ResourceMeta)):
-    """Abstract class representing resources within the Ansible Tower
-    system, on which actions can be taken. Includes standard create,
-    modify, list, get, and delete methods.
+    """Abstract class representing resources within the Ansible Tower system, on which actions can be taken.
+    Includes standard create, modify, list, get, and delete methods.
 
-    Some of these methods are not created as commands, but will be
-    implemented as commands inside of non-abstract child classes.
-    Particularly, create is not a command in this class, but will be for
-    some (but not all) child classes."""
+    Some of these methods are not created as commands, but will be implemented as commands inside of non-abstract
+    child classes. Particularly, create is not a command in this class, but will be for some (but not all) child
+    classes."""
     abstract = True  # Not inherited.
     cli_help = ''
     endpoint = None
@@ -141,9 +139,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     # `modify` are wrappers around `write`.
 
     def _pop_none(self, kwargs):
-        """Remove default values (anything where the value is None).
-        click is unfortunately bad at the way it sends through unspecified
-        defaults."""
+        """Remove default values (anything where the value is None). click is unfortunately bad at the way it
+        sends through unspecified defaults."""
         for key, value in copy(kwargs).items():
             # options with multiple=True return a tuple
             if value is None or value == ():
@@ -151,21 +148,17 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
             if hasattr(value, 'read'):
                 kwargs[key] = value.read()
 
-    def read(self, pk=None, fail_on_no_results=False,
-             fail_on_multiple_results=False, **kwargs):
+    def read(self, pk=None, fail_on_no_results=False, fail_on_multiple_results=False, **kwargs):
         """Retrieve and return objects from the Ansible Tower API.
 
-        If an `object_id` is provided, only attempt to read that object,
-        rather than the list at large.
+        If an `object_id` is provided, only attempt to read that object, rather than the list at large.
 
-        If `fail_on_no_results` is True, then zero results is considered
-        a failure case and raises an exception; otherwise, empty list is
-        returned. (Note: This is always True if a primary key is included.)
+        If `fail_on_no_results` is True, then zero results is considered a failure case and raises an exception;
+        otherwise, empty list is returned. (Note: This is always True if a primary key is included.)
 
-        If `fail_on_multiple_results` is True, then at most one result is
-        expected, and more results constitutes a failure case.
-        (Note: This is meaningless if a primary key is included, as there can
-        never be multiple results.)
+        If `fail_on_multiple_results` is True, then at most one result is expected, and more results constitutes
+        a failure case. (Note: This is meaningless if a primary key is included, as there can never be multiple
+        results.)
         """
         # Piece together the URL we will be hitting.
         url = self.endpoint
@@ -187,8 +180,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # If queries were provided, process them.
         for query in queries:
             if query[0] in kwargs:
-                raise exc.BadRequest('Attempted to set %s twice.'
-                                     % query[0].replace('_', '-'))
+                raise exc.BadRequest('Attempted to set %s twice.' % query[0].replace('_', '-'))
             kwargs[query[0]] = query[1]
 
         # Make the request to the Ansible Tower API.
@@ -215,54 +207,43 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # Did we get more than one result back?
         # If so, this is also an error, and we need to complain.
         if fail_on_multiple_results and resp['count'] >= 2:
-            raise exc.MultipleResults('Expected one result, got %d. Possibly '
-                                      'caused by not providing required '
-                                      'fields. Please tighten '
-                                      'your criteria.' % resp['count'])
+            raise exc.MultipleResults('Expected one result, got %d. Possibly caused by not providing required '
+                                      'fields. Please tighten your criteria.' % resp['count'])
 
         # Return the response.
         return resp
 
     def _get_patch_url(self, url, pk):
-        """Overwrite this method to handle specific corner cases to
-        the url passed to PATCH method."""
+        """Overwrite this method to handle specific corner cases to the url passed to PATCH method."""
         return url + '%s/' % pk
 
-    def write(self, pk=None, create_on_missing=False, fail_on_found=False,
-              force_on_exists=True, **kwargs):
-        """Modify the given object using the Ansible Tower API.
-        Return the object and a boolean value informing us whether or not
-        the record was changed.
+    def write(self, pk=None, create_on_missing=False, fail_on_found=False, force_on_exists=True, **kwargs):
+        """Modify the given object using the Ansible Tower API. Return the object and a boolean value informing
+        us whether or not the record was changed.
 
-        If `create_on_missing` is True, then an object matching the
-        appropriate unique criteria is not found, then a new object is created.
+        If `create_on_missing` is True, then an object matching the appropriate unique criteria is not found,
+        then a new object is created.
 
-        If there are no unique criteria on the model (other than the primary
-        key), then this will always constitute a creation (even if a match
-        exists) unless the primary key is sent.
+        If there are no unique criteria on the model (other than the primary key), then this will always constitute
+        a creation (even if a match exists) unless the primary key is sent.
 
-        If `fail_on_found` is True, then if an object matching the unique
-        criteria already exists, the operation fails.
+        If `fail_on_found` is True, then if an object matching the unique criteria already exists, the operation
+        fails.
 
-        If `force_on_exists` is True, then if an object is modified based on
-        matching via. unique fields (as opposed to the primary key), other
-        fields are updated based on data sent. If `force_on_exists` is set
-        to False, then the non-unique values are only written in a creation
-        case.
+        If `force_on_exists` is True, then if an object is modified based on matching via. unique fields (as opposed
+        to the primary key), other fields are updated based on data sent. If `force_on_exists` is set to False,
+        then the non-unique values are only written in a creation case.
         """
         existing_data = {}
 
         # Remove default values (anything where the value is None).
         self._pop_none(kwargs)
 
-        # Determine which record we are writing, if we weren't given a
-        # primary key.
+        # Determine which record we are writing, if we weren't given a primary key.
         if not pk:
             debug.log('Checking for an existing record.', header='details')
             existing_data = self._lookup(
-                fail_on_found=fail_on_found,
-                fail_on_missing=not create_on_missing,
-                include_debug_header=False,
+                fail_on_found=fail_on_found, fail_on_missing=not create_on_missing, include_debug_header=False,
                 **kwargs
             )
             if existing_data:
@@ -274,39 +255,26 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
             existing_data = self.get(pk)
 
         # Sanity check: Are we missing required values?
-        # If we don't have a primary key, then all required values must be
-        # set, and if they're not, it's an error.
+        # If we don't have a primary key, then all required values must be set, and if they're not, it's an error.
         missing_fields = []
         for i in self.fields:
             if i.key not in kwargs and i.name not in kwargs and i.required:
                 missing_fields.append(i.key or i.name)
         if missing_fields and not pk:
-            raise exc.BadRequest('Missing required fields: %s' %
-                                 ', '.join(missing_fields).replace('_', '-'))
+            raise exc.BadRequest('Missing required fields: %s' % ', '.join(missing_fields).replace('_', '-'))
 
         # Sanity check: Do we need to do a write at all?
-        # If `force_on_exists` is False and the record was, in fact, found,
-        # then no action is required.
+        # If `force_on_exists` is False and the record was, in fact, found, then no action is required.
         if pk and not force_on_exists:
-            debug.log('Record already exists, and --force-on-exists is off; '
-                      'do nothing.', header='decision', nl=2)
-            answer = OrderedDict((
-                ('changed', False),
-                ('id', pk),
-            ))
+            debug.log('Record already exists, and --force-on-exists is off; do nothing.', header='decision', nl=2)
+            answer = OrderedDict((('changed', False), ('id', pk)))
             answer.update(existing_data)
             return answer
 
-        # Similarly, if all existing data matches our write parameters,
-        # there's no need to do anything.
-        if all([kwargs[k] == existing_data.get(k, None)
-                for k in kwargs.keys()]):
-            debug.log('All provided fields match existing data; do nothing.',
-                      header='decision', nl=2)
-            answer = OrderedDict((
-                ('changed', False),
-                ('id', pk),
-            ))
+        # Similarly, if all existing data matches our write parameters, there's no need to do anything.
+        if all([kwargs[k] == existing_data.get(k, None) for k in kwargs.keys()]):
+            debug.log('All provided fields match existing data; do nothing.', header='decision', nl=2)
+            answer = OrderedDict((('changed', False), ('id', pk)))
             answer.update(existing_data)
             return answer
 
@@ -328,12 +296,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # Actually perform the write.
         r = getattr(client, method.lower())(url, data=kwargs)
 
-        # At this point, we know the write succeeded, and we know that data
-        # was changed in the process.
-        answer = OrderedDict((
-            ('changed', True),
-            ('id', r.json()['id']),
-        ))
+        # At this point, we know the write succeeded, and we know that data was changed in the process.
+        answer = OrderedDict((('changed', True), ('id', r.json()['id'])))
         answer.update(r.json())
         return answer
 
@@ -341,22 +305,18 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     def delete(self, pk=None, fail_on_missing=False, **kwargs):
         """Remove the given object.
 
-        If `fail_on_missing` is True, then the object's not being found is
-        considered a failure; otherwise, a success with no change is reported.
+        If `fail_on_missing` is True, then the object's not being found is considered a failure; otherwise,
+        a success with no change is reported.
         """
-        # If we weren't given a primary key, determine which record we're
-        # deleting.
+        # If we weren't given a primary key, determine which record we're deleting.
         if not pk:
-            existing_data = self._lookup(fail_on_missing=fail_on_missing,
-                                         **kwargs)
+            existing_data = self._lookup(fail_on_missing=fail_on_missing, **kwargs)
             if not existing_data:
                 return {'changed': False}
             pk = existing_data['id']
 
-        # Attempt to delete the record.
-        # If it turns out the record doesn't exist, handle the 404
-        # appropriately (this is an okay response if `fail_on_missing` is
-        # False).
+        # Attempt to delete the record. If it turns out the record doesn't exist, handle the 404 appropriately
+        # (this is an okay response if `fail_on_missing` is False).
         url = '%s%s/' % (self.endpoint, pk)
         debug.log('DELETE %s' % url, fg='blue', bold=True)
         try:
@@ -375,41 +335,33 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     def get(self, pk=None, **kwargs):
         """Return one and exactly one object.
 
-        Lookups may be through a primary key, specified as a positional
-        argument, and/or through filters specified through keyword arguments.
+        Lookups may be through a primary key, specified as a positional argument, and/or through filters specified
+        through keyword arguments.
 
         If the number of results does not equal one, raise an exception.
         """
         if kwargs.pop('include_debug_header', True):
             debug.log('Getting the record.', header='details')
-        response = self.read(pk=pk, fail_on_no_results=True,
-                             fail_on_multiple_results=True, **kwargs)
+        response = self.read(pk=pk, fail_on_no_results=True, fail_on_multiple_results=True, **kwargs)
         return response['results'][0]
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
-    @click.option('all_pages', '-a', '--all-pages',
-                  is_flag=True, default=False, show_default=True,
-                  help='If set, collate all pages of content from the API '
-                       'when returning results.')
+    @click.option('all_pages', '-a', '--all-pages', is_flag=True, default=False, show_default=True,
+                  help='If set, collate all pages of content from the API when returning results.')
     @click.option('--page', default=1, type=int, show_default=True,
-                  help='The page to show. Ignored if --all-pages '
-                       'is sent.')
+                  help='The page to show. Ignored if --all-pages is sent.')
     @click.option('-Q', '--query', required=False, nargs=2, multiple=True,
-                  help='A key and value to be passed as an HTTP query string '
-                       'key and value to the Tower API. Will be run through '
-                       'HTTP escaping. This argument may be sent multiple '
-                       'times.\nExample: `--query foo bar` would be passed '
-                       'to Tower as ?foo=bar')
+                  help='A key and value to be passed as an HTTP query string key and value to the Tower API.'
+                       ' Will be run through HTTP escaping. This argument may be sent multiple times.\n'
+                       'Example: `--query foo bar` would be passed to Tower as ?foo=bar')
     def list(self, all_pages=False, **kwargs):
         """Return a list of objects.
 
-        If one or more filters are provided through keyword arguments,
-        filter the results accordingly.
+        If one or more filters are provided through keyword arguments, filter the results accordingly.
 
         If no filters are provided, return all results.
         """
-        # If the `all_pages` flag is set, then ignore any page that might
-        # also be sent.
+        # If the `all_pages` flag is set, then ignore any page that might also be sent.
         if all_pages:
             kwargs.pop('page', None)
 
@@ -417,8 +369,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         debug.log('Getting records.', header='details')
         response = self.read(**kwargs)
 
-        # Alter the "next" and "previous" to reflect simple integers,
-        # rather than URLs, since this endpoint just takes integers.
+        # Alter the "next" and "previous" to reflect simple integers, rather than URLs, since this endpoint
+        # just takes integers.
         for key in ('next', 'previous'):
             if not response.get(key):
                 continue
@@ -428,8 +380,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 continue
             response[key] = int(match.groupdict()['num'])
 
-        # If we were asked for all pages, keep retrieving pages until we
-        # have them all.
+        # If we were asked for all pages, keep retrieving pages until we have them all.
         if all_pages and response['next']:
             cursor = copy(response)
             while cursor['next']:
@@ -445,8 +396,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # Get the endpoint for foreign records within this object.
         url = self.endpoint + '%d/%s/' % (me, url_fragment)
 
-        # Attempt to determine whether the other record already exists here,
-        # for the "changed" moniker.
+        # Attempt to determine whether the other record already exists here, for the "changed" moniker.
         r = client.get(url, params={'id': other}).json()
         if r['count'] > 0:
             return {'changed': False}
@@ -461,8 +411,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # Get the endpoint for foreign records within this object.
         url = self.endpoint + '%d/%s/' % (me, url_fragment)
 
-        # Attempt to determine whether the other record already is absent, for
-        # the "changed" moniker.
+        # Attempt to determine whether the other record already is absent, for the "changed" moniker.
         r = client.get(url, params={'id': other}).json()
         if r['count'] == 0:
             return {'changed': False}
@@ -471,16 +420,13 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         r = client.post(url, data={'disassociate': True, 'id': other})
         return {'changed': True}
 
-    def _lookup(self, fail_on_missing=False, fail_on_found=False,
-                include_debug_header=True, **kwargs):
-        """Attempt to perform a lookup that is expected to return a single
-        result, and return the record.
+    def _lookup(self, fail_on_missing=False, fail_on_found=False, include_debug_header=True, **kwargs):
+        """Attempt to perform a lookup that is expected to return a single result, and return the record.
 
-        This method is a wrapper around `get` that strips out non-unique
-        keys, and is used internally by `write` and `delete`.
+        This method is a wrapper around `get` that strips out non-unique keys, and is used internally by
+        `write` and `delete`.
         """
-        # Determine which parameters we are using to determine
-        # the appropriate field.
+        # Determine which parameters we are using to determine the appropriate field.
         read_params = {}
         for field_name in self.identity:
             if field_name in kwargs:
@@ -490,33 +436,84 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         if 'id' in self.identity and len(self.identity) == 1:
             return {}
 
-        # Sanity check: Do we have any parameters?
-        # If not, then there's no way for us to do this read.
+        # Sanity check: Do we have any parameters? If not, then there's no way for us to do this read.
         if not read_params:
-            raise exc.BadRequest('Cannot reliably determine which record '
-                                 'to write. Include an ID or unique '
+            raise exc.BadRequest('Cannot reliably determine which record to write. Include an ID or unique '
                                  'fields.')
 
         # Get the record to write.
         try:
-            existing_data = self.get(include_debug_header=include_debug_header,
-                                     **read_params)
+            existing_data = self.get(include_debug_header=include_debug_header, **read_params)
             if fail_on_found:
-                raise exc.Found('A record matching %s already exists, and '
-                                'you requested a failure in that case.' %
+                raise exc.Found('A record matching %s already exists, and you requested a failure in that case.' %
                                 read_params)
             return existing_data
         except exc.NotFound:
             if fail_on_missing:
-                raise exc.NotFound('A record matching %s does not exist, and '
-                                   'you requested a failure in that case.' %
+                raise exc.NotFound('A record matching %s does not exist, and you requested a failure in that case.' %
                                    read_params)
             return {}
 
 
+class Resource(BaseResource):
+    """This is the parent class for all standard resources."""
+    abstract = True
+
+    @resources.command
+    @click.option('--fail-on-found', default=False, show_default=True, type=bool, is_flag=True,
+                  help='If used, return an error if a matching record already exists.')
+    @click.option('--force-on-exists', default=False, show_default=True, type=bool, is_flag=True,
+                  help='If used, if a match is found on unique fields, other fields will be updated '
+                       'to the provided values. If False, a match causes the request to be a no-op.')
+    def create(self, **kwargs):
+        """Create an object.
+
+        Fields in the resource's `identity` tuple are used for a lookup; if a match is found, then no-op
+        (unless `force_on_exists` is set) but do not fail (unless `fail_on_found` is set).
+        """
+        return self.write(create_on_missing=True, **kwargs)
+
+    @resources.command(ignore_defaults=True)
+    def copy(self, pk=None, **kwargs):
+        """Copy an object.
+
+        Only the ID is used for the lookup. All provided fields are used to override the old data from the
+        copied resource.
+        """
+        orig = self.read(pk, fail_on_no_results=True, fail_on_multiple_results=True)
+        orig = orig['results'][0]
+        # Remove default values (anything where the value is None).
+        self._pop_none(kwargs)
+
+        newresource = copy(orig)
+        newresource.pop('id')
+        basename = newresource['name'].split('@', 1)[0].strip()
+        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+        newresource.update(kwargs)
+        return self.write(create_on_missing=True, **newresource)
+
+    @resources.command(ignore_defaults=True)
+    @click.option('--create-on-missing', default=False, show_default=True, type=bool, is_flag=True,
+                  help='If used, and if options rather than a primary key are used to attempt to match a record, '
+                       'will create the record if it does not exist. This is an alias to `create --force-on-exists`.')
+    def modify(self, pk=None, create_on_missing=False, **kwargs):
+        """Modify an already existing object.
+
+        Fields in the resource's `identity` tuple can be used in lieu of a primary key for a lookup; in such a case,
+        only other fields are written.
+
+        To modify unique fields, you must use the primary key for the lookup.
+        """
+        return self.write(pk, create_on_missing=create_on_missing, force_on_exists=True, **kwargs)
+
+
+class ReadOnlyResource(BaseResource):
+    abstract = True
+    disabled_methods = set(['_assoc', '_disassoc', '_get_patch_url', 'delete', 'write'])
+
+
 class MonitorableResource(BaseResource):
-    """A resource that is able to be tied to a running task, such as a job
-    or project, and thus able to be monitored.
+    """A resource that is able to be tied to a running task, such as a job or project, and thus able to be monitored.
     """
     abstract = True  # Not inherited.
 
@@ -527,13 +524,11 @@ class MonitorableResource(BaseResource):
 
     def status(self, pk, detail=False):
         """A stub method requesting the status of the resource."""
-        raise NotImplementedError('This resource does not implement a status '
-                                  'method, and must do so.')
+        raise NotImplementedError('This resource does not implement a status method, and must do so.')
 
     def last_job_data(self, pk=None, **kwargs):
         """
-        Internal utility function for Unified Job Templates
-        Returns data about the last job run off of that UJT
+        Internal utility function for Unified Job Templates. Returns data about the last job run off of that UJT
         """
         ujt = self.get(pk, include_debug_header=True, **kwargs)
 
@@ -542,22 +537,17 @@ class MonitorableResource(BaseResource):
             debug.log('A current job; retrieving it.', header='details')
             return client.get(ujt['related']['current_update'][7:]).json()
         elif ujt['related'].get('last_update', None):
-            debug.log('No current job or update exists; retrieving the most '
-                      'recent.', header='details')
+            debug.log('No current job or update exists; retrieving the most recent.', header='details')
             return client.get(ujt['related']['last_update'][7:]).json()
         else:
             raise exc.NotFound('No related jobs or updates exist.')
 
-    def lookup_stdout(self, pk=None, start_line=None, end_line=None,
-                      full=True):
+    def lookup_stdout(self, pk=None, start_line=None, end_line=None, full=True):
         """
-        Internal utility function to return standard out
-        requires the pk of a unified job
+        Internal utility function to return standard out. Requires the pk of a unified job.
         """
         stdout_url = '%s%s/stdout/' % (self.unified_job_type, pk)
-        payload = {
-            'format': 'json', 'content_encoding': 'base64',
-            'content_format': 'ansi'}
+        payload = {'format': 'json', 'content_encoding': 'base64', 'content_format': 'ansi'}
         if start_line:
             payload['start_line'] = start_line
         if end_line:
@@ -569,10 +559,8 @@ class MonitorableResource(BaseResource):
         return content
 
     @resources.command
-    @click.option('--start-line', required=False, type=int,
-                  help='Line at which to start printing the standard out.')
-    @click.option('--end-line', required=False, type=int,
-                  help='Line at which to end printing the standard out.')
+    @click.option('--start-line', required=False, type=int, help='Line at which to start printing the standard out.')
+    @click.option('--end-line', required=False, type=int, help='Line at which to end printing the standard out.')
     def stdout(self, pk, start_line=None, end_line=None, **kwargs):
         """
         Print out the standard out of a unified job to the command line.
@@ -597,16 +585,12 @@ class MonitorableResource(BaseResource):
         return {"changed": False}
 
     @resources.command
-    @click.option('--interval', default=0.2,
-                  help='Polling interval to refresh content from Tower.')
+    @click.option('--interval', default=0.2, help='Polling interval to refresh content from Tower.')
     @click.option('--timeout', required=False, type=int,
-                  help='If provided, this command (not the job) will time out '
-                       'after the given number of seconds.')
-    def monitor(self, pk, parent_pk=None, timeout=None, interval=0.5,
-                outfile=sys.stdout, **kwargs):
+                  help='If provided, this command (not the job) will time out after the given number of seconds.')
+    def monitor(self, pk, parent_pk=None, timeout=None, interval=0.5, outfile=sys.stdout, **kwargs):
         """
-        Stream the standard output from a
-            job, project update, or inventory udpate.
+        Stream the standard output from a job, project update, or inventory udpate.
         """
         # If we do not have the unified job info, infer it from parent
         if pk is None:
@@ -621,11 +605,9 @@ class MonitorableResource(BaseResource):
         start_line = 0
         result = client.get(job_endpoint).json()
 
-        click.echo('\033[0;91m------Starting Standard Out Stream------\033[0m',
-                   nl=2, file=outfile)
+        click.echo('\033[0;91m------Starting Standard Out Stream------\033[0m', nl=2, file=outfile)
 
-        # Poll the Ansible Tower instance for status and content,
-        # and print standard out to the out file
+        # Poll the Ansible Tower instance for status and content, and print standard out to the out file
         while not result['failed'] and result['status'] != 'successful':
 
             result = client.get(job_endpoint).json()
@@ -650,20 +632,15 @@ class MonitorableResource(BaseResource):
         if self.endpoint == '/workflow_jobs/':
             click.echo(self.lookup_stdout(pk, start_line, full=True), nl=1)
 
-        click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m',
-                   nl=2, file=outfile)
+        click.echo('\033[0;91m------End of Standard Out Stream--------\033[0m', nl=2, file=outfile)
 
         if result['failed']:
             raise exc.JobFailure('Job failed.')
 
         # Return the job ID and other response data
-        answer = OrderedDict((
-            ('changed', True),
-            ('id', pk),
-        ))
+        answer = OrderedDict((('changed', True), ('id', pk)))
         answer.update(result)
-        # Make sure to return ID of resource and not update number
-        # relevant for project creation and update
+        # Make sure to return ID of resource and not update number relevant for project creation and update
         if parent_pk:
             answer['id'] = parent_pk
         else:
@@ -671,22 +648,15 @@ class MonitorableResource(BaseResource):
         return answer
 
     @resources.command
-    @click.option('--min-interval',
-                  default=1, help='The minimum interval to request an update '
-                                  'from Tower.')
-    @click.option('--max-interval',
-                  default=30, help='The maximum interval to request an update '
-                                   'from Tower.')
+    @click.option('--min-interval', default=1, help='The minimum interval to request an update from Tower.')
+    @click.option('--max-interval', default=30, help='The maximum interval to request an update from Tower.')
     @click.option('--timeout', required=False, type=int,
-                  help='If provided, this command (not the job) will time out '
-                       'after the given number of seconds.')
-    def wait(self, pk, parent_pk=None, min_interval=1, max_interval=30,
-             timeout=None, outfile=sys.stdout, exit_on=['successful'],
-             **kwargs):
+                  help='If provided, this command (not the job) will time out after the given number of seconds.')
+    def wait(self, pk, parent_pk=None, min_interval=1, max_interval=30, timeout=None, outfile=sys.stdout,
+             exit_on=['successful'], **kwargs):
         """
-        Wait for a running job to finish.
-        Blocks further input until the job completes (whether successfully or
-        unsuccessfully) and a final status can be given.
+        Wait for a running job to finish. Blocks further input until the job completes (whether successfully
+        or unsuccessfully) and a final status can be given.
         """
         # If we do not have the unified job info, infer it from parent
         if pk is None:
@@ -698,35 +668,29 @@ class MonitorableResource(BaseResource):
         interval = min_interval
         start = time.time()
 
-        # Poll the Ansible Tower instance for status, and print the status
-        # to the outfile (usually standard out).
+        # Poll the Ansible Tower instance for status, and print the status to the outfile (usually standard out).
         #
-        # Note that this is one of the few places where we use `secho`
-        # even though we're in a function that might theoretically be imported
-        # and run in Python.  This seems fine; outfile can be set to /dev/null
-        # and very much the normal use for this method should be CLI
-        # monitoring.
+        # Note that this is one of the few places where we use `secho` even though we're in a function that might
+        # theoretically be imported and run in Python.  This seems fine; outfile can be set to /dev/null and very
+        # much the normal use for this method should be CLI monitoring.
         result = client.get(job_endpoint).json()
         last_poll = time.time()
         timeout_check = 0
         while result['status'] not in exit_on:
-            # If the job has failed, we want to raise an Exception for that
-            # so we get a non-zero response.
+            # If the job has failed, we want to raise an Exception for that so we get a non-zero response.
             if result['failed']:
                 if is_tty(outfile) and not settings.verbose:
                     secho('\r' + ' ' * longest_string + '\n', file=outfile)
                 raise exc.JobFailure('Job failed.')
 
             # Sanity check: Have we officially timed out?
-            # The timeout check is incremented below, so this is checking
-            # to see if we were timed out as of the previous iteration.
-            # If we are timed out, abort.
+            # The timeout check is incremented below, so this is checking to see if we were timed out as of
+            # the previous iteration. If we are timed out, abort.
             if timeout and timeout_check - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
 
             # If the outfile is a TTY, print the current status.
-            output = '\rCurrent status: %s%s' % (result['status'],
-                                                 '.' * next(dots))
+            output = '\rCurrent status: %s%s' % (result['status'], '.' * next(dots))
             if longest_string > len(output):
                 output += ' ' * (longest_string - len(output))
             else:
@@ -738,35 +702,30 @@ class MonitorableResource(BaseResource):
             time.sleep(0.2)
 
             # Sanity check: Have we reached our timeout?
-            # If we're about to time out, then we need to ensure that we
-            # do one last check.
+            # If we're about to time out, then we need to ensure that we do one last check.
             #
-            # Note that the actual timeout will be performed at the start
-            # of the **next** iteration, so there's a chance for the job's
-            # completion to be noted first.
+            # Note that the actual timeout will be performed at the start of the **next** iteration,
+            # so there's a chance for the job's completion to be noted first.
             timeout_check = time.time()
             if timeout and timeout_check - start > timeout:
                 last_poll -= interval
 
             # If enough time has elapsed, ask the server for a new status.
             #
-            # Note that this doesn't actually do a status check every single
-            # time; we want the "spinner" to spin even if we're not actively
-            # doing a check.
+            # Note that this doesn't actually do a status check every single time; we want the "spinner" to
+            # spin even if we're not actively doing a check.
             #
-            # So, what happens is that we are "counting down" (actually up)
-            # to the next time that we intend to do a check, and once that
-            # time hits, we do the status check as part of the normal cycle.
+            # So, what happens is that we are "counting down" (actually up) to the next time that we intend
+            # to do a check, and once that time hits, we do the status check as part of the normal cycle.
             if time.time() - last_poll > interval:
                 result = client.get(job_endpoint).json()
                 last_poll = time.time()
                 interval = min(interval * 1.5, max_interval)
 
-                # If the outfile is *not* a TTY, print a status update
-                # when and only when we make an actual check to job status.
+                # If the outfile is *not* a TTY, print a status update when and only when we make an actual
+                # check to job status.
                 if not is_tty(outfile) or settings.verbose:
-                    click.echo('Current status: %s' % result['status'],
-                               file=outfile)
+                    click.echo('Current status: %s' % result['status'], file=outfile)
 
             # Wipe out the previous output
             if is_tty(outfile) and not settings.verbose:
@@ -774,13 +733,9 @@ class MonitorableResource(BaseResource):
                 secho('\r', file=outfile, nl=False)
 
         # Return the job ID and other response data
-        answer = OrderedDict((
-            ('changed', True),
-            ('id', pk),
-        ))
+        answer = OrderedDict((('changed', True), ('id', pk)))
         answer.update(result)
-        # Make sure to return ID of resource and not update number
-        # relevant for project creation and update
+        # Make sure to return ID of resource and not update number relevant for project creation and update
         if parent_pk:
             answer['id'] = parent_pk
         else:
@@ -793,12 +748,10 @@ class ExeResource(MonitorableResource):
     abstract = True
 
     @resources.command
-    @click.option('--detail', is_flag=True, default=False,
-                  help='Print more detail.')
+    @click.option('--detail', is_flag=True, default=False, help='Print more detail.')
     def status(self, pk=None, detail=False, **kwargs):
-        """Print the current job status. This is used to check a running job.
-        You can look up the job with the same parameters used for a get
-        request."""
+        """Print the current job status. This is used to check a running job. You can look up the job with
+        the same parameters used for a get request."""
         # Remove default values (anything where the value is None).
         self._pop_none(kwargs)
 
@@ -811,9 +764,8 @@ class ExeResource(MonitorableResource):
             finished_endpoint = '%s%s/' % (self.endpoint, pk)
             job = client.get(finished_endpoint).json()
 
-        # In most cases, we probably only want to know the status of the job
-        # and the amount of time elapsed. However, if we were asked for
-        # verbose information, provide it.
+        # In most cases, we probably only want to know the status of the job and the amount of time elapsed.
+        # However, if we were asked for verbose information, provide it.
         if detail:
             return job
 
@@ -879,69 +831,6 @@ class ExeResource(MonitorableResource):
         return answer
 
 
-class Resource(BaseResource):
-    """This is the parent class for all standard resources."""
-    abstract = True
-
-    @resources.command
-    @click.option('--fail-on-found', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, return an error if a matching record already '
-                       'exists.')
-    @click.option('--force-on-exists', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, if a match is found on unique fields, other '
-                       'fields will be updated to the provided values. If '
-                       'False, a match causes the request to be a no-op.')
-    def create(self, **kwargs):
-        """Create an object.
-
-        Fields in the resource's `identity` tuple are used for a lookup;
-        if a match is found, then no-op (unless `force_on_exists` is set) but
-        do not fail (unless `fail_on_found` is set).
-        """
-        return self.write(create_on_missing=True, **kwargs)
-
-    @resources.command(ignore_defaults=True)
-    def copy(self, pk=None, **kwargs):
-        """Copy an object.
-
-        Only the ID is used for the lookup. All provided fields are used
-        to override the old data from the copied resource.
-        """
-        orig = self.read(pk, fail_on_no_results=True,
-                         fail_on_multiple_results=True)
-        orig = orig['results'][0]
-        # Remove default values (anything where the value is None).
-        self._pop_none(kwargs)
-
-        newresource = copy(orig)
-        newresource.pop('id')
-        basename = newresource['name'].split('@', 1)[0].strip()
-        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
-        newresource.update(kwargs)
-        return self.write(create_on_missing=True, **newresource)
-
-    @resources.command(ignore_defaults=True)
-    @click.option('--create-on-missing', default=False,
-                  show_default=True, type=bool, is_flag=True,
-                  help='If used, and if options rather than a primary key are '
-                       'used to attempt to match a record, will create the '
-                       'record if it does not exist. This is an alias to '
-                       '`create --force-on-exists`.')
-    def modify(self, pk=None, create_on_missing=False, **kwargs):
-        """Modify an already existing object.
-
-        Fields in the resource's `identity` tuple can be used in lieu of a
-        primary key for a lookup; in such a case, only other fields are
-        written.
-
-        To modify unique fields, you must use the primary key for the lookup.
-        """
-        return self.write(pk, create_on_missing=create_on_missing,
-                          force_on_exists=True, **kwargs)
-
-
 class SurveyResource(Resource):
     """Contains utilities and commands common to "job template" models,
     which take extra_vars and have a survey_spec."""
@@ -953,8 +842,7 @@ class SurveyResource(Resource):
     def write(self, pk=None, **kwargs):
         survey_input = kwargs.pop('survey_spec', None)
         if kwargs.get('extra_vars', None):
-            kwargs['extra_vars'] = parser.process_extra_vars(
-                kwargs['extra_vars'])
+            kwargs['extra_vars'] = parser.process_extra_vars(kwargs['extra_vars'])
         ret = super(SurveyResource, self).write(pk=pk, **kwargs)
         if survey_input is not None and ret.get('id', None):
             if not isinstance(survey_input, dict):
@@ -964,20 +852,17 @@ class SurveyResource(Resource):
                 r = client.delete(self._survey_endpoint(ret['id']))
             else:
                 debug.log('Saving the survey_spec.', header='details')
-                r = client.post(self._survey_endpoint(ret['id']),
-                                data=survey_input)
+                r = client.post(self._survey_endpoint(ret['id']), data=survey_input)
             if r.status_code == 200:
                 ret['changed'] = True
             if survey_input and not ret['survey_enabled']:
-                debug.log('For survey to take effect, set survey_enabled'
-                          ' field to True.', header='warning')
+                debug.log('For survey to take effect, set survey_enabled field to True.', header='warning')
         return ret
 
     @resources.command
     def survey(self, pk=None, **kwargs):
         """Get the survey_spec for the job template.
-        To write a survey, use the modify command with the --survey-spec
-        parameter."""
+        To write a survey, use the modify command with the --survey-spec parameter."""
         job_template = self.get(pk=pk, **kwargs)
         if settings.format == 'human':
             settings.format = 'json'

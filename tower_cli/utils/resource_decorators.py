@@ -52,3 +52,31 @@ def unified_job_template_options(method):
             )
         )
     )
+
+
+# The following three decorators, altogether, are used to disable inherited attributes/methods.
+# Typically it should be used like this:
+#
+# `name = property(disabled_getter('name'), disabled_setter('name'), disabled_deleter('name'))`
+#
+def disabled_getter(attr_name):
+    def handler(self):
+        internal_attr_name = '__' + attr_name
+        if hasattr(self, internal_attr_name):
+            return getattr(self, internal_attr_name)
+        raise AttributeError('Inherited attribute %s has been disabled.' % attr_name)
+    return handler
+
+
+def disabled_setter(attr_name):
+    def handler(self, val):
+        internal_attr_name = '__' + attr_name
+        setattr(self, internal_attr_name, val)
+    return handler
+
+
+def disabled_deleter(attr_name):
+    def handler(self):
+        internal_attr_name = '__' + attr_name
+        delattr(self, internal_attr_name)
+    return handler
