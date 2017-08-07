@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.1.7 (2017-08-07)
+------------------
+
+- Follow up 3.1.6 by duplicating exceptions.py to support `import tower_cli.utils.exceptions` syntax.
+
 3.1.6 (2017-07-18)
 ------------------
 
