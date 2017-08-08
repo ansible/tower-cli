@@ -49,7 +49,7 @@ class Resource(models.Resource):
     team = models.Field(
         type=types.Related('team'), required=False, display=True,
         help_text='The team that receives the permissions '
-                  'specified by the role')
+                  'specified by the role.')
     type = models.Field(
         required=False, display=True, type=click.Choice(ROLE_TYPES),
         help_text='The type of permission that the role controls.')
@@ -284,7 +284,23 @@ class Resource(models.Resource):
     @resources.command(
         use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     def list(self, **kwargs):
-        """Return a list of roles."""
+        """Return a list of roles.
+
+        =====API DOCS=====
+        Retrieve a list of objects.
+
+        :param all_pages: Flag that if set, collect all pages of content from the API when returning results.
+        :type all_pages: bool
+        :param page: The page to show. Ignored if all_pages is set.
+        :type page: int
+        :param query: Contains 2-tuples used as query parameters to filter resulting resource objects.
+        :type query: list
+        :param `**kwargs`: Keyword arguments list of available fields used for searching resource objects.
+        :returns: A JSON object containing details of all resource objects returned by Tower backend.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         data, self.endpoint = self.data_endpoint(kwargs)
         r = super(Resource, self).list(**data)
 
@@ -295,7 +311,20 @@ class Resource(models.Resource):
     @resources.command(
         use_fields_as_options=ACTOR_FIELDS+RESOURCE_FIELDS+['type'])
     def get(self, pk=None, **kwargs):
-        """Get information about a role."""
+        """Get information about a role.
+
+        =====API DOCS=====
+        Retrieve one and exactly one object.
+
+        :param pk: Primary key of the resource to be read. Tower CLI will only attempt to read *that* object
+                   if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve if ``pk`` is not provided.
+        :returns: loaded JSON of the retrieved resource object.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         if kwargs.pop('include_debug_header', True):
             debug.log('Getting the role record.', header='details')
         data, self.endpoint = self.data_endpoint(kwargs)
@@ -315,7 +344,22 @@ class Resource(models.Resource):
         """Add a user or a team to a role. Required information:
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
-        3) A user or a team to add to the role"""
+        3) A user or a team to add to the role
+
+        =====API DOCS=====
+        Add a user or a team to a role. Required information:
+        * Type of the role.
+        * Resource of the role, inventory, credential, or any other.
+        * A user or a team to add to the role.
+
+        :param fail_on_found: Flag that if set, the operation fails if a user/team already has the role.
+        :type fail_on_found: bool
+        :param `**kwargs`: The user to be associated and the role to associate.
+        :returns: parsed JSON of role grant.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self.role_write(fail_on_found=fail_on_found, **kwargs)
 
     @resources.command(
@@ -328,6 +372,21 @@ class Resource(models.Resource):
         """Remove a user or a team from a role. Required information:
         1) Type of the role
         2) Resource of the role, inventory, credential, or any other
-        3) A user or a team to add to the role"""
+        3) A user or a team to add to the role
+
+        =====API DOCS=====
+        Remove a user or a team from a role. Required information:
+        * Type of the role.
+        * Resource of the role, inventory, credential, or any other.
+        * A user or a team to add to the role.
+
+        :param fail_on_found: Flag that if set, the operation fails if a user/team dose not have the role.
+        :type fail_on_found: bool
+        :param `**kwargs`: The user to be disassociated and the role to disassociate.
+        :returns: parsed JSON of role revoke.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self.role_write(fail_on_found=fail_on_found,
                                disassociate=True, **kwargs)

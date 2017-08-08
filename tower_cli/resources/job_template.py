@@ -24,6 +24,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.SurveyResource):
+    """A resource for job templates."""
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
 
@@ -113,14 +114,40 @@ class Resource(models.SurveyResource):
     @click.option('--job-template', type=types.Related('job_template'))
     @click.option('--label', type=types.Related('label'))
     def associate_label(self, job_template, label):
-        """Associate an label with this job template."""
+        """Associate an label with this job template.
+
+        =====API DOCS=====
+        Associate an label with this job template.
+
+        :param job_template: The job template to associate to.
+        :type job_template: str
+        :param label: The label to be associated.
+        :type label: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc('labels', job_template, label)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
     @click.option('--label', type=types.Related('label'))
     def disassociate_label(self, job_template, label):
-        """Disassociate an label from this job template."""
+        """Disassociate an label from this job template.
+
+        =====API DOCS=====
+        Disassociate an label from this job template.
+
+        :param job_template: The job template to disassociate from.
+        :type job_template: str
+        :param label: The label to be disassociated.
+        :type label: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc('labels', job_template, label)
 
     @resources.command(use_fields_as_options=False)
@@ -132,7 +159,22 @@ class Resource(models.SurveyResource):
                   ' of job template to relate to.')
     def associate_notification_template(self, job_template,
                                         notification_template, status):
-        """Associate a notification template from this job template."""
+        """Associate a notification template from this job template.
+
+        =====API DOCS=====
+        Associate a notification template from this job template.
+
+        :param job_template: The job template to associate to.
+        :type job_template: str
+        :param notification_template: The notification template to be associated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be associated to.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc('notification_templates_%s' % status,
                            job_template, notification_template)
 
@@ -145,7 +187,22 @@ class Resource(models.SurveyResource):
                   ' of job template to relate to.')
     def disassociate_notification_template(self, job_template,
                                            notification_template, status):
-        """Disassociate a notification template from this job template."""
+        """Disassociate a notification template from this job template.
+
+        =====API DOCS=====
+        Disassociate a notification template from this job template.
+
+        :param job_template: The job template to disassociate from.
+        :type job_template: str
+        :param notification_template: The notification template to be disassociated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be disassociated from.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc('notification_templates_%s' % status,
                               job_template, notification_template)
 
@@ -153,7 +210,23 @@ class Resource(models.SurveyResource):
     @click.option('--host-config-key', help='Job-template-specific string used to authenticate '
                   'host during provisioning callback.')
     def callback(self, pk=None, host_config_key='', extra_vars=None):
-        """Contact Tower and request a configuration update using this job template."""
+        """Contact Tower and request a configuration update using this job template.
+
+        =====API DOCS=====
+        Contact Tower and request a provisioning callback using this job template.
+
+        :param pk: Primary key of the job template to run provisioning callback against.
+        :type pk: int
+        :param host_config_key: Key string used to authenticate the callback host.
+        :type host_config_key: str
+        :param extra_vars: Extra variables that are passed to provisioning callback.
+        :type extra_vars: array of str
+        :returns: A dictionary of a single key "changed", which indicates whether the provisioning callback
+                  is successful.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         url = self.endpoint + '%s/callback/' % pk
         if not host_config_key:
             host_config_key = client.get(url).json()['host_config_key']

@@ -61,6 +61,12 @@ class ResSubcommand(click.MultiCommand):
         to more CLI appropriate wording, and also disambiguate the
         word "object" on the base class docstrings.
         """
+        # Delete API docs if there are any.
+        api_doc_delimiter = '=====API DOCS====='
+        begin_api_doc = help_text.find(api_doc_delimiter)
+        if begin_api_doc >= 0:
+            end_api_doc = help_text.rfind(api_doc_delimiter) + len(api_doc_delimiter)
+            help_text = help_text[:begin_api_doc] + help_text[end_api_doc:]
         # Convert the word "object" to the appropriate type of
         # object being modified (e.g. user, organization).
         an_prefix = ('a', 'e', 'i', 'o')

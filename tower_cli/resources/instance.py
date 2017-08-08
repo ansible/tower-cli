@@ -13,10 +13,10 @@
 # limitations under the License.
 
 from tower_cli import models
-from tower_cli.cli import types
 
 
 class Resource(models.ReadOnlyResource):
+    """A resource for instances."""
     cli_help = 'Check instances within Ansible Tower.'
     endpoint = '/instances/'
 

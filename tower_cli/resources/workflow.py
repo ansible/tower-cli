@@ -151,6 +151,7 @@ def _update_workflow(existing_roots, updated_roots):
 
 
 class Resource(models.SurveyResource):
+    """A resource for workflow job templates."""
     cli_help = 'Manage workflow job templates.'
     endpoint = '/workflow_job_templates/'
     unified_job_type = '/workflow_jobs/'
@@ -161,7 +162,7 @@ class Resource(models.SurveyResource):
         type=types.Variables(), required=False, display=False, multiple=True,
         help_text='Extra variables used by Ansible in YAML or key=value '
                   'format. Use @ to get YAML from a file. Use the option '
-                  'multiple times to add multiple extra variables')
+                  'multiple times to add multiple extra variables.')
     organization = models.Field(type=types.Related('organization'),
                                 required=False)
     survey_enabled = models.Field(
@@ -254,6 +255,20 @@ class Resource(models.SurveyResource):
         Convert YAML/JSON content into workflow node objects if
         node_network param is given.
         If not, print a YAML representation of the node network.
+
+        =====API DOCS=====
+        Convert YAML/JSON content into workflow node objects if ``node_network`` param is given. If not,
+        print a YAML representation of the node network.
+
+        :param wfjt: Primary key or name of the workflow job template to run schema against.
+        :type wfjt: str
+        :param node_network: JSON- or YAML-formatted string representing the topology of the workflow job
+                             template be updated to.
+        :type node_network: str
+        :returns: The latest topology (possibly after modification) of the workflow job template.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         existing_network = self._get_schema(wfjt)
         if not isinstance(existing_network, list):
@@ -281,14 +296,39 @@ class Resource(models.SurveyResource):
     @click.option('--workflow', type=types.Related('workflow'))
     @click.option('--label', type=types.Related('label'))
     def associate_label(self, workflow, label):
-        """Associate an label with this workflow."""
+        """Associate an label with this workflow.
+
+        =====API DOCS=====
+        Associate an label with this workflow job template.
+
+        :param workflow: The workflow job template to associate to.
+        :type workflow: str
+        :param label: The label to be associated.
+        :type label: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+        =====API DOCS=====
+        """
         return self._assoc('labels', workflow, label)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--workflow', type=types.Related('workflow'))
     @click.option('--label', type=types.Related('label'))
     def disassociate_label(self, workflow, label):
-        """Disassociate an label from this workflow."""
+        """Disassociate an label from this workflow.
+
+        =====API DOCS=====
+        Disassociate an label from this workflow job template.
+
+        :param workflow: The workflow job template to disassociate from.
+        :type workflow: str
+        :param label: The label to be disassociated.
+        :type label: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc('labels', workflow, label)
 
     @resources.command(use_fields_as_options=False)
@@ -300,7 +340,22 @@ class Resource(models.SurveyResource):
                   ' of job template to relate to.')
     def associate_notification_template(self, workflow,
                                         notification_template, status):
-        """Associate a notification template from this workflow."""
+        """Associate a notification template from this workflow.
+
+        =====API DOCS=====
+        Associate a notification template from this workflow job template.
+
+        :param workflow: The workflow job template to associate to.
+        :type workflow: str
+        :param notification_template: The notification template to be associated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be associated to.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc('notification_templates_%s' % status,
                            workflow, notification_template)
 
@@ -313,6 +368,21 @@ class Resource(models.SurveyResource):
                   ' of job template to relate to.')
     def disassociate_notification_template(self, workflow,
                                            notification_template, status):
-        """Disassociate a notification template from this workflow."""
+        """Disassociate a notification template from this workflow.
+
+        =====API DOCS=====
+        Disassociate a notification template from this workflow job template.
+
+        :param job_template: The workflow job template to disassociate from.
+        :type job_template: str
+        :param notification_template: The notification template to be disassociated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be disassociated from.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc('notification_templates_%s' % status,
                               workflow, notification_template)

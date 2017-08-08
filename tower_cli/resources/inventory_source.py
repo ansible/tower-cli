@@ -22,6 +22,7 @@ from tower_cli.utils import debug
 
 
 class Resource(models.Resource, models.MonitorableResource):
+    """A resource for inventory sources."""
     cli_help = 'Manage inventory sources within Ansible Tower.'
     endpoint = '/inventory_sources/'
     unified_job_type = '/inventory_updates/'
@@ -67,7 +68,31 @@ class Resource(models.Resource, models.MonitorableResource):
     @resources.command(use_fields_as_options=False, no_args_is_help=True)
     def update(self, inventory_source, monitor=False, wait=False,
                timeout=None, **kwargs):
-        """Update the given inventory source."""
+        """Update the given inventory source.
+
+        =====API DOCS=====
+        Update the given inventory source.
+
+        :param inventory_source: Primary key or name of the inventory source to be updated.
+        :type inventory_source: str
+        :param monitor: Flag that if set, immediately calls ``monitor`` on the newly launched inventory update
+                        rather than exiting with a success.
+        :type monitor: bool
+        :param wait: Flag that if set, monitor the status of the inventory update, but do not print while it is
+                     in progress.
+        :type wait: bool
+        :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
+                        of seconds.
+        :type timeout: int
+        :param `**kwargs`: Fields used to override underlyingl inventory source fields when creating and launching
+                           an inventory update.
+        :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent ``wait``
+                  call if ``wait`` flag is on; dictionary of "status" if none of the two flags are on.
+        :rtype: dict
+        :raises tower_cli.exceptions.BadRequest: When the inventory source cannot be updated.
+
+        =====API DOCS=====
+        """
 
         # Establish that we are able to update this inventory source
         # at all.
@@ -98,7 +123,23 @@ class Resource(models.Resource, models.MonitorableResource):
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
     def status(self, pk, detail=False, **kwargs):
-        """Print the status of the most recent sync."""
+        """Print the status of the most recent sync.
+
+        =====API DOCS=====
+        Retrieve the current inventory update status.
+
+        :param pk: Primary key of the resource to retrieve status from.
+        :type pk: int
+        :param detail: Flag that if set, return the full JSON of the job resource rather than a status summary.
+        :type detail: bool
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve status from if ``pk``
+                           is not provided.
+        :returns: full loaded JSON of the specified unified job if ``detail`` flag is on; trimed JSON containing
+                  only "elapsed", "failed" and "status" fields of the unified job if ``detail`` flag is off.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         # Obtain the most recent inventory sync
         job = self.last_job_data(pk, **kwargs)
 

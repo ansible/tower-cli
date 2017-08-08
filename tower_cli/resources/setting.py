@@ -27,6 +27,7 @@ from tower_cli.utils.data_structures import OrderedDict
 
 
 class Resource(models.Resource):
+    """A resource for Tower configurations."""
     cli_help = 'Manage settings within Ansible Tower.'
     custom_category = None
 
@@ -36,7 +37,19 @@ class Resource(models.Resource):
     @click.option('category', '-c', '--category',
                   help='If set, filter settings by a specific category')
     def list(self, **kwargs):
-        """Return a list of objects."""
+        """Return a list of objects.
+
+        =====API DOCS=====
+        Retrieve a list of Tower settings.
+
+        :param category: The category slug in which to look up indevidual settings.
+        :type category: str
+        :param `**kwargs`: Keyword arguments list of available fields used for searching resource objects.
+        :returns: A JSON object containing details of all resource objects returned by Tower backend.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         self.custom_category = kwargs.get('category', 'all')
         try:
             result = super(Resource, self).list(**kwargs)
@@ -58,7 +71,19 @@ class Resource(models.Resource):
 
     @resources.command(use_fields_as_options=False)
     def get(self, pk):
-        """Return one and exactly one object"""
+        """Return one and exactly one object
+
+        =====API DOCS=====
+        Return one and exactly one Tower setting.
+
+        :param pk: Primary key of the Tower setting to retrieve
+        :type pk: int
+        :returns: loaded JSON of the retrieved Tower setting object.
+        :rtype: dict
+        :raises tower_cli.exceptions.NotFound: When no specified Tower setting exists.
+
+        =====API DOCS=====
+        """
         # The Tower API doesn't provide a mechanism for retrieving a single
         # setting value at a time, so fetch them all and filter
         try:
@@ -75,6 +100,20 @@ class Resource(models.Resource):
 
         Positional argument SETTING is the setting name and VALUE is its value,
         which can be provided directly or obtained from a file name if prefixed with '@'.
+
+        =====API DOCS=====
+        Modify an already existing Tower setting.
+
+        :param setting: The name of the Tower setting to be modified.
+        :type setting: str
+        :param value: The new value of the Tower setting.
+        :type value: str
+        :returns: A dictionary combining the JSON output of the modified resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is successfully updated; "id", an integer which
+                  is the primary key of the updated object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         prev_value = new_value = self.get(setting)['value']
         answer = OrderedDict()

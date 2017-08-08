@@ -23,6 +23,7 @@ from tower_cli.utils import debug, parser
 
 
 class Resource(models.ExeResource):
+    """A resource for workflow jobs."""
     cli_help = 'Launch or monitor workflow jobs.'
     endpoint = '/workflow_jobs/'
 
@@ -90,7 +91,12 @@ class Resource(models.ExeResource):
 
     @resources.command
     def summary(self):
-        """Placeholder to get swapped out for `stdout`."""
+        """Placeholder to get swapped out for `stdout`.
+
+        =====API DOCS=====
+        foobar
+        =====API DOCS=====
+        """
         pass
 
     @resources.command(
@@ -112,6 +118,29 @@ class Resource(models.ExeResource):
 
         Creates a new workflow job in Ansible Tower, starts it, and
         returns back an ID in order for its status to be monitored.
+
+        =====API DOCS=====
+        Launch a new workflow job based on a workflow job template.
+
+        :param workflow_job_template: Primary key or name of the workflow job template to launch new job.
+        :type workflow_job_template: str
+        :param monitor: Flag that if set, immediately calls ``monitor`` on the newly launched workflow job rather
+                        than exiting with a success.
+        :type monitor: bool
+        :param wait: Flag that if set, monitor the status of the workflow job, but do not print while job is
+                     in progress.
+        :type wait: bool
+        :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
+                        of seconds.
+        :type timeout: int
+        :param extra_vars: yaml formatted texts that contains extra variables to pass on.
+        :type extra_vars: array of strings
+        :param `**kwargs`: Fields needed to create and launch a workflow job.
+        :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent ``wait``
+                  call if ``wait`` flag is on; loaded JSON output of the job launch if none of the two flags are on.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         if extra_vars is not None and len(extra_vars) > 0:
             kwargs['extra_vars'] = parser.process_extra_vars(extra_vars)
