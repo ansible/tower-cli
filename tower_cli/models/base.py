@@ -63,18 +63,34 @@ class ResourceMeta(type):
             # down to the subclass implementation.
             if not len(bases):
                 continue
-            superclass = bases[0]
-            super_method = getattr(superclass, key, None)
-            if super_method and getattr(super_method, '_cli_command', False):
-                # Copy the click parameters from the parent method to the
-                # child.
-                cp = getattr(value, '__click_params__', [])
-                cp = getattr(super_method, '__click_params__', []) + cp
-                value.__click_params__ = cp
+            cp = []
+            baseattrs = {}
+            for superclass in bases:
+                super_method = getattr(superclass, key, None)
+                if super_method and getattr(super_method, '_cli_command', False):
+                    # Copy the click parameters from the parent method to the
+                    # child.
+                    for param in getattr(super_method, '__click_params__', []):
+                        if param not in cp:
+                            cp.append(param)
 
-                # Copy the command attributes from the parent to the child,
-                # if the child has not overridden them.
-                for attkey, attval in super_method._cli_command_attrs.items():
+                    # Copy the command attributes from the parent to the child,
+                    # if the child has not overridden them.
+                    for attkey, attval in getattr(super_method, '_cli_command_attrs', {}).items():
+                        baseattrs.setdefault(attkey, attval)
+            if cp:
+                # If subclass method is not decorated as command, but parent
+                # classes do, then make it into a command here
+                if not hasattr(value, '__click_params__'):
+                    value.__click_params__ = []
+                if not hasattr(value, '_cli_command_attrs'):
+                    value._cli_command_attrs = {}
+
+                # Copy all parent click parameters to subclass method here
+                for param in cp:
+                    if param not in value.__click_params__:
+                        value.__click_params__.append(param)
+                for attkey, attval in baseattrs.items():
                     value._cli_command_attrs.setdefault(attkey, attval)
         attrs['commands'] = sorted(commands)
 
