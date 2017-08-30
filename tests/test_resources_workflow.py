@@ -391,7 +391,7 @@ class SchemaTests(unittest.TestCase):
     def test_expected_output(self):
         """
         Test that the expected structure is returned from the method
-        to reorganize workflow nodes in a heirarchy
+        to reorganize workflow nodes in a hierarchy
         """
         output = Resource._workflow_node_structure(EXAMPLE_NODE_LIST)
         self.assertEqual(
