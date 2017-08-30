@@ -103,7 +103,7 @@ class CreateTests(unittest.TestCase):
 
     def test_create_wait(self):
         """Establish that a project can be created with the wait flag
-        enabled and still sucessfully exit and complete.
+        enabled and still successfully exit and complete.
         """
         with client.test_mode as t:
 

@@ -149,7 +149,7 @@ class RelatedTests(unittest.TestCase):
             self.assertEqual(self.related.convert('meagan', p, None), 42)
 
     def test_convert_by_lookup_error(self):
-        """Establish that if doing a foriegn key lookup fails, that we
+        """Establish that if doing a foreign key lookup fails, that we
         raise an appropriate exception.
         """
         p = click.Option(('name', '-n'))

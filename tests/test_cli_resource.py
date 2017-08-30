@@ -193,7 +193,7 @@ class SubcommandTests(unittest.TestCase):
 
     def test_docstring_replacement_an(self):
         """Establish that for resources with names beginning with vowels,
-        that the automatic docstring replacement is gramatically correct.
+        that the automatic docstring replacement is grammatically correct.
         """
         # Create a resource with an approriate name.
         class Oreo(models.Resource):

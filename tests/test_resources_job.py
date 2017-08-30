@@ -70,7 +70,7 @@ def jt_vars_registration(t, extra_vars):
     """ Endpoints that are needed to get information from job template.
     This particular combination also entails
     1) version of Tower - 2.2.0
-    2) sucessful job launch, id=42
+    2) successful job launch, id=42
     3) prompts user for variables on launch """
     t.register_json('/job_templates/1/', {
         'ask_variables_on_launch': True,
@@ -326,7 +326,7 @@ class LaunchTests(unittest.TestCase):
 
     def test_launch_with_use_job_endpoint_set(self):
         """Establish that launching a job with `--use-job-endpoint` set would
-        launch job through /jobs/\d/ endpoint regardless of the existance of
+        launch job through /jobs/\d/ endpoint regardless of the existence of
         /job_templates/\d/launch/ endpoint
         """
         jt = {
@@ -452,7 +452,7 @@ class MonitorWaitTests(unittest.TestCase):
                 self.assertEqual(result['status'], 'successful')
 
     def test_already_successful_monitor(self):
-        """Pass-through sucessful job with monitor method"""
+        """Pass-through successful job with monitor method"""
         with client.test_mode as t:
             t.register_json('/jobs/42/', {
                 'elapsed': 1335024000.0,
