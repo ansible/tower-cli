@@ -147,7 +147,7 @@ class ParserTests(unittest.TestCase):
 
 
 class TestSplitter_Gen(unittest.TestCase):
-    """Set of strings paired with expected output is ran agains the parsing
+    """Set of strings paired with expected output is ran against the parsing
     functions in this code in order to verrify desired accuracy.
 
     SPLIT_DATA is taken from Ansible tests located in:
