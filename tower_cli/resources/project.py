@@ -22,6 +22,7 @@ from tower_cli.utils import debug
 
 
 class Resource(models.Resource, models.MonitorableResource):
+    """A resource for projects."""
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
     unified_job_type = '/project_updates/'
@@ -40,7 +41,7 @@ class Resource(models.Resource, models.MonitorableResource):
     )
     scm_url = models.Field(required=False)
     local_path = models.Field(
-        help_text='For manual projects, the server playbook directory name',
+        help_text='For manual projects, the server playbook directory name.',
         required=False)
     scm_branch = models.Field(required=False, display=False)
     scm_credential = models.Field(
@@ -72,6 +73,34 @@ class Resource(models.Resource, models.MonitorableResource):
         """Create a new item of resource, with or w/o org.
         This would be a shared class with user, but it needs the ability
         to monitor if the flag is set.
+
+        =====API DOCS=====
+        Create a project and, if related flags are set, monitor or wait the triggered initial project update.
+
+        :param monitor: Flag that if set, immediately calls ``monitor`` on the newly triggered project update
+                        rather than exiting with a success.
+        :type monitor: bool
+        :param wait: Flag that if set, monitor the status of the triggered project update, but do not print
+                     while it is in progress.
+        :type wait: bool
+        :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
+                        of seconds.
+        :type timeout: bool
+        :param fail_on_found: Flag that if set, the operation fails if an object matching the unique criteria
+                              already exists.
+        :type fail_on_found: bool
+        :param force_on_exists: Flag that if set, then if a match is found on unique fields, other fields will
+                                be updated to the provided values.; If unset, a match causes the request to be
+                                a no-op.
+        :type force_on_exists: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as POST body to create the
+                           resource object.
+        :returns: A dictionary combining the JSON output of the created resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is created successfully; "id", an integer which
+                  is the primary key of the created object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         if 'job_timeout' in kwargs and 'timeout' not in kwargs:
             kwargs['timeout'] = kwargs.pop('job_timeout')
@@ -129,6 +158,24 @@ class Resource(models.Resource, models.MonitorableResource):
         written.
 
         To modify unique fields, you must use the primary key for the lookup.
+
+        =====API DOCS=====
+        Modify an already existing project.
+
+        :param pk: Primary key of the resource to be modified.
+        :type pk: int
+        :param create_on_missing: Flag that if set, a new object is created if ``pk`` is not set and objects
+                                  matching the appropriate unique criteria is not found.
+        :type create_on_missing: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as PATCH body to modify the
+                           resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
+                           also in resource's identity will be used to lookup existing reosource.
+        :returns: A dictionary combining the JSON output of the modified resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is successfully updated; "id", an integer which
+                  is the primary key of the updated object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # Associated with issue #52, the organization can't be modified
         #    with the 'modify' command. This would create confusion about
@@ -154,6 +201,32 @@ class Resource(models.Resource, models.MonitorableResource):
                wait=False, timeout=None, name=None, organization=None):
         """Trigger a project update job within Ansible Tower.
         Only meaningful on non-manual projects.
+
+        =====API DOCS=====
+        Update the given project.
+
+        :param pk: Primary key of the project to be updated.
+        :type pk: int
+        :param monitor: Flag that if set, immediately calls ``monitor`` on the newly launched project update
+                        rather than exiting with a success.
+        :type monitor: bool
+        :param wait: Flag that if set, monitor the status of the project update, but do not print while it is
+                     in progress.
+        :type wait: bool
+        :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
+                        of seconds.
+        :type timeout: int
+        :param name: Name of the project to be updated if ``pk`` is not set.
+        :type name: str
+        :param organization: Primary key or name of the organization the project to be updated belonging to if
+                             ``pk`` is not set.
+        :type organization: str
+        :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent ``wait``
+                  call if ``wait`` flag is on; dictionary of "status" if none of the two flags are on.
+        :rtype: dict
+        :raises tower_cli.exceptions.CannotStartJob: When the project cannot be updated.
+
+        =====API DOCS=====
         """
         # First, get the appropriate project.
         # This should be uniquely identified at this point, and if not, then
@@ -191,7 +264,22 @@ class Resource(models.Resource, models.MonitorableResource):
     @click.option('--detail', is_flag=True, default=False,
                   help='Print more detail.')
     def status(self, pk=None, detail=False, **kwargs):
-        """Print the status of the most recent update."""
+        """Print the status of the most recent update.
+
+        =====API DOCS=====
+        Print the status of the most recent update.
+
+        :param pk: Primary key of the resource to retrieve status from.
+        :type pk: int
+        :param detail: Flag that if set, return the full JSON of the job resource rather than a status summary.
+        :type detail: bool
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve status from if ``pk``
+                           is not provided.
+        :returns: full loaded JSON of the specified unified job if ``detail`` flag is on; trimed JSON containing
+                  only "elapsed", "failed" and "status" fields of the unified job if ``detail`` flag is off.
+        :rtype: dict
+        =====API DOCS=====
+        """
         # Obtain the most recent project update
         job = self.last_job_data(pk, **kwargs)
 

@@ -17,6 +17,7 @@ from tower_cli import models
 
 
 class Resource(models.Resource):
+    """A resource for unified jobs."""
     cli_help = 'Combined model of projects, job templates, and others.'
     endpoint = '/unified_jobs/'
     internal = True

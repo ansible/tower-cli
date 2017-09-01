@@ -94,6 +94,7 @@ def jt_aggregate(func, is_create=False, has_pk=False):
 
 
 class Resource(models.Resource):
+    """A resource for schedules."""
     cli_help = 'Manage schedules within Ansible Tower.'
     endpoint = '/schedules/'
 
@@ -114,10 +115,10 @@ class Resource(models.Resource):
     unified_job_template = models.Field(required=False, type=int,
                                         help_text='Integer used to display'
                                         ' unified job template in result, '
-                                        'Please don\'t use it for create/'
+                                        'Do not use it for create/'
                                         'modify.')
     enabled = models.Field(required=False, type=click.BOOL, default=True,
-                           help_text='Whether this schedule will be used',
+                           help_text='Whether this schedule will be used.',
                            show_default=True)
     rrule = models.Field(required=False, display=False,
                          help_text='Schedule rules specifications which is'

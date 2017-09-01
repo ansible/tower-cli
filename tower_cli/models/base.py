@@ -148,17 +148,81 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
             if hasattr(value, 'read'):
                 kwargs[key] = value.read()
 
+    def _lookup(self, fail_on_missing=False, fail_on_found=False, include_debug_header=True, **kwargs):
+        """
+        =====API DOCS=====
+        Attempt to perform a lookup that is expected to return a single result, and return the record.
+
+        This method is a wrapper around `get` that strips out non-unique keys, and is used internally by
+        `write` and `delete`.
+
+        :param fail_on_missing: Flag that raise exception if no resource is found.
+        :type fail_on_missing: bool
+        :param fail_on_found: Flag that raise exception if a resource is found.
+        :type fail_on_found: bool
+        :param include_debug_header: Flag determining whether to print debug messages when querying
+                                     Tower backend.
+        :type include_debug_header: bool
+        :param `**kwargs`: Keyword arguments list of available fields used for searching resource.
+        :returns: A JSON object containing details of the resource returned by Tower backend.
+        :rtype: dict
+
+        :raises tower_cli.exceptions.BadRequest: When no field are provided in kwargs.
+        :raises tower_cli.exceptions.Found: When a resource is found and fail_on_found flag is on.
+        :raises tower_cli.exceptions.NotFound: When no resource is found and fail_on_missing flag
+                                               is on.
+        =====API DOCS=====
+        """
+        read_params = {}
+        for field_name in self.identity:
+            if field_name in kwargs:
+                read_params[field_name] = kwargs[field_name]
+        if 'id' in self.identity and len(self.identity) == 1:
+            return {}
+        if not read_params:
+            raise exc.BadRequest('Cannot reliably determine which record to write. Include an ID or unique '
+                                 'fields.')
+        try:
+            existing_data = self.get(include_debug_header=include_debug_header, **read_params)
+            if fail_on_found:
+                raise exc.Found('A record matching %s already exists, and you requested a failure in that case.' %
+                                read_params)
+            return existing_data
+        except exc.NotFound:
+            if fail_on_missing:
+                raise exc.NotFound('A record matching %s does not exist, and you requested a failure in that case.' %
+                                   read_params)
+            return {}
+
     def read(self, pk=None, fail_on_no_results=False, fail_on_multiple_results=False, **kwargs):
-        """Retrieve and return objects from the Ansible Tower API.
+        """
+        =====API DOCS=====
+        Retrieve and return objects from the Ansible Tower API.
 
-        If an `object_id` is provided, only attempt to read that object, rather than the list at large.
+        :param pk: Primary key of the resource to be read. Tower CLI will only attempt to read that object
+                   if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param fail_on_no_results: Flag that if set, zero results is considered a failure case and raises
+                                   an exception; otherwise, empty list is returned. (Note: This is always True
+                                   if a primary key is included.)
+        :type fail_on_no_results: bool
+        :param fail_on_multiple_results: Flag that if set, at most one result is expected, and more results
+                                         constitutes a failure case. (Note: This is meaningless if a primary
+                                         key is included, as there can never be multiple results.)
+        :type fail_on_multiple_results: bool
+        :param query: Contains 2-tuples used as query parameters to filter resulting resource objects.
+        :type query: list
+        :param `**kwargs`: Keyword arguements which, all together, will be used as query parameters to filter
+                           resulting resource objects.
+        :returns: loaded JSON from Tower backend response body.
+        :rtype: dict
+        :raises tower_cli.exceptions.BadRequest: When 2-tuples in ``query`` overlaps key-value pairs in
+                                                 ``**kwargs``.
+        :raises tower_cli.exceptions.NotFound: When no objects are found and ``fail_on_no_results`` flag is on.
+        :raises tower_cli.exceptions.MultipleResults: When multiple objects are found and
+                                                      ``fail_on_multiple_results`` flag is on.
 
-        If `fail_on_no_results` is True, then zero results is considered a failure case and raises an exception;
-        otherwise, empty list is returned. (Note: This is always True if a primary key is included.)
-
-        If `fail_on_multiple_results` is True, then at most one result is expected, and more results constitutes
-        a failure case. (Note: This is meaningless if a primary key is included, as there can never be multiple
-        results.)
+        =====API DOCS=====
         """
         # Piece together the URL we will be hitting.
         url = self.endpoint
@@ -218,21 +282,34 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         return url + '%s/' % pk
 
     def write(self, pk=None, create_on_missing=False, fail_on_found=False, force_on_exists=True, **kwargs):
-        """Modify the given object using the Ansible Tower API. Return the object and a boolean value informing
-        us whether or not the record was changed.
+        """
+        =====API DOCS=====
+        Modify the given object using the Ansible Tower API.
 
-        If `create_on_missing` is True, then an object matching the appropriate unique criteria is not found,
-        then a new object is created.
+        :param pk: Primary key of the resource to be read. Tower CLI will only attempt to read that object
+                   if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param create_on_missing: Flag that if set, a new object is created if ``pk`` is not set and objects
+                                  matching the appropriate unique criteria is not found.
+        :type create_on_missing: bool
+        :param fail_on_found: Flag that if set, the operation fails if an object matching the unique criteria
+                              already exists.
+        :type fail_on_found: bool
+        :param force_on_exists: Flag that if set, then if an object is modified based on matching via unique
+                                fields (as opposed to the primary key), other fields are updated based on data
+                                sent; If unset, then the non-unique values are only written in a creation case.
+        :type force_on_exists: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as POST/PATCH body to create/modify
+                           the resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
+                           also in resource's identity will be used to lookup existing reosource.
+        :returns: A dictionary combining the JSON output of the resource, as well as two extra fields: "changed",
+                  a flag indicating if the resource is created or successfully updated; "id", an integer which
+                  is the primary key of the specified object.
+        :rtype: dict
+        :raises tower_cli.exceptions.BadRequest: When required fields are missing in ``**kwargs`` when creating
+                                                 a new resource object.
 
-        If there are no unique criteria on the model (other than the primary key), then this will always constitute
-        a creation (even if a match exists) unless the primary key is sent.
-
-        If `fail_on_found` is True, then if an object matching the unique criteria already exists, the operation
-        fails.
-
-        If `force_on_exists` is True, then if an object is modified based on matching via. unique fields (as opposed
-        to the primary key), other fields are updated based on data sent. If `force_on_exists` is set to False,
-        then the non-unique values are only written in a creation case.
+        =====API DOCS=====
         """
         existing_data = {}
 
@@ -307,6 +384,21 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
         If `fail_on_missing` is True, then the object's not being found is considered a failure; otherwise,
         a success with no change is reported.
+
+        =====API DOCS=====
+        Remove the given object.
+
+        :param pk: Primary key of the resource to be deleted.
+        :type pk: int
+        :param fail_on_missing: Flag that if set, the object's not being found is considered a failure; otherwise,
+                                a success with no change is reported.
+        :type fail_on_missing: bool
+        :param `**kwargs`: Keyword arguments used to look up resource object to delete if ``pk`` is not provided.
+        :returns: dictionary of only one field "changed", which is a flag indicating whether the specified resource
+                  is successfully deleted.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # If we weren't given a primary key, determine which record we're deleting.
         if not pk:
@@ -339,6 +431,18 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         through keyword arguments.
 
         If the number of results does not equal one, raise an exception.
+
+        =====API DOCS=====
+        Retrieve one and exactly one object.
+
+        :param pk: Primary key of the resource to be read. Tower CLI will only attempt to read *that* object
+                   if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve if ``pk`` is not provided.
+        :returns: loaded JSON of the retrieved resource object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         if kwargs.pop('include_debug_header', True):
             debug.log('Getting the record.', header='details')
@@ -360,6 +464,21 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         If one or more filters are provided through keyword arguments, filter the results accordingly.
 
         If no filters are provided, return all results.
+
+        =====API DOCS=====
+        Retrieve a list of objects.
+
+        :param all_pages: Flag that if set, collect all pages of content from the API when returning results.
+        :type all_pages: bool
+        :param page: The page to show. Ignored if all_pages is set.
+        :type page: int
+        :param query: Contains 2-tuples used as query parameters to filter resulting resource objects.
+        :type query: list
+        :param `**kwargs`: Keyword arguments list of available fields used for searching resource objects.
+        :returns: A JSON object containing details of all resource objects returned by Tower backend.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # If the `all_pages` flag is set, then ignore any page that might also be sent.
         if all_pages:
@@ -420,40 +539,6 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         r = client.post(url, data={'disassociate': True, 'id': other})
         return {'changed': True}
 
-    def _lookup(self, fail_on_missing=False, fail_on_found=False, include_debug_header=True, **kwargs):
-        """Attempt to perform a lookup that is expected to return a single result, and return the record.
-
-        This method is a wrapper around `get` that strips out non-unique keys, and is used internally by
-        `write` and `delete`.
-        """
-        # Determine which parameters we are using to determine the appropriate field.
-        read_params = {}
-        for field_name in self.identity:
-            if field_name in kwargs:
-                read_params[field_name] = kwargs[field_name]
-
-        # Special case of resources that only only addressable by id
-        if 'id' in self.identity and len(self.identity) == 1:
-            return {}
-
-        # Sanity check: Do we have any parameters? If not, then there's no way for us to do this read.
-        if not read_params:
-            raise exc.BadRequest('Cannot reliably determine which record to write. Include an ID or unique '
-                                 'fields.')
-
-        # Get the record to write.
-        try:
-            existing_data = self.get(include_debug_header=include_debug_header, **read_params)
-            if fail_on_found:
-                raise exc.Found('A record matching %s already exists, and you requested a failure in that case.' %
-                                read_params)
-            return existing_data
-        except exc.NotFound:
-            if fail_on_missing:
-                raise exc.NotFound('A record matching %s does not exist, and you requested a failure in that case.' %
-                                   read_params)
-            return {}
-
 
 class Resource(BaseResource):
     """This is the parent class for all standard resources."""
@@ -470,6 +555,25 @@ class Resource(BaseResource):
 
         Fields in the resource's `identity` tuple are used for a lookup; if a match is found, then no-op
         (unless `force_on_exists` is set) but do not fail (unless `fail_on_found` is set).
+
+        =====API DOCS=====
+        Create an object.
+
+        :param fail_on_found: Flag that if set, the operation fails if an object matching the unique criteria
+                              already exists.
+        :type fail_on_found: bool
+        :param force_on_exists: Flag that if set, then if a match is found on unique fields, other fields will
+                                be updated to the provided values.; If unset, a match causes the request to be
+                                a no-op.
+        :type force_on_exists: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as POST body to create the
+                           resource object.
+        :returns: A dictionary combining the JSON output of the created resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is created successfully; "id", an integer which
+                  is the primary key of the created object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         return self.write(create_on_missing=True, **kwargs)
 
@@ -479,6 +583,17 @@ class Resource(BaseResource):
 
         Only the ID is used for the lookup. All provided fields are used to override the old data from the
         copied resource.
+
+        =====API DOCS=====
+        Copy an object.
+
+        :param pk: Primary key of the resource object to be copied
+        :type pk: int
+        :param `**kwargs`: Keyword arguments of fields whose given value will override the original value.
+        :returns: loaded JSON of the copied new resource object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         orig = self.read(pk, fail_on_no_results=True, fail_on_multiple_results=True)
         orig = orig['results'][0]
@@ -503,6 +618,24 @@ class Resource(BaseResource):
         only other fields are written.
 
         To modify unique fields, you must use the primary key for the lookup.
+
+        =====API DOCS=====
+        Modify an already existing object.
+
+        :param pk: Primary key of the resource to be modified.
+        :type pk: int
+        :param create_on_missing: Flag that if set, a new object is created if ``pk`` is not set and objects
+                                  matching the appropriate unique criteria is not found.
+        :type create_on_missing: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as PATCH body to modify the
+                           resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
+                           also in resource's identity will be used to lookup existing reosource.
+        :returns: A dictionary combining the JSON output of the modified resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is successfully updated; "id", an integer which
+                  is the primary key of the updated object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         return self.write(pk, create_on_missing=create_on_missing, force_on_exists=True, **kwargs)
 
@@ -591,6 +724,32 @@ class MonitorableResource(BaseResource):
     def monitor(self, pk, parent_pk=None, timeout=None, interval=0.5, outfile=sys.stdout, **kwargs):
         """
         Stream the standard output from a job, project update, or inventory udpate.
+
+        =====API DOCS=====
+        Stream the standard output from a job run to stdout.
+
+        :param pk: Primary key of the job resource object to be monitored.
+        :type pk: int
+        :param parent_pk: Primary key of the unified job template resource object whose latest job run will be
+                          monitored if ``pk`` is not set.
+        :type parent_pk: int
+        :param timeout: Number in seconds after which this method wiil time out.
+        :type timeout: float
+        :param interval: Polling interval to refresh content from Tower.
+        :type interval: float
+        :param outfile: Alternative file than stdout to write job stdout to.
+        :type outfile: file
+        :param `**kwargs`: Keyword arguments used to look up job resource object to monitor if ``pk`` is
+                           not provided.
+        :returns: A dictionary combining the JSON output of the finished job resource object, as well as
+                  two extra fields: "changed", a flag indicating if the job resource object is finished
+                  as expected; "id", an integer which is the primary key of the job resource object being
+                  monitored.
+        :rtype: dict
+        :raises tower_cli.exceptions.Timeout: When monitor time reaches time out.
+        :raises tower_cli.exceptions.JobFailure: When the job being monitored runs into failure.
+
+        =====API DOCS=====
         """
         # If we do not have the unified job info, infer it from parent
         if pk is None:
@@ -657,6 +816,35 @@ class MonitorableResource(BaseResource):
         """
         Wait for a running job to finish. Blocks further input until the job completes (whether successfully
         or unsuccessfully) and a final status can be given.
+
+        =====API DOCS=====
+        Wait for a job resource object to enter certain status.
+
+        :param pk: Primary key of the job resource object to wait.
+        :type pk: int
+        :param parent_pk: Primary key of the unified job template resource object whose latest job run will be
+                          waited if ``pk`` is not set.
+        :type parent_pk: int
+        :param timeout: Number in seconds after which this method will time out.
+        :type timeout: float
+        :param min_interval: Minimum polling interval to request an update from Tower.
+        :type min_interval: float
+        :param max_interval: Maximum polling interval to request an update from Tower.
+        :type max_interval: float
+        :param outfile: Alternative file than stdout to write job status updates on.
+        :type outfile: file
+        :param exit_on: Job resource object statuses to wait on.
+        :type exit_on: array
+        :param `**kwargs`: Keyword arguments used to look up job resource object to wait if ``pk`` is
+                           not provided.
+        :returns: A dictionary combining the JSON output of the status-changed job resource object, as well
+                  as two extra fields: "changed", a flag indicating if the job resource object is status-changed
+                  as expected; "id", an integer which is the primary key of the job resource object being
+                  status-changed.
+        :rtype: dict
+        :raises tower_cli.exceptions.Timeout: When wait time reaches time out.
+        :raises tower_cli.exceptions.JobFailure: When the job being waited on runs into failure.
+        =====API DOCS=====
         """
         # If we do not have the unified job info, infer it from parent
         if pk is None:
@@ -751,7 +939,23 @@ class ExeResource(MonitorableResource):
     @click.option('--detail', is_flag=True, default=False, help='Print more detail.')
     def status(self, pk=None, detail=False, **kwargs):
         """Print the current job status. This is used to check a running job. You can look up the job with
-        the same parameters used for a get request."""
+        the same parameters used for a get request.
+
+        =====API DOCS=====
+        Retrieve the current job status.
+
+        :param pk: Primary key of the resource to retrieve status from.
+        :type pk: int
+        :param detail: Flag that if set, return the full JSON of the job resource rather than a status summary.
+        :type detail: bool
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve status from if ``pk``
+                           is not provided.
+        :returns: full loaded JSON of the specified unified job if ``detail`` flag is on; trimed JSON containing
+                  only "elapsed", "failed" and "status" fields of the unified job if ``detail`` flag is off.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         # Remove default values (anything where the value is None).
         self._pop_none(kwargs)
 
@@ -784,6 +988,22 @@ class ExeResource(MonitorableResource):
 
         Fails with a non-zero exit status if the job cannot be canceled.
         You must provide either a pk or parameters in the job's identity.
+
+        =====API DOCS=====
+        Cancel a currently running job.
+
+        :param pk: Primary key of the job resource to restart.
+        :type pk: int
+        :param fail_if_not_running: Flag that if set, raise exception if the job resource cannot be canceled.
+        :type fail_if_not_running: bool
+        :param `**kwargs`: Keyword arguments used to look up job resource object to restart if ``pk`` is not
+                           provided.
+        :returns: A dictionary of two keys: "status", which is "canceled", and "changed", which indicates if
+                  the job resource has been successfully canceled.
+        :rtype: dict
+        :raises tower_cli.exceptions.TowerCLIError: When the job resource cannot be canceled and
+                                                    ``fail_if_not_running`` flag is on.
+        =====API DOCS=====
         """
         # Search for the record if pk not given
         if not pk:
@@ -809,6 +1029,20 @@ class ExeResource(MonitorableResource):
 
         Fails with a non-zero exit status if the job cannot be relaunched.
         You must provide either a pk or parameters in the job's identity.
+
+        =====API DOCS=====
+        Relaunch a stopped job resource.
+
+        :param pk: Primary key of the job resource to relaunch.
+        :type pk: int
+        :param `**kwargs`: Keyword arguments used to look up job resource object to relaunch if ``pk`` is not
+                           provided.
+        :returns: A dictionary combining the JSON output of the relaunched job resource object, as well
+                  as an extra field "changed", a flag indicating if the job resource object is status-changed
+                  as expected.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # Search for the record if pk not given
         if not pk:
@@ -862,7 +1096,20 @@ class SurveyResource(Resource):
     @resources.command
     def survey(self, pk=None, **kwargs):
         """Get the survey_spec for the job template.
-        To write a survey, use the modify command with the --survey-spec parameter."""
+        To write a survey, use the modify command with the --survey-spec parameter.
+
+        =====API DOCS=====
+        Get the survey specification of a resource object.
+
+        :param pk: Primary key of the resource to retrieve survey from. Tower CLI will only attempt to
+                   read *that* object if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve survey if ``pk``
+                           is not provided.
+        :returns: loaded JSON of the retrieved survey specification of the resource object.
+        :rtype: dict
+        =====API DOCS=====
+        """
         job_template = self.get(pk=pk, **kwargs)
         if settings.format == 'human':
             settings.format = 'json'

@@ -65,3 +65,6 @@ results.xml
 
 # ignore python egg
 *.egg-info/
+
+# Sphinx
+docs_wip/build/*

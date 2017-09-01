@@ -19,6 +19,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.Resource):
+    """A resource for inventory scripts."""
     cli_help = 'Manage inventory scripts within Ansible Tower.'
     endpoint = '/inventory_scripts/'
 

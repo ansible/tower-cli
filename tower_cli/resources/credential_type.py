@@ -19,6 +19,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.Resource):
+    """A resource for credential types."""
     cli_help = 'Manage credential types within Ansible Tower.'
     endpoint = '/credential_types/'
 

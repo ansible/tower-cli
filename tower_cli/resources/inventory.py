@@ -18,6 +18,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.Resource):
+    """A resource for inventories."""
     cli_help = 'Manage inventory within Ansible Tower.'
     endpoint = '/inventories/'
     identity = ('organization', 'name')

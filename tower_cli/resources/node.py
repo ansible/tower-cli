@@ -36,6 +36,7 @@ JOB_TYPES = {
 
 
 class Resource(models.Resource):
+    """A resource for workflow nodes."""
     cli_help = 'Manage nodes inside of a workflow job template.'
     endpoint = '/workflow_job_template_nodes/'
     identity = ('id',)
@@ -101,18 +102,30 @@ class Resource(models.Resource):
 
     def _assoc_or_create(self, relationship, parent, child, **kwargs):
         if child is None:
-            child_data = self._get_or_create_child(
-                parent, relationship, **kwargs)
+            child_data = self._get_or_create_child(parent, relationship, **kwargs)
             return child_data
-        return self._assoc(self._forward_rel_name(relationship),
-                           parent, child)
+        return self._assoc(self._forward_rel_name(relationship), parent, child)
 
     @resources.command
     @unified_job_template_options
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_success_node(self, parent, child=None, **kwargs):
-        """Add a node to run on success."""
+        """Add a node to run on success.
+
+        =====API DOCS=====
+        Add a node to run on success.
+
+        :param parent: Primary key of parent node to associate success node to.
+        :type parent: int
+        :param child: Primary key of child node to be associated.
+        :type child: int
+        :param `**kwargs`: Fields used to create child node if ``child`` is not provided.
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc_or_create('success', parent, child, **kwargs)
 
     @resources.command(use_fields_as_options=False)
@@ -120,7 +133,20 @@ class Resource(models.Resource):
     @click.argument('child', type=types.Related('node'))
     def disassociate_success_node(self, parent, child):
         """Remove success node.
-        The resulatant 2 nodes will both become root nodes."""
+        The resulatant 2 nodes will both become root nodes.
+
+        =====API DOCS=====
+        Remove success node.
+
+        :param parent: Primary key of parent node to disassociate success node from.
+        :type parent: int
+        :param child: Primary key of child node to be disassociated.
+        :type child: int
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc(
             self._forward_rel_name('success'), parent, child)
 
@@ -129,7 +155,21 @@ class Resource(models.Resource):
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_failure_node(self, parent, child=None, **kwargs):
-        """Add a node to run on failure."""
+        """Add a node to run on failure.
+
+        =====API DOCS=====
+        Add a node to run on failure.
+
+        :param parent: Primary key of parent node to associate failure node to.
+        :type parent: int
+        :param child: Primary key of child node to be associated.
+        :type child: int
+        :param `**kwargs`: Fields used to create child node if ``child`` is not provided.
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc_or_create('failure', parent, child, **kwargs)
 
     @resources.command(use_fields_as_options=False)
@@ -137,7 +177,20 @@ class Resource(models.Resource):
     @click.argument('child', type=types.Related('node'))
     def disassociate_failure_node(self, parent, child):
         """Remove a failure node link.
-        The resulatant 2 nodes will both become root nodes."""
+        The resulatant 2 nodes will both become root nodes.
+
+        =====API DOCS=====
+        Remove a failure node link.
+
+        :param parent: Primary key of parent node to disassociate failure node from.
+        :type parent: int
+        :param child: Primary key of child node to be disassociated.
+        :type child: int
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc(
             self._forward_rel_name('failure'), parent, child)
 
@@ -146,14 +199,41 @@ class Resource(models.Resource):
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'), required=False)
     def associate_always_node(self, parent, child=None, **kwargs):
-        """Add a node to always run after the parent is finished."""
+        """Add a node to always run after the parent is finished.
+
+        =====API DOCS=====
+        Add a node to always run after the parent is finished.
+
+        :param parent: Primary key of parent node to associate always node to.
+        :type parent: int
+        :param child: Primary key of child node to be associated.
+        :type child: int
+        :param `**kwargs`: Fields used to create child node if ``child`` is not provided.
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc_or_create('always', parent, child, **kwargs)
 
     @resources.command(use_fields_as_options=False)
     @click.argument('parent', type=types.Related('node'))
     @click.argument('child', type=types.Related('node'))
     def disassociate_always_node(self, parent, child):
-        """Add a node to always run after the parent is finished.
-        The resulatant 2 nodes will both become root nodes."""
+        """Remove an always node link.
+        The resultant 2 nodes will both become root nodes.
+
+        =====API DOCS=====
+        Remove an always node link.
+
+        :param parent: Primary key of parent node to disassociate always node from.
+        :type parent: int
+        :param child: Primary key of child node to be disassociated.
+        :type child: int
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._disassoc(
             self._forward_rel_name('always'), parent, child)

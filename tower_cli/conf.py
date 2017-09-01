@@ -68,15 +68,26 @@ class Parser(configparser.ConfigParser):
 
 
 class Settings(object):
-    """An object that understands permanent configuration provided to
-    tower-cli through configuration files or command-line arguments.
+    """A class that understands configurations provided to tower-cli through configuration files
+    or runtime parameters. A signleton object ``tower_cli.conf.settings`` will be instantiated and used.
 
-    The order of precedence for settings, from least to greatest, is:
+    The 5 levels of precedence for settings, listing from least to greatest, are:
 
-        - defaults provided in this method
-        - `/etc/tower/tower_cli.cfg`
-        - `~/.tower_cli.cfg`
-        - command line arguments
+        - defaults: Default values provided
+        - global: Contents parsed from .ini-formatted file ``/etc/tower/tower_cli.cfg`` if exists.
+        - user: Contents parsed from .ini-formatted file ``~/.tower_cli.cfg`` if exists.
+        - local: Contents parsed from .ini-formatted file ``.tower_cli.cfg`` if exists in the present working
+          directory or any parent directories.
+        - runtime: keyworded arguements provided by ``settings.runtime_values`` context manager.
+
+    Note that .ini configuration file should follow the specified format in order to be correctly parsed:
+
+    .. code-block:: bash
+
+       [general]
+       <configuration name 1> = <value 1>
+       <configuration name 2> = <value 2>
+       ...
 
     """
     _parser_names = ['runtime', 'local', 'user', 'global', 'defaults']
@@ -245,8 +256,22 @@ class Settings(object):
 
     @contextlib.contextmanager
     def runtime_values(self, **kwargs):
-        """Temporarily override the runtime settings, which exist at the
-        highest precedence level.
+        """
+        =====API DOCS=====
+        Context manager that temporarily override runtime level configurations.
+
+        :param kwargs: Keyword arguments specifying runtime configuration settings.
+        :type kwargs: arbitrary keyword arguments
+        :returns: N/A
+
+        :Example:
+
+        >>> import tower_cli
+        >>> from tower_cli.conf import settings
+        >>> with settings.runtime_values(username='user', password='pass'):
+        >>>     print(tower_cli.get_resource('credential').list())
+
+        =====API DOCS=====
         """
         kwargs = config_from_environment(kwargs)
 

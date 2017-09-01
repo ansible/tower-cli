@@ -20,6 +20,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.Resource):
+    """A resource for teams."""
     cli_help = 'Manage teams within Ansible Tower.'
     endpoint = '/teams/'
     identity = ('organization', 'name')
@@ -32,12 +33,37 @@ class Resource(models.Resource):
     @click.option('--team', type=types.Related('team'))
     @click.option('--user', type=types.Related('user'))
     def associate(self, team, user):
-        """Associate a user with this team."""
+        """Associate a user with this team.
+
+        =====API DOCS=====
+        Associate a user with this team.
+
+        :param team: Primary key or name of the team to associate to.
+        :type team: str
+        :param user: Primary key or name of the user to be associated.
+        :type user: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
         return self._assoc('users', team, user)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--team', type=types.Related('team'))
     @click.option('--user', type=types.Related('user'))
     def disassociate(self, team, user):
-        """Disassociate a user from this team."""
+        """Disassociate a user from this team.
+
+        =====API DOCS=====
+        Disassociate a user from this team.
+
+        :param organization: Primary key or name of the team to disassociate from.
+        :type organization: str
+        :param user: Primary key or name of the user to be disassociated.
+        :type user: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        """
         return self._disassoc('users', team, user)

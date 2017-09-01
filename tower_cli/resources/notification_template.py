@@ -23,6 +23,7 @@ from tower_cli.cli import types
 
 
 class Resource(models.Resource):
+    """A resource for notification templates."""
     cli_help = 'Manage notification templates within Ansible Tower.'
     endpoint = '/notification_templates/'
 
@@ -203,6 +204,25 @@ class Resource(models.Resource):
         Fields in the resource's `identity` tuple are used for a lookup;
         if a match is found, then no-op (unless `force_on_exists` is set) but
         do not fail (unless `fail_on_found` is set).
+
+        =====API DOCS=====
+        Create an object.
+
+        :param fail_on_found: Flag that if set, the operation fails if an object matching the unique criteria
+                              already exists.
+        :type fail_on_found: bool
+        :param force_on_exists: Flag that if set, then if a match is found on unique fields, other fields will
+                                be updated to the provided values.; If unset, a match causes the request to be
+                                a no-op.
+        :type force_on_exists: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as POST body to create the
+                           resource object.
+        :returns: A dictionary combining the JSON output of the created resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is created successfully; "id", an integer which
+                  is the primary key of the created object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         config_item = self._separate(kwargs)
         jt_id = kwargs.pop('job_template', None)
@@ -247,6 +267,24 @@ class Resource(models.Resource):
         written.
 
         To modify unique fields, you must use the primary key for the lookup.
+
+        =====API DOCS=====
+        Modify an already existing object.
+
+        :param pk: Primary key of the resource to be modified.
+        :type pk: int
+        :param create_on_missing: Flag that if set, a new object is created if ``pk`` is not set and objects
+                                  matching the appropriate unique criteria is not found.
+        :type create_on_missing: bool
+        :param `**kwargs`: Keyword arguements which, all together, will be used as PATCH body to modify the
+                           resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
+                           also in resource's identity will be used to lookup existing reosource.
+        :returns: A dictionary combining the JSON output of the modified resource, as well as two extra fields:
+                  "changed", a flag indicating if the resource is successfully updated; "id", an integer which
+                  is the primary key of the updated object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # Create the resource if needed.
         if pk is None and create_on_missing:
@@ -297,6 +335,21 @@ class Resource(models.Resource):
 
         If `fail_on_missing` is True, then the object's not being found is
         considered a failure; otherwise, a success with no change is reported.
+
+        =====API DOCS=====
+        Remove the given object.
+
+        :param pk: Primary key of the resource to be deleted.
+        :type pk: int
+        :param fail_on_missing: Flag that if set, the object's not being found is considered a failure; otherwise,
+                                a success with no change is reported.
+        :type fail_on_missing: bool
+        :param `**kwargs`: Keyword arguments used to look up resource object to delete if ``pk`` is not provided.
+        :returns: dictionary of only one field "changed", which is a flag indicating whether the specified resource
+                  is successfully deleted.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         self._separate(kwargs)
         return super(Resource, self).\
@@ -314,6 +367,21 @@ class Resource(models.Resource):
         filter the results accordingly.
 
         If no filters are provided, return all results.
+
+        =====API DOCS=====
+        Retrieve a list of objects.
+
+        :param all_pages: Flag that if set, collect all pages of content from the API when returning results.
+        :type all_pages: bool
+        :param page: The page to show. Ignored if all_pages is set.
+        :type page: int
+        :param query: Contains 2-tuples used as query parameters to filter resulting resource objects.
+        :type query: list
+        :param `**kwargs`: Keyword arguments list of available fields used for searching resource objects.
+        :returns: A JSON object containing details of all resource objects returned by Tower backend.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         self._separate(kwargs)
         return super(Resource, self).list(all_pages=all_pages, **kwargs)
@@ -330,6 +398,18 @@ class Resource(models.Resource):
         argument, and/or through filters specified through keyword arguments.
 
         If the number of results does not equal one, raise an exception.
+
+        =====API DOCS=====
+        Retrieve one and exactly one object.
+
+        :param pk: Primary key of the resource to be read. Tower CLI will only attempt to read *that* object
+                   if ``pk`` is provided (not ``None``).
+        :type pk: int
+        :param `**kwargs`: Keyword arguments used to look up resource object to retrieve if ``pk`` is not provided.
+        :returns: loaded JSON of the retrieved resource object.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         self._separate(kwargs)
         return super(Resource, self).get(pk=pk, **kwargs)

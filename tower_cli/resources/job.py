@@ -94,6 +94,44 @@ class Resource(models.ExeResource):
 
         Creates a new job in Ansible Tower, immediately starts it, and
         returns back an ID in order for its status to be monitored.
+
+        =====API DOCS=====
+        Launch a new job based on a job template.
+
+        :param job_template: Primary key or name of the job template to launch new job.
+        :type job_template: str
+        :param monitor: Flag that if set, immediately calls ``monitor`` on the newly launched job rather
+                        than exiting with a success.
+        :type monitor: bool
+        :param wait: Flag that if set, monitor the status of the job, but do not print while job is in progress.
+        :type wait: bool
+        :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
+                        of seconds.
+        :type timeout: int
+        :param no_input: Flag that if set, suppress any requests for input.
+        :type no_input: bool
+        :param extra_vars: yaml formatted texts that contains extra variables to pass on.
+        :type extra_vars: array of strings
+        :param limit: Specify host limit for job template to run.
+        :type limit: str
+        :param tags: Specify tagged actions in the playbook to run.
+        :type tags: str
+        :param skip_tags: Specify tagged actions in the playbook to ommit.
+        :type skip_tags: str
+        :param job_type: Specify job type for job template to run.
+        :type job_type str
+        :param inventory: Specify machine credential for job template to run.
+        :type inventory: str
+        :param credential: Specify machine credential for job template to run.
+        :type credential: str
+        :param use_job_endpoint: Flag that if set, disable launching jobs from job template when set.
+        :type use_job_endpoint: bool
+        :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent
+                  ``wait`` call if ``wait`` flag is on; Result of subsequent ``status`` call if none of
+                  the two flags are on.
+        :rtype: dict
+
+        =====API DOCS=====
         """
         # Get the job template from Ansible Tower.
         # This is used as the baseline for starting the job.
