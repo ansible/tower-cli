@@ -171,7 +171,7 @@ class Resource(models.Resource):
             endpoint = '%s/%s/roles/' % (cls.pluralize(obj_type), obj)
             if res is not None:
                 # For teams, this is the best lookup we can do
-                #  without making the addional request for its member_role
+                #  without making the additional request for its member_role
                 data['object_id'] = res
         elif res:
             endpoint = '%s/%s/object_roles/' % (cls.pluralize(res_type), res)

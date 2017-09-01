@@ -105,7 +105,7 @@ class Related(click.types.ParamType):
         self.resource_name = resource_name
 
     def convert(self, value, param, ctx):
-        """Return the appropriate interger value. If a non-integer is
+        """Return the appropriate integer value. If a non-integer is
         provided, attempt a name-based lookup and return the primary key.
         """
         resource = tower_cli.get_resource(self.resource_name)
