@@ -37,8 +37,7 @@ class HostTests(unittest.TestCase):
                             {'count': 0, 'results': []})
             t.register_json('/hosts/42/groups/', {}, method='POST')
             self.host_resource.associate(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'associate': True, 'id': 84}))
+            self.assertEqual(t.requests[1].body, json.dumps({'associate': True, 'id': 84}))
 
     def test_disassociate(self):
         """Establish that the associate method makes the HTTP requests
@@ -50,19 +49,36 @@ class HostTests(unittest.TestCase):
                              'next': None, 'previous': None})
             t.register_json('/hosts/42/groups/', {}, method='POST')
             self.host_resource.disassociate(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'disassociate': True, 'id': 84}))
+            self.assertEqual(t.requests[1].body, json.dumps({'disassociate': True, 'id': 84}))
 
     def test_list_under_group(self):
         """Establish that a group flag is converted into query string."""
-        with mock.patch(
-                'tower_cli.models.base.BaseResource.list') as mock_list:
+        with mock.patch('tower_cli.models.base.BaseResource.list') as mock_list:
             self.host_resource.list(group=78)
             mock_list.assert_called_once_with(query=(('groups__in', 78),))
 
+    def test_list_by_host_filter(self):
+        """Establish that a host filter option is converted into query string."""
+        with mock.patch('tower_cli.models.base.BaseResource.list') as mock_list:
+            self.host_resource.list(host_filter='foobar')
+            mock_list.assert_called_once_with(query=(('host_filter', 'foobar'),))
+
     def test_normal_list(self):
         """Establish that the group flag doesn't break the normal list."""
-        with mock.patch(
-                'tower_cli.models.base.BaseResource.list') as mock_list:
+        with mock.patch('tower_cli.models.base.BaseResource.list') as mock_list:
             self.host_resource.list(name="foobar")
             mock_list.assert_called_once_with(name="foobar")
+
+    def test_list_facts(self):
+        """Establish that the list_facts command runs as it is supposed."""
+        with client.test_mode as t:
+            t.register_json('/hosts/42/', {'id': 42})
+            t.register_json('/hosts/42/ansible_facts/', {'foo': 'bar'})
+            self.assertEqual(self.host_resource.list_facts(pk=42), {'foo': 'bar'})
+
+    def test_insights(self):
+        """Establish that the insights command runs as it is supposed."""
+        with client.test_mode as t:
+            t.register_json('/hosts/42/', {'id': 42})
+            t.register_json('/hosts/42/insights/', {'foo': 'bar'})
+            self.assertEqual(self.host_resource.insights(pk=42), {'foo': 'bar'})

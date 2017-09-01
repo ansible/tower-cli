@@ -37,6 +37,7 @@ class Resource(models.Resource, models.MonitorableResource):
             ('git', 'git'),
             ('hg', 'hg'),
             ('svn', 'svn'),
+            ('insights', 'insights'),
         ]),
     )
     scm_url = models.Field(required=False)
