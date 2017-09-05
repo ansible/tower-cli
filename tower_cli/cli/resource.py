@@ -31,6 +31,11 @@ from tower_cli.utils import parser, debug, secho
 from tower_cli.cli.action import ActionSubcommand
 from tower_cli.exceptions import MultipleRelatedError
 
+try:
+    basestring
+except NameError:
+    basestring = None
+
 
 class ResSubcommand(click.MultiCommand):
     """A subcommand that implements all command methods on the
@@ -139,6 +144,17 @@ class ResSubcommand(click.MultiCommand):
         raise MultipleRelatedError(
             'Can not use id format when multiple objects are returned.')
 
+    @staticmethod
+    def get_print_value(data, col):
+        value = data.get(col, 'N/A')
+        is_bool = isinstance(value, bool)
+        if basestring and isinstance(value, basestring) and type(value) is not str:
+            value = value.encode('utf-8')  # handle python 2 encoding problem
+        value = '%s' % value
+        if is_bool:
+            value = value.lower()
+        return value
+
     def _format_human(self, payload):
         """Convert the payload into an ASCII table suitable for
         printing on screen and return it.
@@ -197,7 +213,7 @@ class ResSubcommand(click.MultiCommand):
         for col in columns:
             widths[col] = max(
                 len(col),
-                *[len(six.text_type(i.get(col, 'N/A'))) for i in raw_rows]
+                *[len(self.get_print_value(i, col)) for i in raw_rows]
             )
             fd = fields_by_name.get(col, None)
             if fd is not None and fd.col_width is not None:
@@ -229,10 +245,10 @@ class ResSubcommand(click.MultiCommand):
             data_row = ''
             for col in columns:
                 template = '{0:%d}' % widths[col]
-                value = raw_row.get(col, 'N/A')
-                if isinstance(raw_row.get(col, 'N/A'), bool):
+                value = self.get_print_value(raw_row, col)
+                # Right-align certain native data types
+                if isinstance(raw_row.get(col, 'N/A'), (bool, int)):
                     template = template.replace('{0:', '{0:>')
-                    value = six.text_type(value).lower()
                 # Truncate the cell entry if exceeds manually
                 # specified column width limit
                 fd = fields_by_name.get(col, None)

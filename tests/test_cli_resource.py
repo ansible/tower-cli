@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import yaml
 
@@ -8,6 +9,11 @@ from tower_cli.cli.resource import ResSubcommand
 from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
+
+try:
+    basestring
+except NameError:
+    basestring = None
 
 
 class SubcommandTests(unittest.TestCase):
@@ -262,6 +268,26 @@ class SubcommandTests(unittest.TestCase):
             output = secho.mock_calls[-1][1][0]
         self.assertIn('1 Durham, NC', output)
         self.assertIn('2 Austin, TX', output)
+
+    def test_unicode_human_formatting(self):
+        value = 'unicode ❤ ☀ ☆ ☂'
+        data = {
+            'count': 1,
+            'results': [
+                {'id': 1, 'name': 'ascii'},
+                {
+                    'id': 42,
+                    'name': ''
+                }
+            ]
+        }
+        if basestring:
+            # Python < 3
+            data['results'][1]['name'] = value.decode('utf-8')
+        else:
+            data['results'][1]['name'] = value
+        output = self.command._format_human(data)
+        assert value in output
 
     def test_echo_method_human_formatted_changed(self):
         """Establish that if there is a change and no id is returned,
