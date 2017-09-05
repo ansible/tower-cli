@@ -394,6 +394,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     @click.option('--page', default=1, type=int, show_default=True,
                   help='The page to show. Ignored if --all-pages '
                        'is sent.')
+    @click.option('--page-size', type=int, show_default=True, required=False,
+                  help='Number of records to show. Ignored if --all-pages.')
     @click.option('-Q', '--query', required=False, nargs=2, multiple=True,
                   help='A key and value to be passed as an HTTP query string '
                        'key and value to the Tower API. Will be run through '
@@ -412,6 +414,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         # also be sent.
         if all_pages:
             kwargs.pop('page', None)
+            kwargs.pop('page_size', None)
 
         # Get the response.
         debug.log('Getting records.', header='details')
