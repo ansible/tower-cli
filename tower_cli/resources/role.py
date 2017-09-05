@@ -251,6 +251,7 @@ class Resource(models.Resource):
         debug.log('Checking if %s already has role.' % obj_type,
                   header='details')
         data, self.endpoint = self.data_endpoint(kwargs)
+        data['content_type__model'] = res_type.replace('_', '')
         response = self.read(pk=None, fail_on_no_results=False,
                              fail_on_multiple_results=False, **data)
 
