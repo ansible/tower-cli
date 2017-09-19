@@ -46,23 +46,23 @@ rpm-build/.exists:
 install:
 	sudo rm -rf dist/ build/ 
 	sudo python setup.py install
-	
-clean_v1:
-	rm -rf tower_cli_v1
-	rm -rf ansible_tower_cli_v1.egg-info
-	rm -rf setup_v1.py
-	rm -f bin/tower-cli-v1
 
-setup_v1.py:
-	cp -R tower_cli tower_cli_v1/
-	cp bin/tower-cli bin/tower-cli-v1
-	cp setup.py setup_v1.py
+clean_v2:
+	rm -rf tower_cli_v2
+	rm -rf ansible_tower_cli_v2.egg-info
+	rm -rf setup_v2.py
+	rm -f bin/tower-cli-v2
+
+setup_v2.py:
+	cp -R tower_cli tower_cli_v2/
+	cp bin/tower-cli bin/tower-cli-v2
+	cp setup.py setup_v2.py
 	python version_swap.py
 
-prep_v1: setup_v1.py
+prep_v2: setup_v2.py
 
-install_v1: setup_v1.py
+install_v2: setup_v2.py
 	sudo rm -rf dist/ build/
-	sudo python setup_v1.py install
+	sudo python setup_v2.py install
 
-v1-refresh: clean_v1 install_v1
+v2-refresh: clean_v2 install_v2

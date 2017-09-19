@@ -1,7 +1,7 @@
 import os
 
 
-API_VERSION = 1
+API_VERSION = 2
 package_name = 'tower_cli_v%s' % API_VERSION
 
 
