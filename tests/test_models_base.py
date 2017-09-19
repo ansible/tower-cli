@@ -91,8 +91,46 @@ class ResourceMetaTests(unittest.TestCase):
 
         # Establish that it has one of the options added to the
         # superclass list command.
-        self.assertTrue(any([i.name == 'query'
-                            for i in MyResource.list.__click_params__]))
+        self.assertEqual(MyResource.list.__click_params__, models.Resource.list.__click_params__)
+
+    def test_multiple_inheritance(self):
+        """
+        Establish that click decoration from all parent class chains are
+        preserved in a subclass.
+        """
+        class MyMixin(models.Resource):
+            endpoint = '/bogus/'
+
+            def list(self, **kwargs):
+                return super(MyMixin, self).list(**kwargs)
+
+        class MyResource(MyMixin, models.Resource):
+            endpoint = '/bogus/'
+
+            def list(self, **kwargs):
+                return super(MyResource, self).list(**kwargs)
+
+        self.assertTrue(hasattr(MyResource.list, '__click_params__'))
+        self.assertEqual(MyResource.list.__click_params__, models.Resource.list.__click_params__)
+
+    def test_no_duplicate_options_from_inheritance(self):
+        """
+        Test that metaclass does not duplicate options from multiple parents
+        """
+        class MyMixin1(models.Resource):
+            endpoint = '/bogus/'
+
+        class MyMixin2(models.Resource):
+            endpoint = '/boguser/'
+
+        class MyResource(MyMixin1, MyMixin2):
+            endpoint = '/boguser/'
+
+            def list(self, **kwargs):
+                return super(MyResource, self).list(**kwargs)
+
+        self.assertTrue(hasattr(MyResource.list, '__click_params__'))
+        self.assertEqual(MyResource.list.__click_params__, models.Resource.list.__click_params__)
 
     def test_fields(self):
         """Establish that fields are appropriately classified within

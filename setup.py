@@ -23,6 +23,9 @@ from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
 
+pkg_name = 'tower_cli'
+
+
 class Tox(TestCommand):
     """The test command should install and then run tox.
 
@@ -112,8 +115,8 @@ def combine_files(*args):
 
 setup(
     # Basic metadata
-    name='ansible-tower-cli',
-    version=open('VERSION').read().strip(),
+    name='ansible-%s' % pkg_name.replace('_', '-'),
+    version=open('tower_cli/VERSION').read().strip(),
     author='Luke Sneeringer',
     author_email='lsneeringer@ansible.com',
     url='https://github.com/ansible/tower-cli',
@@ -126,10 +129,10 @@ setup(
     # How to do the install
     install_requires=parse_requirements('requirements.txt'),
     provides=[
-        'tower_cli',
+        pkg_name,
     ],
     scripts=[
-        'bin/tower-cli',
+        'bin/%s' % pkg_name.replace('_', '-'),
     ],
     packages=find_packages(exclude=['tests']),
     # How to do the tests
@@ -138,7 +141,7 @@ setup(
 
     # Data files
     package_data={
-        'tower_cli': ['VERSION'],
+        pkg_name: ['VERSION'],
     },
 
     # PyPI metadata.
