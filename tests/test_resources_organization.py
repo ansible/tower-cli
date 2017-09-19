@@ -73,26 +73,3 @@ class OrganizationTests(unittest.TestCase):
             self.org_resource.disassociate_admin(42, 84)
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 84}))
-
-    def test_project_associate(self):
-        """Test request for associating project with organization.
-        """
-        with client.test_mode as t:
-            t.register_json('/organizations/42/projects/?id=84',
-                            {'count': 0, 'results': []})
-            t.register_json('/organizations/42/projects/', {}, method='POST')
-            self.org_resource.associate_project(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'associate': True, 'id': 84}))
-
-    def test_project_disassociate(self):
-        """Test request for disassociating project with organization.
-        """
-        with client.test_mode as t:
-            t.register_json('/organizations/42/projects/?id=84',
-                            {'count': 1, 'results': [{'id': 84}],
-                             'next': None, 'previous': None})
-            t.register_json('/organizations/42/projects/', {}, method='POST')
-            self.org_resource.disassociate_project(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'disassociate': True, 'id': 84}))
