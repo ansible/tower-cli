@@ -1,6 +1,17 @@
 Release History
 ===============
 
+3.1.8 (2017-08-21)
+------------------
+
+- Fix bug of incomplete role membership lookup, preventing granting of roles
+- New method of installing tower-cli-v1, specific to API v1 use
+- Combine click parameters from multiple base classes in metaclass
+- Fix unicode bug in human display format
+- Add new page_size parameter to list view
+- Add scm_update_cache_timeout field to project resource
+- Begin process to deprecate python 2.6
+
 3.1.7 (2017-08-07)
 ------------------
 
