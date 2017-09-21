@@ -5,6 +5,13 @@ from tower_cli.cli import types
 from collections import OrderedDict
 
 
+try:
+    unicode
+except NameError:
+    unicode = str
+    basestring = str
+
+
 ATTR_TO_SHOW = [
     'name',
     'type',
