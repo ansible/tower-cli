@@ -54,6 +54,7 @@ class Resource(models.Resource, models.MonitorableResource):
                                         display=False)
     scm_update_on_launch = models.Field(type=bool, required=False,
                                         display=False)
+    scm_update_cache_timeout = models.Field(type=int, required=False, display=False)
     job_timeout = models.Field(type=int, required=False, display=False,
                                help_text='The timeout field (in seconds).')
 

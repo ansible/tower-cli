@@ -1,4 +1,4 @@
-VERSION = $(shell cat VERSION)
+VERSION = $(shell cat tower_cli/VERSION)
 
 DISTS = el6 el7
 DIST_SUFFIX_el6 = 
@@ -46,3 +46,23 @@ rpm-build/.exists:
 install:
 	sudo rm -rf dist/ build/ 
 	sudo python setup.py install
+
+clean_v2:
+	rm -rf tower_cli_v2
+	rm -rf ansible_tower_cli_v2.egg-info
+	rm -rf setup_v2.py
+	rm -f bin/tower-cli-v2
+
+setup_v2.py:
+	cp -R tower_cli tower_cli_v2/
+	cp bin/tower-cli bin/tower-cli-v2
+	cp setup.py setup_v2.py
+	python version_swap.py
+
+prep_v2: setup_v2.py
+
+install_v2: setup_v2.py
+	sudo rm -rf dist/ build/
+	sudo python setup_v2.py install
+
+v2-refresh: clean_v2 install_v2

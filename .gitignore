@@ -68,3 +68,13 @@ results.xml
 
 # Sphinx
 docs_wip/build/*
+
+# tower-cli v1 build
+tower_cli_v1/
+bin/tower-cli-v1
+setup_v1.py
+
+# tower-cli v2 build
+tower_cli_v2/
+bin/tower-cli-v2
+setup_v2.py
