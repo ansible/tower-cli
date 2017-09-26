@@ -152,6 +152,46 @@ class Resource(models.SurveyResource):
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--credential', type=types.Related('credential'))
+    def associate_credential(self, job_template, credential):
+        """Associate a credential with this job template.
+
+        =====API DOCS=====
+        Associate a credential with this job template.
+
+        :param job_template: The job template to associate to.
+        :type job_template: str
+        :param credential: The credential to be associated.
+        :type credential: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._assoc('extra_credentials', job_template, credential)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
+    @click.option('--credential', type=types.Related('credential'))
+    def disassociate_credential(self, job_template, credential):
+        """Disassociate a credential with this job template.
+
+        =====API DOCS=====
+        Disassociate a credential from this job template.
+
+        :param job_template: The job template to disassociate fom.
+        :type job_template: str
+        :param credential: The credential to be disassociated.
+        :type credential: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._disassoc('extra_credentials', job_template, credential)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'))
     @click.option('--notification-template',
                   type=types.Related('notification_template'))
     @click.option('--status', type=click.Choice(['any', 'error', 'success']),
