@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from __future__ import absolute_import, unicode_literals
-from copy import copy
 from getpass import getpass
 from distutils.version import LooseVersion
 
@@ -85,9 +84,6 @@ class Resource(models.ExeResource):
         '--credential', required=False, type=types.Related('credential'),
         help='Specify machine credential for job template to run.'
     )
-    @click.option('--use-job-endpoint', required=False, default=False,
-                  is_flag=True, help='A flag that disable launching jobs'
-                  ' from job template when set.')
     def launch(self, job_template=None, monitor=False, wait=False,
                timeout=None, no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
@@ -124,8 +120,6 @@ class Resource(models.ExeResource):
         :type inventory: str
         :param credential: Specify machine credential for job template to run.
         :type credential: str
-        :param use_job_endpoint: Flag that if set, disable launching jobs from job template when set.
-        :type use_job_endpoint: bool
         :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent
                   ``wait`` call if ``wait`` flag is on; Result of subsequent ``status`` call if none of
                   the two flags are on.
@@ -137,15 +131,12 @@ class Resource(models.ExeResource):
         # This is used as the baseline for starting the job.
 
         tags = kwargs.get('tags', None)
-        use_job_endpoint = kwargs.pop('use_job_endpoint', False)
         jt_resource = get_resource('job_template')
         jt = jt_resource.get(job_template)
 
         # Update the job data by adding an automatically-generated job name,
         # and removing the ID.
-        data = copy(jt)
-        data['job_template'] = data.pop('id')
-        data['name'] = '%s [invoked via. Tower CLI]' % data['name']
+        data = {}
         if tags:
             data['job_tags'] = tags
 
@@ -165,11 +156,11 @@ class Resource(models.ExeResource):
 
         # If the job template requires prompting for extra variables,
         # do so (unless --no-input is set).
-        if data.pop('ask_variables_on_launch', False) and not no_input \
+        if jt.get('ask_variables_on_launch', False) and not no_input \
                 and not extra_vars:
             # If JT extra_vars are JSON, echo them to user as YAML
             initial = parser.process_extra_vars(
-                [data['extra_vars']], force_json=False
+                [jt['extra_vars']], force_json=False
             )
             initial = '\n'.join((
                 '# Specify extra variables (if any) here as YAML.',
@@ -187,17 +178,14 @@ class Resource(models.ExeResource):
         # Replace/populate data fields if prompted.
         modified = set()
         for resource in PROMPT_LIST:
-            if data.pop('ask_' + resource + '_on_launch', False) \
-               and not no_input or use_job_endpoint:
+            if jt.pop('ask_' + resource + '_on_launch', False) and not no_input:
                 resource_object = kwargs.get(resource, None)
                 if type(resource_object) == types.Related:
                     resource_class = get_resource(resource)
-                    resource_object = resource_class.get(resource).\
-                        pop('id', None)
+                    resource_object = resource_class.get(resource).pop('id', None)
                 if resource_object is None:
-                    if not use_job_endpoint:
-                        debug.log('{0} is asked at launch but not provided'.
-                                  format(resource), header='warning')
+                    debug.log('{0} is asked at launch but not provided'.
+                              format(resource), header='warning')
                 elif resource != 'tags':
                     data[resource] = resource_object
                     modified.add(resource)
@@ -208,29 +196,16 @@ class Resource(models.ExeResource):
                 extra_vars_list, force_json=True
             )
 
-        # In Tower 2.1 and later, we create the new job with
-        # /job_templates/N/launch/; in Tower 2.0 and before, there is a two
-        # step process of posting to /jobs/ and then /jobs/N/start/.
-        supports_job_template_launch = False
-        if 'launch' in jt['related']:
-            supports_job_template_launch = True
-
         # Create the new job in Ansible Tower.
         start_data = {}
-        if supports_job_template_launch and not use_job_endpoint:
-            endpoint = '/job_templates/%d/launch/' % jt['id']
-            if 'extra_vars' in data and len(data['extra_vars']) > 0:
-                start_data['extra_vars'] = data['extra_vars']
-            if tags:
-                start_data['job_tags'] = data['job_tags']
-            for resource in PROMPT_LIST:
-                if resource in modified:
-                    start_data[resource] = data[resource]
-        else:
-            debug.log('Creating the job.', header='details')
-            job = client.post('/jobs/', data=data).json()
-            job_id = job['id']
-            endpoint = '/jobs/%d/start/' % job_id
+        endpoint = '/job_templates/%d/launch/' % jt['id']
+        if 'extra_vars' in data and len(data['extra_vars']) > 0:
+            start_data['extra_vars'] = data['extra_vars']
+        if tags:
+            start_data['job_tags'] = data['job_tags']
+        for resource in PROMPT_LIST:
+            if resource in modified:
+                start_data[resource] = data[resource]
 
         # There's a non-trivial chance that we are going to need some
         # additional information to start the job; in particular, many jobs
@@ -249,10 +224,8 @@ class Resource(models.ExeResource):
         kwargs.update(start_data)
         job_started = client.post(endpoint, data=kwargs)
 
-        # If this used the /job_template/N/launch/ route, get the job
-        # ID from the result.
-        if supports_job_template_launch and not use_job_endpoint:
-            job_id = job_started.json()['job']
+        # Get the job ID from the result.
+        job_id = job_started.json()['id']
 
         # If returning json indicates any ignored fields, display it in
         # verbose mode.
