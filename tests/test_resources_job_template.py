@@ -157,6 +157,31 @@ class TemplateTests(unittest.TestCase):
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 84}))
 
+    def test_associate_credential(self):
+        """Establish that the associate method makes the HTTP requests
+        that we expect.
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/42/extra_credentials/?id=84',
+                            {'count': 0, 'results': []})
+            t.register_json('/job_templates/42/extra_credentials/', {}, method='POST')
+            self.res.associate_credential(42, 84)
+            self.assertEqual(t.requests[1].body,
+                             json.dumps({'associate': True, 'id': 84}))
+
+    def test_disassociate_credential(self):
+        """Establish that the disassociate method makes the HTTP requests
+        that we expect.
+        """
+        with client.test_mode as t:
+            t.register_json('/job_templates/42/extra_credentials/?id=84',
+                            {'count': 1, 'results': [{'id': 84}],
+                             'next': None, 'previous': None})
+            t.register_json('/job_templates/42/extra_credentials/', {}, method='POST')
+            self.res.disassociate_credential(42, 84)
+            self.assertEqual(t.requests[1].body,
+                             json.dumps({'disassociate': True, 'id': 84}))
+
     def test_associate_notification_template(self):
         """Establish that a job template should be able to associate itself
         with an existing notification template.
