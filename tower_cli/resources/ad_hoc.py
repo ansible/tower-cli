@@ -43,18 +43,11 @@ class Resource(models.ExeResource):
         type=click.Choice(['run', 'check']),
     )
     inventory = models.Field(type=types.Related('inventory'))
-    machine_credential = models.Field(
-        'credential',
-        display=False,
-        type=types.Related('credential'),
-    )
-    cloud_credential = models.Field(type=types.Related('credential'),
-                                    required=False, display=False)
-    module_name = models.Field(required=False, display=True,
-                               default="command", show_default=True)
+    limit = models.Field(required=False, display=False)
+    credential = models.Field(display=False, type=types.Related('credential'))
+    module_name = models.Field(required=False, display=True, default="command", show_default=True)
     module_args = models.Field(required=False, display=False)
     forks = models.Field(type=int, required=False, display=False)
-    limit = models.Field(required=False, display=False)
     verbosity = models.Field(
         display=False,
         type=types.MappedChoice([
@@ -67,12 +60,13 @@ class Resource(models.ExeResource):
         ]),
         required=False,
     )
+    become_enabled = models.Field(type=bool, required=False, display=False)
+    diff_mode = models.Field(type=bool, required=False, display=False)
 
     @resources.command(
         use_fields_as_options=(
-            'job_explanation', 'job_type', 'inventory', 'machine_credential',
-            'cloud_credential', 'module_name', 'module_args', 'forks',
-            'limit', 'verbosity', 'become_enabled',
+            'job_explanation', 'job_type', 'inventory', 'credential', 'module_name', 'module_args', 'forks',
+            'limit', 'verbosity', 'become_enabled', 'diff_mode',
         )
     )
     @click.option('--monitor', is_flag=True, default=False,
@@ -85,11 +79,7 @@ class Resource(models.ExeResource):
                   help='If provided with --monitor, this attempt'
                        ' will time out after the given number of seconds. '
                        'Does nothing if --monitor is not sent.')
-    @click.option('--become', required=False, is_flag=True,
-                  help='If used, privilege escalation will be enabled for '
-                       'this command.')
-    def launch(self, monitor=False, wait=False, timeout=None, become=False,
-               **kwargs):
+    def launch(self, monitor=False, wait=False, timeout=None, **kwargs):
         """Launch a new ad-hoc command.
 
         Runs a user-defined command from Ansible Tower, immediately starts it,
@@ -106,8 +96,6 @@ class Resource(models.ExeResource):
         :param timeout: If provided with ``monitor`` flag set, this attempt will time out after the given number
                         of seconds.
         :type timeout: int
-        :param become: Flag that if set, privilege escalation will be enabled for this command.
-        :type become: bool
         :param `**kwargs`: Fields needed to create and launch an ad hoc command.
         :returns: Result of subsequent ``monitor`` call if ``monitor`` flag is on; Result of subsequent ``wait``
                   call if ``wait`` flag is on; dictionary of "id" and "changed" if none of the two flags are on.
@@ -126,10 +114,6 @@ class Resource(models.ExeResource):
         # Pop the None arguments because we have no .write() method in
         # inheritance chain for this type of resource. This is needed
         self._pop_none(kwargs)
-
-        # Change the flag to the dictionary format
-        if become:
-            kwargs['become_enabled'] = True
 
         # Actually start the command.
         debug.log('Launching the ad-hoc command.', header='details')

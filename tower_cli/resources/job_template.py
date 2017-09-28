@@ -38,15 +38,8 @@ class Resource(models.SurveyResource):
     inventory = models.Field(type=types.Related('inventory'), required=False)
     project = models.Field(type=types.Related('project'))
     playbook = models.Field()
-    machine_credential = models.Field(
-        'credential',
-        display=False, required=False,
-        type=types.Related('credential'),
-    )
-    cloud_credential = models.Field(type=types.Related('credential'),
-                                    required=False, display=False)
-    network_credential = models.Field(type=types.Related('credential'),
-                                      required=False, display=False)
+    credential = models.Field(display=False, required=False, type=types.Related('credential'))
+    vault_credential = models.Field(type=types.Related('credential'), required=False, display=False)
     forks = models.Field(type=int, required=False, display=False)
     limit = models.Field(required=False, display=False)
     verbosity = models.Field(
@@ -61,15 +54,25 @@ class Resource(models.SurveyResource):
         ]),
         required=False,
     )
+    extra_vars = models.Field(type=types.Variables(), required=False, display=False, multiple=True,
+                              help_text='Extra variables used by Ansible in YAML or key=value '
+                                        'format. Use @ to get YAML from a file.')
     job_tags = models.Field(required=False, display=False)
+    force_handlers = models.Field(type=bool, required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
-    extra_vars = models.Field(
-        type=types.Variables(), required=False, display=False, multiple=True,
-        help_text='Extra variables used by Ansible in YAML or key=value '
-                  'format. Use @ to get YAML from a file.')
+    start_at_task = models.Field(required=False, display=False)
+    timeout = models.Field(type=int, required=False, display=False,
+                           help_text='The amount of time (in seconds) to run before the task is canceled.')
+    use_fact_cache = models.Field(type=bool, required=False, display=False,
+                                  help_text='If enabled, Tower will act as an Ansible Fact Cache Plugin;'
+                                            ' persisting facts at the end of a playbook run to the database'
+                                            ' and caching facts for use by Ansible.')
     host_config_key = models.Field(
         required=False, display=False,
         help_text='Allow Provisioning Callbacks using this host config key')
+    ask_diff_mode_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Ask diff mode on launch.')
     ask_variables_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for extra_vars on launch.')
@@ -85,19 +88,24 @@ class Resource(models.SurveyResource):
     ask_job_type_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for job type on launch.')
+    ask_verbosity_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for verbosity on launch.')
     ask_inventory_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for inventory on launch.')
     ask_credential_on_launch = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for machine credential on launch.')
-    become_enabled = models.Field(type=bool, required=False, display=False)
-    allow_simultaneous = models.Field(type=bool, required=False, display=False)
-    timeout = models.Field(type=int, required=False, display=False,
-                           help_text='The timeout field (in seconds).')
     survey_enabled = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for job type on launch.')
+    become_enabled = models.Field(type=bool, required=False, display=False)
+    diff_mode = models.Field(type=bool, required=False, display=False,
+                             help_text='If enabled, textual changes made to any templated files on'
+                                       ' the host are shown in the standard output.')
+    allow_simultaneous = models.Field(type=bool, required=False, display=False)
+
     survey_spec = models.Field(
         type=types.Variables(), required=False, display=False,
         help_text='On write commands, perform extra POST to the '

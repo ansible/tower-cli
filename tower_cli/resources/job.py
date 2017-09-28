@@ -25,9 +25,7 @@ from tower_cli.cli import types
 from tower_cli.utils import debug, parser
 
 
-PROMPT_LIST = [
-    'limit', 'tags', 'skip_tags', 'job_type', 'inventory', 'credential'
-]
+PROMPT_LIST = ['diff_mode', 'limit', 'tags', 'skip_tags', 'job_type', 'verbosity', 'inventory', 'credential']
 
 
 class Resource(models.ExeResource):
@@ -67,23 +65,17 @@ class Resource(models.ExeResource):
     @click.option('-e', '--extra-vars', required=False, multiple=True,
                   help='yaml format text that contains extra variables '
                        'to pass on. Use @ to get these from a file.')
-    @click.option('--limit', required=False,
-                  help='Specify host limit for job template to run.')
-    @click.option('--tags', required=False,
-                  help='Specify tagged actions in the playbook to run.')
-    @click.option('--skip-tags', required=False,
-                  help='Specify tagged actions in the playbook to ommit.')
-    @click.option('--job-type', required=False, type=click.Choice(['run',
-                  'check']), help='Specify job type for job template'
-                  ' to run.')
-    @click.option(
-        '--inventory', required=False, type=types.Related('inventory'),
-        help='Specify inventory for job template to run.'
-    )
-    @click.option(
-        '--credential', required=False, type=types.Related('credential'),
-        help='Specify machine credential for job template to run.'
-    )
+    @click.option('--diff-mode', type=bool, required=False, help='Specify diff mode for job template to run.')
+    @click.option('--limit', required=False, help='Specify host limit for job template to run.')
+    @click.option('--tags', required=False, help='Specify tagged actions in the playbook to run.')
+    @click.option('--skip-tags', required=False, help='Specify tagged actions in the playbook to ommit.')
+    @click.option('--job-type', required=False, type=click.Choice(['run', 'check']),
+                  help='Specify job type for job template to run.')
+    @click.option('--verbosity', type=int, required=False, help='Specify verbosity of the playbook run.')
+    @click.option('--inventory', required=False, type=types.Related('inventory'),
+                  help='Specify inventory for job template to run.')
+    @click.option('--credential', required=False, type=types.Related('credential'),
+                  help='Specify machine credential for job template to run.')
     def launch(self, job_template=None, monitor=False, wait=False,
                timeout=None, no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
@@ -108,6 +100,8 @@ class Resource(models.ExeResource):
         :type no_input: bool
         :param extra_vars: yaml formatted texts that contains extra variables to pass on.
         :type extra_vars: array of strings
+        :param diff_mode: Specify diff mode for job template to run.
+        :type diff_mode: bool
         :param limit: Specify host limit for job template to run.
         :type limit: str
         :param tags: Specify tagged actions in the playbook to run.
@@ -115,7 +109,9 @@ class Resource(models.ExeResource):
         :param skip_tags: Specify tagged actions in the playbook to ommit.
         :type skip_tags: str
         :param job_type: Specify job type for job template to run.
-        :type job_type str
+        :type job_type: str
+        :param verbosity: Specify verbosity of the playbook run.
+        :type verbosity: int
         :param inventory: Specify machine credential for job template to run.
         :type inventory: str
         :param credential: Specify machine credential for job template to run.
