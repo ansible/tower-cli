@@ -73,12 +73,11 @@ class CredentialTests(unittest.TestCase):
             self.assertTrue(cred_res.fields[3].no_lookup)
 
             # Verify request data is correct
-            self.assertEqual(len(t.requests), 3)
-            self.assertEqual(t.requests[0].method, 'OPTIONS')
-            self.assertEqual(t.requests[1].method, 'GET')
-            self.assertEqual(t.requests[2].method, 'POST')
-            self.assertTrue('name=foobar' in t.requests[1].url)
+            self.assertEqual(len(t.requests), 2)
+            self.assertEqual(t.requests[0].method, 'GET')
+            self.assertEqual(t.requests[1].method, 'POST')
+            self.assertIn('name=foobar', t.requests[0].url)
             # Make sure special fields not used for GET
-            self.assertTrue('user' not in t.requests[1].url)
+            self.assertTrue('user' not in t.requests[0].url)
             # Make sure special files are used in actual POST
-            self.assertTrue('user' in t.requests[2].body)
+            self.assertIn('user', t.requests[1].body)
