@@ -168,6 +168,7 @@ class Resource(models.SurveyResource):
     survey_enabled = models.Field(
         type=bool, required=False, display=False,
         help_text='Prompt user for job type on launch.')
+    allow_simultaneous = models.Field(type=bool, required=False, display=False)
     survey_spec = models.Field(
         type=types.Variables(), required=False, display=False,
         help_text='On write commands, perform extra POST to the '

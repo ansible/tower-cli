@@ -46,7 +46,7 @@ class LaunchTests(unittest.TestCase):
             self.assertEqual(result, {'changed': True, 'id': 42})
 
     def test_launch_with_become(self):
-        """Establish that we are able use the --become flag
+        """Establish that we are able use the --become-enabled flag
         """
         with client.test_mode as t:
             t.register_json('/ad_hoc_commands/42/', {'id': 42}, method='GET')
@@ -54,11 +54,7 @@ class LaunchTests(unittest.TestCase):
                 'ad_hoc_commands': '/api/%s/ad_hoc_commands/' % CUR_API_VERSION
                 }, method='GET')
             t.register_json('/ad_hoc_commands/', {'id': 42}, method='POST')
-            self.res.launch(inventory="foobar", machine_credential=2,
-                            become=True)
-            # Critically, we test that the request sent to the server
-            # contains the key "become_enabled", as this must be triggered
-            # by the conditional written specifically for --become
+            self.res.launch(inventory="foobar", machine_credential=2, become_enabled=True)
             self.assertDictContainsSubset(
                 {'become_enabled': True},
                 json.loads(t.requests[1].body)
