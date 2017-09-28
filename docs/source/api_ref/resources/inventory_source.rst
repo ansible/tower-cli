@@ -20,7 +20,7 @@ Fields Table
 +-------------------------+--------------------------------------------------------------------------------------------+-------------------------------------------+----------+-------+-----------+---------+
 |inventory                |Resource inventory                                                                          |The inventory field.                       |False     |False  |True       |True     |
 +-------------------------+--------------------------------------------------------------------------------------------+-------------------------------------------+----------+-------+-----------+---------+
-|source                   |Choices: ,file,scm,ec2,rax,vmware,gce,azure,azure_rm,openstack,satellite6,cloudforms,custom |The type of inventory source in use.       |False     |False  |True       |True     |
+|source                   |Choices: ,file,scm,ec2,vmware,gce,azure,azure_rm,openstack,satellite6,cloudforms,custom |The type of inventory source in use.       |False     |False  |True       |True     |
 +-------------------------+--------------------------------------------------------------------------------------------+-------------------------------------------+----------+-------+-----------+---------+
 |credential               |Resource credential                                                                         |The credential field.                      |False     |False  |True       |False    |
 +-------------------------+--------------------------------------------------------------------------------------------+-------------------------------------------+----------+-------+-----------+---------+

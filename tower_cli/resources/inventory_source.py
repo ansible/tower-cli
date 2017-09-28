@@ -33,7 +33,7 @@ class Resource(models.Resource, models.MonitorableResource):
     inventory = models.Field(type=types.Related('inventory'))
     source = models.Field(
         default=None, help_text='The type of inventory source in use.',
-        type=click.Choice(['', 'file', 'scm', 'ec2', 'rax', 'vmware', 'gce', 'azure', 'azure_rm', 'openstack',
+        type=click.Choice(['', 'file', 'scm', 'ec2', 'vmware', 'gce', 'azure', 'azure_rm', 'openstack',
                            'satellite6', 'cloudforms', 'custom']),
     )
     credential = models.Field(type=types.Related('credential'), required=False, display=False)

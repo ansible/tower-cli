@@ -94,7 +94,6 @@ tower-cli credential create --name="EC2 SSH" --description="Used for EC2 instanc
 # key taken from http://phpseclib.sourceforge.net/rsa/examples.html
 tower-cli credential create --name="Local SSH" --description="Used for vagrant instances" --team=Ops --kind=ssh --username=vagrant --ssh-key-data="insecure_private_key"
 tower-cli credential create --name="AWS creds" --team=Ops --kind=aws --username=your_username --password=canthandle1234
-tower-cli credential create --name="RAX creds" --description="Used for Rackspace" --team=Ops --kind=rax --username=me --password=noyoucant
 # Two users who can become the other to escalate a task
 tower-cli credential create --name=user1 --username=user1 --password=password --team=Engineering --kind=ssh --become-method=su --become-username=user2 --become-password=pass1
 tower-cli credential create --name=user2 --username=user2 --password=pass1 --team=Engineering --kind=ssh --become-method=su --become-username=user1 --become-password=password
@@ -106,7 +105,6 @@ tower-cli host create --name="127.0.0.1" --description="the host in localhost" -
 # Corporate example uses localhost with special vars for testing
 tower-cli inventory create --name=Production --description="Production Machines" --organization="Hyrule Ventures" --variables="variables.yml"
 tower-cli group create --name=EC2 --credential="AWS creds" --source=ec2 --description="EC2 hosts" --inventory=Production
-tower-cli group create --name=RAX --credential="RAX creds" --source=rax --description="RAX hosts" --inventory=Production
 # EC2vars demonstrates the use of advanced source variables
 tower-cli group create --name=EC2vars --credential="AWS creds" --source=ec2 --description="EC2 hosts" --inventory=Production --source-regions="us-east-1" --overwrite=true --overwrite-vars=false --source-vars="foo: bar"
 # Another example

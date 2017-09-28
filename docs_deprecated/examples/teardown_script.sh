@@ -24,7 +24,6 @@ tower-cli credential delete --name=user2
 tower-cli credential delete --name="EC2 SSH"
 tower-cli credential delete --name="Local SSH"
 tower-cli credential delete --name="AWS creds"
-tower-cli credential delete --name="RAX creds"
 
 echo "Tower-CLI DATA FAKER: deleting users"
 tower-cli user delete --username="rshinra"
