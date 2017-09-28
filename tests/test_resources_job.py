@@ -24,7 +24,6 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli import exceptions as exc
 from tower_cli.cli.resource import ResSubcommand
-from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
@@ -61,7 +60,7 @@ def standard_registration(t, **kwargs):
 
     # A POST to the launch endpoint will launch a job, and we
     # expect that the tower server will return the job number
-    data = {'job': 42}
+    data = {'id': 42}
     data.update(kwargs)
     t.register_json('/job_templates/1/launch/', data, method='POST')
 
@@ -82,7 +81,7 @@ def jt_vars_registration(t, extra_vars):
     register_get(t)
     t.register_json('/config/', {'version': '2.2.0'}, method='GET')
     t.register_json('/job_templates/1/launch/', {}, method='GET')
-    t.register_json('/job_templates/1/launch/', {'job': 42},
+    t.register_json('/job_templates/1/launch/', {'id': 42},
                     method='POST')
 
 
@@ -161,7 +160,7 @@ class LaunchTests(unittest.TestCase):
                 )
             self.assertDictContainsSubset(
                 {'foo': 'bar'},
-                json.loads(json.loads(t.requests[3].body)['extra_vars'])
+                json.loads(json.loads(t.requests[2].body)['extra_vars'])
             )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
@@ -200,61 +199,18 @@ class LaunchTests(unittest.TestCase):
                 self.assertEqual(t.requests[2].method, 'POST')
                 self.assertEqual(t.requests[2].body, '{}')
 
-    def test_job_template_variables(self):
-        """Establish that job template extra_vars are combined with local
-        extra vars, but only for older versions
-        """
-        with client.test_mode as t:
-            jt_vars_registration(t, 'spam: eggs')
-            result = self.res.launch(1, extra_vars=['foo: bar'])
-            response_json = yaml.load(t.requests[3].body)
-            ev_json = yaml.load(response_json['extra_vars'])
-            self.assertTrue('foo' in ev_json)
-            self.assertTrue('spam' in ev_json)
-            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
-
     def test_job_template_variables_post_24(self):
-        """ Check that in recent versions, it does not include job template
-         variables along with the rest """
+        """ Check that in Tower versions past 2.4,
+        it does not include job template
+        variables along with the rest """
         with client.test_mode as t:
             jt_vars_registration(t, 'spam: eggs')
             t.register_json('/config/', {'version': '2.4'}, method='GET')
             result = self.res.launch(1, extra_vars=['foo: bar'])
-            response_json = yaml.load(t.requests[3].body)
+            response_json = yaml.load(t.requests[2].body)
             ev_json = yaml.load(response_json['extra_vars'])
             self.assertTrue('foo' in ev_json)
             self.assertTrue('spam' not in ev_json)
-            self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
-
-    def test_extra_vars_at_runtime_tower_20(self):
-        """Establish that if we should be asking for extra variables at
-        runtime, that we do.
-        (This test is intended for Tower 2.0 compatibility.)
-        """
-        with client.test_mode as t:
-            t.register_json('/job_templates/1/', {
-                'ask_variables_on_launch': True,
-                'extra_vars': 'spam: eggs',
-                'id': 1,
-                'name': 'frobnicate',
-                'related': {},
-            })
-            register_get(t)
-            t.register_json('/config/', {'version': '2.0'}, method='GET')
-            t.register_json('/jobs/', {'id': 42}, method='POST')
-            t.register_json('/jobs/42/start/', {}, method='GET')
-            t.register_json('/jobs/42/start/', {}, method='POST')
-            with mock.patch.object(click, 'edit') as edit:
-                edit.return_value = '# Nothing.\nfoo: bar'
-                result = self.res.launch(1, no_input=False)
-                self.assertDictContainsSubset(
-                    {"spam": "eggs"},
-                    yaml.load(edit.mock_calls[0][1][0])
-                )
-            self.assertDictContainsSubset(
-                {'foo': 'bar'},
-                json.loads(json.loads(t.requests[2].body)['extra_vars'])
-            )
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
 
     def test_extra_vars_at_call_time(self):
@@ -269,7 +225,7 @@ class LaunchTests(unittest.TestCase):
             })
             register_get(t)
             t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
+            t.register_json('/job_templates/1/launch/', {'id': 42},
                             method='POST')
             result = self.res.launch(1, extra_vars=['foo: bar'])
 
@@ -291,7 +247,7 @@ class LaunchTests(unittest.TestCase):
             })
             register_get(t)
             t.register_json('/job_templates/1/launch/', {}, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
+            t.register_json('/job_templates/1/launch/', {'id': 42},
                             method='POST')
             result = self.res.launch(1, extra_vars=['foo: bar'])
 
@@ -315,7 +271,7 @@ class LaunchTests(unittest.TestCase):
             t.register_json('/job_templates/1/launch/', {
                 'passwords_needed_to_start': ['foo'],
             }, method='GET')
-            t.register_json('/job_templates/1/launch/', {'job': 42},
+            t.register_json('/job_templates/1/launch/', {'id': 42},
                             method='POST')
 
             with mock.patch('tower_cli.resources.job.getpass') as getpass:
@@ -323,26 +279,6 @@ class LaunchTests(unittest.TestCase):
                 result = self.res.launch(1)
                 getpass.assert_called_once_with('Password for foo: ')
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)
-
-    def test_launch_with_use_job_endpoint_set(self):
-        """Establish that launching a job with `--use-job-endpoint` set would
-        launch job through /jobs/\d/ endpoint regardless of the existence of
-        /job_templates/\d/launch/ endpoint
-        """
-        jt = {
-            'related': {
-                'launch': '/api/%s/job_templates/1/launch/' % CUR_API_VERSION
-            },
-            'id': 1,
-            'name': 'demo'
-        }
-        with client.test_mode as t:
-            t.register_json('/job_templates/1/', jt)
-            t.register_json('/jobs/16/', {})
-            t.register_json('/jobs/', {'id': 16}, method='POST')
-            t.register_json('/jobs/16/start/', {})
-            t.register_json('/jobs/16/start/', {}, method='POST')
-            self.res.launch(job_template=1, use_job_endpoint=True)
 
     def test_ignored_fields(self):
         """Establish that if ignored_fields is returned when launching job,
