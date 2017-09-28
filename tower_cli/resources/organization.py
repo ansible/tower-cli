@@ -110,3 +110,44 @@ class Resource(models.Resource):
         =====API DOCS=====
         """
         return self._disassoc('admins', organization, user)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'), required=True)
+    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
+    def associate_ig(self, organization, instance_group):
+        """Associate an instance group with this organization.
+        The instance group will be used to run jobs within the organization.
+
+        =====API DOCS=====
+        Associate an instance group with this organization.
+
+        :param organization: Primary key or name of the organization to associate to.
+        :type organization: str
+        :param instance_group: Primary key or name of the instance group to be associated.
+        :type instance_group: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._assoc('instance_groups', organization, instance_group)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--organization', type=types.Related('organization'), required=True)
+    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
+    def disassociate_ig(self, organization, instance_group):
+        """Disassociate an instance group from this organization.
+
+        =====API DOCS=====
+        Disassociate an instance group with this organization.
+
+        :param organization: Primary key or name of the organization to associate to.
+        :type organization: str
+        :param instance_group: Primary key or name of the instance group to be associated.
+        :type instance_group: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._disassoc('instance_groups', organization, instance_group)
