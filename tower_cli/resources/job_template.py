@@ -33,7 +33,7 @@ class Resource(models.SurveyResource):
     job_type = models.Field(
         required=False,
         display=False,
-        type=click.Choice(['run', 'check', 'scan']),
+        type=click.Choice(['run', 'check']),
     )
     inventory = models.Field(type=types.Related('inventory'), required=False)
     project = models.Field(type=types.Related('project'))

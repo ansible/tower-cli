@@ -74,7 +74,7 @@ class Resource(models.ExeResource):
     @click.option('--skip-tags', required=False,
                   help='Specify tagged actions in the playbook to ommit.')
     @click.option('--job-type', required=False, type=click.Choice(['run',
-                  'check', 'scan']), help='Specify job type for job template'
+                  'check']), help='Specify job type for job template'
                   ' to run.')
     @click.option(
         '--inventory', required=False, type=types.Related('inventory'),
