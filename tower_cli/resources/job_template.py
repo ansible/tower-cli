@@ -276,3 +276,44 @@ class Resource(models.SurveyResource):
         r = client.post(url, data=post_data, auth=None)
         if r.status_code == 201:
             return {'changed': True}
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'), required=True)
+    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
+    def associate_ig(self, job_template, instance_group):
+        """Associate an instance group with this job_template.
+        The instance group will be used to run jobs within the job_template.
+
+        =====API DOCS=====
+        Associate an instance group with this job_template.
+
+        :param job_template: Primary key or name of the job_template to associate to.
+        :type job_template: str
+        :param instance_group: Primary key or name of the instance group to be associated.
+        :type instance_group: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._assoc('instance_groups', job_template, instance_group)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--job-template', type=types.Related('job_template'), required=True)
+    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
+    def disassociate_ig(self, job_template, instance_group):
+        """Disassociate an instance group from this job_template.
+
+        =====API DOCS=====
+        Disassociate an instance group with this job_template.
+
+        :param job_template: Primary key or name of the job_template to associate to.
+        :type job_template: str
+        :param instance_group: Primary key or name of the instance group to be associated.
+        :type instance_group: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._disassoc('instance_groups', job_template, instance_group)
