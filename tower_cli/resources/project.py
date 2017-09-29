@@ -248,17 +248,18 @@ class Resource(models.Resource, models.MonitorableResource):
         debug.log('Updating the project.', header='details')
         result = client.post('/projects/%d/update/' % pk)
 
+        project_update_id = result.json()['project_update']
+
         # If we were told to monitor the project update's status, do so.
         if monitor:
-            project_update_id = result.json()['project_update']
             return self.monitor(project_update_id, parent_pk=pk,
                                 timeout=timeout)
         elif wait:
-            project_update_id = result.json()['project_update']
             return self.wait(project_update_id, parent_pk=pk, timeout=timeout)
 
         # Return the project update ID.
         return {
+            'id': project_update_id,
             'changed': True,
         }
 
