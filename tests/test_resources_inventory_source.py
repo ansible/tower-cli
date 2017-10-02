@@ -46,7 +46,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/inventory_sources/1/update/',
                             {'can_update': True}, method='GET')
             t.register_json('/inventory_sources/1/update/',
-                            {}, method='POST')
+                            {'inventory_update': 42}, method='POST')
             answer = self.isr.update(1)
             self.assertEqual(answer['status'], 'ok')
 

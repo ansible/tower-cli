@@ -172,7 +172,7 @@ class UpdateTests(unittest.TestCase):
             t.register_json('/projects/1/update/', {'project_update': 42},
                             method='POST')
             result = self.res.update(1)
-            self.assertEqual(result, {'changed': True})
+            self.assertEqual(result, {'changed': True, 'id': 42})
 
     def test_basic_update_with_monitor(self):
         """Establish that we are able to create a project update

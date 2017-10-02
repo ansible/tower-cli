@@ -14,3 +14,18 @@
 
 
 CUR_API_VERSION = 'v2'
+
+LAUNCH_TYPE_CHOICES = [
+    'manual', 'relaunch', 'relaunch', 'callback',
+    'scheduled', 'dependency', 'workflow', 'sync', 'scm'
+]
+
+STATUS_CHOICES = [
+    'new', 'pending', 'waiting', 'running', 'successful',
+    'failed', 'error', 'canceled'
+]
+
+INVENTORY_SOURCE_CHOICES = [
+    '', 'file', 'scm', 'ec2', 'vmware', 'gce', 'azure', 'azure_rm', 'openstack',
+    'satellite6', 'cloudforms', 'custom'
+]

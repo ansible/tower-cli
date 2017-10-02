@@ -16,6 +16,7 @@
 import click
 
 from tower_cli import models, resources, exceptions as exc
+from tower_cli.constants import INVENTORY_SOURCE_CHOICES
 from tower_cli.api import client
 from tower_cli.cli import types
 from tower_cli.utils import debug
@@ -33,8 +34,7 @@ class Resource(models.Resource, models.MonitorableResource):
     inventory = models.Field(type=types.Related('inventory'))
     source = models.Field(
         default=None, help_text='The type of inventory source in use.',
-        type=click.Choice(['', 'file', 'scm', 'ec2', 'vmware', 'gce', 'azure', 'azure_rm', 'openstack',
-                           'satellite6', 'cloudforms', 'custom']),
+        type=click.Choice(INVENTORY_SOURCE_CHOICES),
     )
     credential = models.Field(type=types.Related('credential'), required=False, display=False)
     source_vars = models.Field(required=False, display=False)
@@ -104,10 +104,10 @@ class Resource(models.Resource, models.MonitorableResource):
         # Run the update.
         debug.log('Updating the inventory source.', header='details')
         r = client.post('%s%d/update/' % (self.endpoint, inventory_source), data={})
+        inventory_update_id = r.json()['inventory_update']
 
         # If we were told to monitor the project update's status, do so.
         if monitor or wait:
-            inventory_update_id = r.json()['inventory_update']
             if monitor:
                 result = self.monitor(inventory_update_id, parent_pk=inventory_source, timeout=timeout)
             elif wait:
@@ -117,7 +117,10 @@ class Resource(models.Resource, models.MonitorableResource):
             return result
 
         # Done.
-        return {'status': 'ok'}
+        return {
+            'id': inventory_update_id,
+            'status': 'ok'
+        }
 
     @resources.command
     @click.option('--detail', is_flag=True, default=False,
