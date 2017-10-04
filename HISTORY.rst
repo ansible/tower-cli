@@ -13,7 +13,7 @@ Release History
 *Updates from Tower 3.2:*
 
 - Migrated to API V2. All API calls will start with `/api/v2` instead of `/api/v1`.
-- Made inventory_source an external resource and remove the old relationship as a group. associate. Remove launching inventory updates from group resource.
+- Made inventory_source an external resource and remove the old relationship to its associated group. Remove launching inventory updates from group resource.
 - Added credential_type resource and significantly modified credential resource to reveal user-defined credentials feature of Tower 3.2.
 - Added job template extra credential (dis)association to reveal extra_credential field of 3.2 job templates.
 - Removed all source-specific inventory source fields and replaced them with a `credential` field.
@@ -32,27 +32,17 @@ Release History
 - Disabled launching a job using the jobs endpoint.
 - Removed scan jobs in favor of new job fact cache.
 - Removed Rackspace options.
-- Old association function for project’s organization.
+- Remove outdated association function for project’s organization.
 
 *Reflected from 3.1.8:*
 
+- Include method of installing with alias tower-cli-v2
 - Fix bug of incomplete role membership lookup, preventing granting of roles.
 - Combine click parameters from multiple base classes in metaclass.
 - Fix unicode bug in human display format.
 - Add new page_size parameter to list view.
 - Add scm_update_cache_timeout field to project resource.
 - Begin process to deprecate python 2.6.
-
-3.1.8 (2017-08-21)
-------------------
-
-- Fix bug of incomplete role membership lookup, preventing granting of roles
-- New method of installing tower-cli-v1, specific to API v1 use
-- Combine click parameters from multiple base classes in metaclass
-- Fix unicode bug in human display format
-- Add new page_size parameter to list view
-- Add scm_update_cache_timeout field to project resource
-- Begin process to deprecate python 2.6
 
 3.1.7 (2017-08-07)
 ------------------
