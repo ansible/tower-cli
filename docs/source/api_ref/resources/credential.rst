@@ -33,4 +33,4 @@ Fields Table
 API Specification
 -----------------
 .. autoclass:: tower_cli.resources.credential.Resource
-   :members: copy, create, delete, get, modify
+   :members: copy, create, delete, get, list, modify

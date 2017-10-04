@@ -24,4 +24,4 @@ Fields Table
 API Specification
 -----------------
 .. autoclass:: tower_cli.resources.organization.Resource
-   :members: copy, create, delete, get, list, modify, associate, disassociate, associate_admin, disassociate_admin, associate_project, disassociate_project
+   :members: copy, create, delete, get, list, modify, associate, disassociate, associate_admin, disassociate_admin, associate_ig, disassociate_ig

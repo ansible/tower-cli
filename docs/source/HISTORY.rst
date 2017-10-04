@@ -1,6 +1,64 @@
 Release History
 ===============
 
+3.2.0 (2017-10-04)
+------------------
+
+*General:*
+
+- Officially support using tower_cli as a python library.
+- Major documentation updates. From 3.2.0 docs are hosted on http://tower-cli.readthedocs.io.
+- Added project_update and inventory_update resources to allow canceling and deleting.
+
+*Updates from Tower 3.2:*
+
+- Migrated to API V2. All API calls will start with `/api/v2` instead of `/api/v1`.
+- Made inventory_source an external resource and remove the old relationship as a group. associate. Remove launching inventory updates from group resource.
+- Added credential_type resource and significantly modified credential resource to reveal user-defined credentials feature of Tower 3.2.
+- Added job template extra credential (dis)association to reveal extra_credential field of 3.2 job templates.
+- Removed all source-specific inventory source fields and replaced them with a `credential` field.
+- Updated inventory resource fields to reveal smart inventory and insights integration features of Tower 3.2.
+- Added `list_fact` and `insights` commands to host resource to reveal smart inventory and insights integration features of Tower 3.2.
+- Added `instance` and `instance_group` resources to reveal instance/instance group feature of Tower 3.2.
+- Enabled (dis)associating instance groups to(from) organization, job_template and inventory resources to reveal instance/instance group feature of Tower 3.2.
+- Added support for Tower 3.2 SCM inventory sources.
+- Updated job_template resource fields to reveal changes in Tower 3.2, including `--diff` mode feature.
+- Updated job resource launch command to reveal changes in Tower 3.2, including `--diff` mode feature.
+- Updated ad_hoc resource fields to reveal changes in Tower 3.2, including `--diff` mode feature. Specifically, changed name of `--become` of `launch` command into `--become-enabled`.
+
+*Deprecated features:*
+
+- Removed permission resource.
+- Disabled launching a job using the jobs endpoint.
+- Removed scan jobs in favor of new job fact cache.
+- Removed Rackspace options.
+- Old association function for project’s organization.
+
+*Reflected from 3.1.8:*
+
+- Fix bug of incomplete role membership lookup, preventing granting of roles.
+- Combine click parameters from multiple base classes in metaclass.
+- Fix unicode bug in human display format.
+- Add new page_size parameter to list view.
+- Add scm_update_cache_timeout field to project resource.
+- Begin process to deprecate python 2.6.
+
+3.1.8 (2017-08-21)
+------------------
+
+- Fix bug of incomplete role membership lookup, preventing granting of roles
+- New method of installing tower-cli-v1, specific to API v1 use
+- Combine click parameters from multiple base classes in metaclass
+- Fix unicode bug in human display format
+- Add new page_size parameter to list view
+- Add scm_update_cache_timeout field to project resource
+- Begin process to deprecate python 2.6
+
+3.1.7 (2017-08-07)
+------------------
+
+- Follow up 3.1.6 by duplicating exceptions.py to support `import tower_cli.utils.exceptions` syntax.
+
 3.1.6 (2017-07-18)
 ------------------
 
