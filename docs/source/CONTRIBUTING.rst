@@ -38,7 +38,7 @@ essentially using a combination of ``read`` and ``write`` to communicate with To
 
 Here is the detailed class hierarchy from ``tower_cli.models.base.BaseResource`` to all specific Tower resources:
 
-.. inheritance-diagram:: tower_cli.models.base tower_cli.models.fields tower_cli.resources.ad_hoc tower_cli.resources.credential_type tower_cli.resources.credential tower_cli.resources.group tower_cli.resources.host tower_cli.resources.instance_group tower_cli.resources.instance tower_cli.resources.inventory_script tower_cli.resources.inventory_source tower_cli.resources.inventory tower_cli.resources.job_template tower_cli.resources.job tower_cli.resources.label tower_cli.resources.node tower_cli.resources.notification_template tower_cli.resources.organization tower_cli.resources.project tower_cli.resources.role tower_cli.resources.schedule tower_cli.resources.setting tower_cli.resources.team tower_cli.resources.unified_job tower_cli.resources.user tower_cli.resources.workflow_job tower_cli.resources.workflow
+.. inheritance-diagram:: tower_cli.models.base tower_cli.models.fields tower_cli.resources.ad_hoc tower_cli.resources.credential_type tower_cli.resources.credential tower_cli.resources.group tower_cli.resources.host tower_cli.resources.instance_group tower_cli.resources.instance tower_cli.resources.inventory_script tower_cli.resources.inventory_source tower_cli.resources.inventory_update tower_cli.resources.inventory tower_cli.resources.job_template tower_cli.resources.job tower_cli.resources.label tower_cli.resources.node tower_cli.resources.notification_template tower_cli.resources.organization tower_cli.resources.project tower_cli.resources.project_update tower_cli.resources.role tower_cli.resources.schedule tower_cli.resources.setting tower_cli.resources.team tower_cli.resources.unified_job tower_cli.resources.user tower_cli.resources.workflow_job tower_cli.resources.workflow
    :parts: 0
 
 Details of each Tower CLI resource module are available under ``tower_cli/resources/``.
@@ -80,6 +80,9 @@ Some points to keep in mind when developing:
   exclusively used for API v2, that means if you fixed a bug for 3.1.8, switch to 3.2.0 and see if the same or
   similar bug exists and needs similar fix.
 - Consider python 2/3 compatibility, make good use of ``six`` and ``tower_cli.compat``.
+- Consider docs update. Whenever a new resource, new resource public method or new resource field is added, inspect
+  the docs folder and make all necessary updates before committing. Whenever ``HISTORY.rst`` at base directory changes
+  replace ``docs/source/HISTORY.rst`` with the latest version.
 - Adhere to the flake8 specifications when developing, the only exception we allow is the maximum line length, which
   is 120 characters rather than 79.
 - Be pythonic by using meaningful names and clear structures. Make code self-explanatory rather than adding excessive

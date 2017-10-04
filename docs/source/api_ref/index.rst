@@ -93,6 +93,7 @@ Table of Contents
    resources/instance.rst
    resources/inventory_script.rst
    resources/inventory_source.rst
+   resources/inventory_update.rst
    resources/inventory.rst
    resources/job_template.rst
    resources/job.rst
@@ -101,6 +102,7 @@ Table of Contents
    resources/notification_template.rst
    resources/organization.rst
    resources/project.rst
+   resources/project_update.rst
    resources/role.rst
    resources/schedule.rst
    resources/setting.rst

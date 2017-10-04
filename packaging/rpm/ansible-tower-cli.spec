@@ -2,7 +2,7 @@
 %global srcname tower-cli
 
 Name:           ansible-%{srcname}
-Version:        3.1.8
+Version:        3.2.0
 Release:        2%{?dist}
 Summary:        Commandline interface for Ansible Tower
 Group:          Development/Tools
