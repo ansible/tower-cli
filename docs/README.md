@@ -19,7 +19,9 @@ to activate the virtual environment.
 In the newly created empty virtual environment, install [sphinx](http://www.sphinx-doc.org/en/stable/), our doc
 generating engine.
 ```
-$ sudo pip install sphinx
+$  pip install sphinx
+$  pip install ansible-tower-cli
+$  pip install click
 ```
 Sphinx walks through an existing python package's source code tree to generate its documentation. so make sure tower
 CLI is installed also.
