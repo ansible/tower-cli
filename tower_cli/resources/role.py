@@ -190,7 +190,7 @@ class Resource(models.Resource):
         Also makes a copies name field to type, which is a default column."""
         item_dict['type'] = item_dict['name']
         if len(item_dict['summary_fields']) == 0:
-            # Singleton roles ommit these fields
+            # Singleton roles omit these fields
             item_dict['resource_name'] = None
             item_dict['resource_type'] = None
         else:

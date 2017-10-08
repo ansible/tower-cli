@@ -228,7 +228,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         :type fail_on_multiple_results: bool
         :param query: Contains 2-tuples used as query parameters to filter resulting resource objects.
         :type query: list
-        :param `**kwargs`: Keyword arguements which, all together, will be used as query parameters to filter
+        :param `**kwargs`: Keyword arguments which, all together, will be used as query parameters to filter
                            resulting resource objects.
         :returns: loaded JSON from Tower backend response body.
         :rtype: dict
@@ -315,7 +315,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                                 fields (as opposed to the primary key), other fields are updated based on data
                                 sent; If unset, then the non-unique values are only written in a creation case.
         :type force_on_exists: bool
-        :param `**kwargs`: Keyword arguements which, all together, will be used as POST/PATCH body to create/modify
+        :param `**kwargs`: Keyword arguments which, all together, will be used as POST/PATCH body to create/modify
                            the resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
                            also in resource's identity will be used to lookup existing reosource.
         :returns: A dictionary combining the JSON output of the resource, as well as two extra fields: "changed",
@@ -585,7 +585,7 @@ class Resource(BaseResource):
                                 be updated to the provided values.; If unset, a match causes the request to be
                                 a no-op.
         :type force_on_exists: bool
-        :param `**kwargs`: Keyword arguements which, all together, will be used as POST body to create the
+        :param `**kwargs`: Keyword arguments which, all together, will be used as POST body to create the
                            resource object.
         :returns: A dictionary combining the JSON output of the created resource, as well as two extra fields:
                   "changed", a flag indicating if the resource is created successfully; "id", an integer which
@@ -646,7 +646,7 @@ class Resource(BaseResource):
         :param create_on_missing: Flag that if set, a new object is created if ``pk`` is not set and objects
                                   matching the appropriate unique criteria is not found.
         :type create_on_missing: bool
-        :param `**kwargs`: Keyword arguements which, all together, will be used as PATCH body to modify the
+        :param `**kwargs`: Keyword arguments which, all together, will be used as PATCH body to modify the
                            resource object. if ``pk`` is not set, key-value pairs of ``**kwargs`` which are
                            also in resource's identity will be used to lookup existing reosource.
         :returns: A dictionary combining the JSON output of the modified resource, as well as two extra fields:
@@ -752,7 +752,7 @@ class MonitorableResource(BaseResource):
         :param parent_pk: Primary key of the unified job template resource object whose latest job run will be
                           monitored if ``pk`` is not set.
         :type parent_pk: int
-        :param timeout: Number in seconds after which this method wiil time out.
+        :param timeout: Number in seconds after which this method will time out.
         :type timeout: float
         :param interval: Polling interval to refresh content from Tower.
         :type interval: float

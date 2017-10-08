@@ -60,7 +60,7 @@ class Resource(models.Resource):
                                 be updated to the provided values.; If unset, a match causes the request to be
                                 a no-op.
         :type force_on_exists: bool
-        :param `**kwargs`: Keyword arguements which, all together, will be used as POST body to create the
+        :param `**kwargs`: Keyword arguments which, all together, will be used as POST body to create the
                            resource object.
         :returns: A dictionary combining the JSON output of the created resource, as well as two extra fields:
                   "changed", a flag indicating if the resource is created successfully; "id", an integer which
