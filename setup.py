@@ -18,6 +18,7 @@
 
 import re
 import sys
+import codecs
 from distutils.core import setup
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
@@ -108,7 +109,7 @@ def combine_files(*args):
     with two line breaks between them"""
     file_contents = []
     for filename in args:
-        with open(filename, 'r') as f:
+        with codecs.open(filename, mode='r', encoding='utf8') as f:
             file_contents.append(f.read())
     return "\n\n".join(file_contents)
 
