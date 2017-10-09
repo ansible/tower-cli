@@ -17,7 +17,7 @@ necessary for Tower CLI to communicate to Tower. With these prerequisites, run
     $ tower-cli config username user
     $ tower-cli config password pass
 
-The first Tower CLI command, ``tower-cli config``. writes the connection informations to a configuration file
+The first Tower CLI command, ``tower-cli config``. writes the connection information to a configuration file
 (``~/.tower-cli.cfg`` in this case), and subsequent commands and API calls will read this file, extract connection
 information and talk to Tower as the specified user. See details of Tower CLI configuration in API reference and
 ``tower-cli config --help``.

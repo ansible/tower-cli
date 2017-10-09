@@ -78,7 +78,7 @@ class Settings(object):
         - user: Contents parsed from .ini-formatted file ``~/.tower_cli.cfg`` if exists.
         - local: Contents parsed from .ini-formatted file ``.tower_cli.cfg`` if exists in the present working
           directory or any parent directories.
-        - runtime: keyworded arguements provided by ``settings.runtime_values`` context manager.
+        - runtime: keyworded arguments provided by ``settings.runtime_values`` context manager.
 
     Note that .ini configuration file should follow the specified format in order to be correctly parsed:
 

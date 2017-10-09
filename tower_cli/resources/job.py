@@ -68,7 +68,7 @@ class Resource(models.ExeResource):
     @click.option('--diff-mode', type=bool, required=False, help='Specify diff mode for job template to run.')
     @click.option('--limit', required=False, help='Specify host limit for job template to run.')
     @click.option('--tags', required=False, help='Specify tagged actions in the playbook to run.')
-    @click.option('--skip-tags', required=False, help='Specify tagged actions in the playbook to ommit.')
+    @click.option('--skip-tags', required=False, help='Specify tagged actions in the playbook to omit.')
     @click.option('--job-type', required=False, type=click.Choice(['run', 'check']),
                   help='Specify job type for job template to run.')
     @click.option('--verbosity', type=int, required=False, help='Specify verbosity of the playbook run.')
@@ -106,7 +106,7 @@ class Resource(models.ExeResource):
         :type limit: str
         :param tags: Specify tagged actions in the playbook to run.
         :type tags: str
-        :param skip_tags: Specify tagged actions in the playbook to ommit.
+        :param skip_tags: Specify tagged actions in the playbook to omit.
         :type skip_tags: str
         :param job_type: Specify job type for job template to run.
         :type job_type: str

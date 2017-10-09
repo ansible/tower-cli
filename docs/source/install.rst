@@ -30,7 +30,7 @@ Then, inside ``tower_cli`` directory, run
 
 and follow the instructions.
 
-If you are not familar with ansible-tower-cli's dependency tree, we suggested building source in a fresh
+If you are not familiar with ansible-tower-cli's dependency tree, we suggested building source in a fresh
 `virtual environment <http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/>`__
 to prevent any dependency conflict.
 
