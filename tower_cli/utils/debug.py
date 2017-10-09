@@ -45,6 +45,10 @@ def log(s, header='', file=sys.stderr, nl=1, **kwargs):
                     i += 1
                     if i == len(word_arr):
                         break
+            # Handle corner case of extra-long word longer than 75 characters.
+            if len(to_add) == 1:
+                to_add.append(word_arr[i])
+                i += 1
             if i != len(word_arr):
                 count -= len(word_arr[i]) + 1
             to_add.append('*' * (78 - count))
