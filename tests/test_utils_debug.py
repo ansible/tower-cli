@@ -63,16 +63,25 @@ class LogTests(unittest.TestCase):
         """
         s = ' '.join(['multi-line'] * 30)
         expected = '\n'.join([
-            '*** DETAILS: multi-line multi-line multi-line '
-            'multi-line multi-line multi-line ',
-            '*** multi-line multi-line multi-line multi-line '
-            'multi-line multi-line *********',
-            '*** multi-line multi-line multi-line multi-line '
-            'multi-line multi-line *********',
-            '*** multi-line multi-line multi-line multi-line '
-            'multi-line multi-line *********',
-            '*** multi-line multi-line multi-line multi-line '
-            'multi-line multi-line *********',
+            '*** DETAILS: multi-line multi-line multi-line multi-line multi-line multi-line ',
+            '*** multi-line multi-line multi-line multi-line multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line multi-line multi-line *********',
+            '*** multi-line multi-line multi-line multi-line multi-line multi-line *********',
+        ])
+        with mock.patch.object(click, 'secho') as secho:
+            with settings.runtime_values(verbose=True):
+                debug.log(s, header='details')
+            self.assertEqual(secho.mock_calls[0][1][0], expected)
+
+    def test_extra_long_words(self):
+        """Ensure we treat words longer than 79 characters properly and do not
+        trigger any issue.
+        """
+        s = ' '.join(['short_word', 'short_word', 'l' + 'o' * 68 + 'ng_word'])
+        expected = '\n'.join([
+            '*** DETAILS: short_word short_word ********************************************',
+            '*** loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong_word ',
         ])
         with mock.patch.object(click, 'secho') as secho:
             with settings.runtime_values(verbose=True):
