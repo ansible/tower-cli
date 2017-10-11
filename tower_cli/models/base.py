@@ -937,8 +937,15 @@ class Resource(BaseResource):
         newresource = copy(orig)
         newresource.pop('id')
         basename = newresource['name'].split('@', 1)[0].strip()
-        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+
+        # Modify data to fit the call pattern of the tower-cli method
+        for field in self.fields:
+            if field.multiple and field.name in newresource:
+                newresource[field.name] = (newresource.get(field.name),)
+
         newresource.update(kwargs)
+        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+
         return self.write(create_on_missing=True, **newresource)
 
     @resources.command(ignore_defaults=True)
