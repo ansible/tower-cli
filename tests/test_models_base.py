@@ -604,6 +604,33 @@ class ResourceTests(unittest.TestCase):
             with self.assertRaises(exc.Found):
                 self.res._lookup(name='bar', fail_on_found=True)
 
+    def test_copy_with_multiples(self):
+        """
+        A resource with fields marked `multiple` has those fields copied fully
+        """
+        class BarResource(models.Resource):
+            endpoint = '/bar/'
+            name = models.Field(unique=True)
+            variables = models.Field(multiple=True)
+        res = BarResource()
+        with mock.patch.object(res, 'read') as read_mock:
+            read_mock.return_value = {
+                "count": 1,
+                "results": [
+                    {
+                        "id": 42,
+                        "name": "foobarin",
+                        "variables": "foobar: barfood"
+                    }
+                ]
+            }
+            with mock.patch.object(res, 'write') as write_mock:
+                res.copy()
+                name, args, kwargs = write_mock.mock_calls[0]
+                self.assertEqual(kwargs['name'][:len("foobarin")], "foobarin")
+                self.assertEqual(kwargs['variables'], ('foobar: barfood',))
+                self.assertNotIn('id', kwargs)
+
 
 class MonitorableResourcesTests(unittest.TestCase):
     """Estblaish that the MonitorableResource abstract class works in the
