@@ -33,15 +33,3 @@ and follow the instructions.
 If you are not familiar with ansible-tower-cli's dependency tree, we suggested building source in a fresh
 `virtual environment <http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/>`__
 to prevent any dependency conflict.
-
-Install the Right Version
--------------------------
-
-REST API of Ansible Tower is versioned, and each API version is supported by a subset,
-rather than all, of ansible-tower-cli versions. Make sure you are pairing
-your Tower backend with a right version of ansible-tower-cli, specifically:
-
-- If you are using Tower 3.2.0 and beyond, API v2 is available, you should use ansible-tower-cli
-  3.2.0 and beyond.
-- If you are using a Tower version lower than 3.2.0, only API v1 is available,
-  you should use ansible-tower-cli versions lower than 3.2.0.

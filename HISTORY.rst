@@ -1,6 +1,15 @@
 Release History
 ===============
 
+3.2.1 (2017-xx-xx)
+------------------
+
+- Install new CLI entry point, awx-cli
+- Allow setup and testing to proceed without root privileges
+- Add project and inventory update resources to enable more functionality
+- Fix bug when copying resources that use the variables field type
+- Fix bug that caused debug messages to hang with long line lengths
+
 3.2.0 (2017-10-04)
 ------------------
 
