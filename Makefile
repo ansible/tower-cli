@@ -30,8 +30,13 @@ $(foreach DIST, $(DISTS), $(eval $(call RPM_DIST_RULE,$(DIST))))
 
 all: $(RPMS)
 
-clean:
+remove_complied:
+	find . -type d -name "__pycache__" -delete
+	find . -name '*.pyc' -delete
+
+clean: remove_complied
 	rm -rf dist
+	rm -rf build
 	rm -rf ansible_tower_cli.egg-info
 	rm -rf rpm-build
 
@@ -44,25 +49,23 @@ rpm-build/.exists:
 
 # For devel convenience
 install:
-	sudo rm -rf dist/ build/ 
-	sudo python setup.py install
+	python setup.py install
+
+refresh: clean install
 
 clean_v2:
 	rm -rf tower_cli_v2
 	rm -rf ansible_tower_cli_v2.egg-info
 	rm -rf setup_v2.py
-	rm -f bin/tower-cli-v2
 
 setup_v2.py:
 	cp -R tower_cli tower_cli_v2/
-	cp bin/tower-cli bin/tower-cli-v2
 	cp setup.py setup_v2.py
 	python version_swap.py
 
 prep_v2: setup_v2.py
 
 install_v2: setup_v2.py
-	sudo rm -rf dist/ build/
-	sudo python setup_v2.py install
+	python setup_v2.py install
 
-v2-refresh: clean_v2 install_v2
+v2-refresh: clean clean_v2 install_v2

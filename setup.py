@@ -25,6 +25,8 @@ from setuptools.command.test import test as TestCommand
 
 
 pkg_name = 'tower_cli'
+dashed_name = pkg_name.replace('_', '-')
+awx_entry = dashed_name.replace('tower', 'awx')
 
 
 class Tox(TestCommand):
@@ -116,14 +118,14 @@ def combine_files(*args):
 
 setup(
     # Basic metadata
-    name='ansible-%s' % pkg_name.replace('_', '-'),
-    version=open('tower_cli/VERSION').read().strip(),
-    author='Luke Sneeringer',
-    author_email='lsneeringer@ansible.com',
+    name='ansible-%s' % dashed_name,
+    version=open('%s/VERSION' % pkg_name).read().strip(),
+    author='Red Hat, Inc.',
+    author_email='info@ansible.com',
     url='https://github.com/ansible/tower-cli',
 
     # Additional information
-    description='A CLI tool for Ansible Tower.',
+    description='A CLI tool for Ansible Tower and AWX.',
     long_description=combine_files('README.rst', 'HISTORY.rst'),
     license='Apache 2.0',
 
@@ -132,10 +134,14 @@ setup(
     provides=[
         pkg_name,
     ],
-    scripts=[
-        'bin/%s' % pkg_name.replace('_', '-'),
-    ],
+    entry_points={
+        'console_scripts': [
+            '%s=%s.cli.run:cli' % (dashed_name, pkg_name),
+            '%s=%s.cli.run:cli' % (awx_entry, pkg_name),
+        ],
+    },
     packages=find_packages(exclude=['tests']),
+    include_package_data=True,
     # How to do the tests
     tests_require=['tox'],
     cmdclass={'test': Tox},
@@ -155,11 +161,11 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: System :: Software Distribution',
         'Topic :: System :: Systems Administration',
     ],
