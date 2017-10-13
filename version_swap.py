@@ -14,16 +14,16 @@ def convert_file(filename):
             'Command has already ran, no need to run again.' % filename
         )
     s = s.replace('tower_cli', package_name)
-    s = s.replace('tower-cli', 'tower-cli-v%s' % API_VERSION)
     with open(filename, "w") as f:
         f.write(s)
 
 
+# Conversion of secondary source tree
 for dname, dirs, files in os.walk(package_name):
     for fname in files:
         fpath = os.path.join(dname, fname)
         convert_file(fpath)
 
 
+# Conversion of seconary setup file
 convert_file('setup_v%s.py' % API_VERSION)
-convert_file('bin/tower-cli-v%s' % API_VERSION)
