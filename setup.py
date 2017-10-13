@@ -116,7 +116,7 @@ def combine_files(*args):
 setup(
     # Basic metadata
     name='ansible-%s' % pkg_name.replace('_', '-'),
-    version=open('tower_cli/VERSION').read().strip(),
+    version=open('%s/VERSION' % pkg_name).read().strip(),
     author='Luke Sneeringer',
     author_email='lsneeringer@ansible.com',
     url='https://github.com/ansible/tower-cli',
