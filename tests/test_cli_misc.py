@@ -25,6 +25,7 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli.cli.misc import config, version, _echo_setting
 from tower_cli.conf import settings
+from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 
@@ -43,14 +44,26 @@ class VersionTests(unittest.TestCase):
         # Set up output from the /config/ endpoint in Tower and
         # invoke the command.
         with client.test_mode as t:
-            t.register_json('/config/', {'version': '4.21'})
+            t.register_json('/config/', {
+                'license_info': {
+                    'license_type': 'open'
+                },
+                'version': '4.21',
+                'ansible_version': '2.7'
+            })
             result = self.runner.invoke(version)
 
             # Verify that we got the output we expected.
             self.assertEqual(result.exit_code, 0)
             self.assertEqual(
                 result.output.strip(),
-                'Tower CLI %s\nAnsible Tower 4.21' % tower_cli.__version__,
+                'Tower CLI %s\n'
+                'API %s\n'
+                'AWX 4.21\n'
+                'Ansible 2.7' % (
+                    tower_cli.__version__,
+                    CUR_API_VERSION
+                ),
             )
 
     def test_cannot_connect(self):
