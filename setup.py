@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import re
+import os
 import sys
 from distutils.core import setup
 from setuptools import find_packages
@@ -113,10 +114,18 @@ def combine_files(*args):
     return "\n\n".join(file_contents)
 
 
+# Read the constants, for versioning information
+constants = {}
+exec(
+    open(os.path.join(pkg_name, 'constants.py')).read(),
+    constants
+)
+
+
 setup(
     # Basic metadata
     name='ansible-%s' % pkg_name.replace('_', '-'),
-    version=open('%s/VERSION' % pkg_name).read().strip(),
+    version=constants['VERSION'],
     author='Luke Sneeringer',
     author_email='lsneeringer@ansible.com',
     url='https://github.com/ansible/tower-cli',
@@ -138,11 +147,6 @@ setup(
     # How to do the tests
     tests_require=['tox'],
     cmdclass={'test': Tox},
-
-    # Data files
-    package_data={
-        pkg_name: ['VERSION'],
-    },
 
     # PyPI metadata.
     classifiers=[
