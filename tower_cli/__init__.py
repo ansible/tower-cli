@@ -15,7 +15,6 @@
 
 from __future__ import absolute_import, unicode_literals
 import importlib
-import os
 
 from tower_cli import constants
 

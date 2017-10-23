@@ -35,7 +35,7 @@ clean:
 	rm -rf ansible_tower_cli.egg-info
 	rm -rf rpm-build
 
-dist/ansible-tower-cli-$(VERSION).tar.gz: bin/tower-cli HISTORY.rst LICENSE MANIFEST.in README.rst requirements.txt setup.py setup.cfg
+dist/ansible-tower-cli-$(VERSION).tar.gz: HISTORY.rst LICENSE MANIFEST.in README.rst requirements.txt setup.py setup.cfg
 	@python setup.py sdist
 
 rpm-build/.exists:
@@ -51,11 +51,9 @@ clean_v1:
 	rm -rf tower_cli_v1
 	rm -rf ansible_tower_cli_v1.egg-info
 	rm -rf setup_v1.py
-	rm -f bin/tower-cli-v1
 
 setup_v1.py:
 	cp -R tower_cli tower_cli_v1/
-	cp bin/tower-cli bin/tower-cli-v1
 	cp setup.py setup_v1.py
 	python version_swap.py
 
@@ -65,4 +63,4 @@ install_v1: setup_v1.py
 	sudo rm -rf dist/ build/
 	sudo python setup_v1.py install
 
-v1-refresh: clean_v1 install_v1
+v1-refresh: clean clean_v1 install_v1

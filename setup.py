@@ -25,6 +25,7 @@ from setuptools.command.test import test as TestCommand
 
 
 pkg_name = 'tower_cli'
+dashed_name = pkg_name.replace('_', '-')
 
 
 class Tox(TestCommand):
@@ -124,7 +125,7 @@ exec(
 
 setup(
     # Basic metadata
-    name='ansible-%s' % pkg_name.replace('_', '-'),
+    name='ansible-%s' % dashed_name,
     version=constants['VERSION'],
     author='Luke Sneeringer',
     author_email='lsneeringer@ansible.com',
@@ -140,9 +141,11 @@ setup(
     provides=[
         pkg_name,
     ],
-    scripts=[
-        'bin/%s' % pkg_name.replace('_', '-'),
-    ],
+    entry_points={
+        'console_scripts': [
+            '%s=%s.cli.run:cli' % (dashed_name, pkg_name),
+        ],
+    },
     packages=find_packages(exclude=['tests']),
     # How to do the tests
     tests_require=['tox'],
