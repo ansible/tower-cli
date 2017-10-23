@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import re
+import os
 import sys
 import codecs
 from distutils.core import setup
@@ -116,10 +117,18 @@ def combine_files(*args):
     return "\n\n".join(file_contents)
 
 
+# Read the constants, for versioning information
+constants = {}
+exec(
+    open(os.path.join(pkg_name, 'constants.py')).read(),
+    constants
+)
+
+
 setup(
     # Basic metadata
     name='ansible-%s' % dashed_name,
-    version=open('%s/VERSION' % pkg_name).read().strip(),
+    version=constants['VERSION'],
     author='Red Hat, Inc.',
     author_email='info@ansible.com',
     url='https://github.com/ansible/tower-cli',
@@ -145,11 +154,6 @@ setup(
     # How to do the tests
     tests_require=['tox'],
     cmdclass={'test': Tox},
-
-    # Data files
-    package_data={
-        pkg_name: ['VERSION'],
-    },
 
     # PyPI metadata.
     classifiers=[

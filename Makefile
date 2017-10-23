@@ -1,4 +1,4 @@
-VERSION = $(shell cat tower_cli/VERSION)
+VERSION := $(shell python -c "exec(open('''tower_cli/constants.py''').read(), globals()); print VERSION")
 
 DISTS = el6 el7
 DIST_SUFFIX_el6 = 
@@ -40,7 +40,7 @@ clean: remove_complied
 	rm -rf ansible_tower_cli.egg-info
 	rm -rf rpm-build
 
-dist/ansible-tower-cli-$(VERSION).tar.gz: bin/tower-cli HISTORY.rst LICENSE MANIFEST.in README.rst VERSION requirements.txt setup.py setup.cfg
+dist/ansible-tower-cli-$(VERSION).tar.gz: bin/tower-cli HISTORY.rst LICENSE MANIFEST.in README.rst requirements.txt setup.py setup.cfg
 	@python setup.py sdist
 
 rpm-build/.exists:
