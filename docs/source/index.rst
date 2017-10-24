@@ -49,6 +49,7 @@ Table of Contents
 
    self
    install.rst
+   VERSIONING.rst
    quickstart.rst
    api_ref/index.rst
    cli_ref/index.rst
