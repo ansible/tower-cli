@@ -14,6 +14,7 @@
 
 import os
 import sys
+import pkgutil
 
 import click
 
@@ -41,12 +42,7 @@ class TowerCLI(click.MultiCommand):
         """Return a list of commands present in the commands and resources
         folders, but not subcommands.
         """
-        answer = set()
-        for filename in os.listdir('%s/%s/' % (tower_cli.whereami, 'resources')):
-            if filename.endswith('.py') and not filename.startswith('_'):
-                res = tower_cli.get_resource(filename[:-3])
-                if not getattr(res, 'internal', False):
-                    answer.add(filename[:-3])
+        answer = set([name for _, name, _ in pkgutil.iter_modules(['tower_cli/resources'])])
         for cmd_name in misc.__all__:
             answer.add(cmd_name)
         return sorted(answer)
