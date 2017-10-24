@@ -44,8 +44,8 @@ rpm-build/.exists:
 
 # For devel convenience
 install:
-	sudo rm -rf dist/ build/ 
-	sudo python setup.py install
+	rm -rf dist/ build/
+	python setup.py install
 	
 clean_v1:
 	rm -rf tower_cli_v1
@@ -60,7 +60,7 @@ setup_v1.py:
 prep_v1: setup_v1.py
 
 install_v1: setup_v1.py
-	sudo rm -rf dist/ build/
-	sudo python setup_v1.py install
+	rm -rf dist/ build/
+	python setup_v1.py install
 
 v1-refresh: clean clean_v1 install_v1
