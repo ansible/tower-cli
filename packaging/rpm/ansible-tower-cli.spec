@@ -51,7 +51,6 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %ghost %{_sysconfdir}/tower/tower_cli.cfg
 %{python_sitelib}/ansible*
 %{python_sitelib}/tower_cli*
-%{_bindir}/*
 
 %changelog
 * Sun Mar 26 2017 Satoru SATOH <satoru.satoh@gmail.com> - 3.1.3-2
