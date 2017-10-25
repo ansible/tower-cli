@@ -26,4 +26,3 @@ for dname, dirs, files in os.walk(package_name):
 
 
 convert_file('setup_v%s.py' % API_VERSION)
-convert_file('bin/tower-cli-v%s' % API_VERSION)

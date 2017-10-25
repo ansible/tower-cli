@@ -15,11 +15,11 @@
 
 from __future__ import absolute_import, unicode_literals
 import importlib
-import os
+
+from tower_cli import constants
 
 
-whereami = os.path.realpath(os.path.dirname(__file__))
-__version__ = open('%s/VERSION' % whereami, 'r').read().strip()
+__version__ = constants.VERSION
 
 
 def get_resource(name):

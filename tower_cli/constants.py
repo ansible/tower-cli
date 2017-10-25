@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# Copyright 2013-2014, Ansible, Inc.
-# Luke Sneeringer <lsneeringer@ansible.com>
+# Copyright 2017, Ansible by Red Hat.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import click
 
-from tower_cli.cli.base import TowerCLI
-
-
-if __name__ == '__main__':
-    cli = TowerCLI(
-        params=[click.Option(param_decls=['--version'], is_flag=True,
-                             help='Display tower-cli version.')],
-    )
-    cli()
+VERSION = '3.1.8'
+CUR_API_VERSION = 'v1'

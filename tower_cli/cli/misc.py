@@ -25,6 +25,7 @@ from tower_cli import __version__, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import with_global_options, Parser, settings
 from tower_cli.utils import secho
+from tower_cli.constants import CUR_API_VERSION
 
 __all__ = ['version', 'config']
 
@@ -36,6 +37,9 @@ def version(**kwargs):
 
     # Print out the current version of Tower CLI.
     click.echo('Tower CLI %s' % __version__)
+
+    # Print out the current API version of the current code base.
+    click.echo('API %s' % CUR_API_VERSION)
 
     # Attempt to connect to the Ansible Tower server.
     # If we succeed, print a version; if not, generate a failure.
