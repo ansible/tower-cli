@@ -35,6 +35,11 @@ __all__ = ['settings', 'with_global_options', 'pop_option']
 tower_dir = '/etc/tower/'
 user_dir = os.path.expanduser('~')
 CONFIG_FILENAME = '.tower_cli.cfg'
+CONFIG_OPTIONS = frozenset((
+    'host', 'username', 'password', 'verify_ssl', 'format',
+    'color', 'verbose', 'description_on', 'certificate',
+    'use_token'
+))
 
 
 class Parser(configparser.ConfigParser):
@@ -83,6 +88,7 @@ class Settings(object):
         - user: Contents parsed from .ini-formatted file ``~/.tower_cli.cfg`` if exists.
         - local: Contents parsed from .ini-formatted file ``.tower_cli.cfg`` if exists in the present working
           directory or any parent directories.
+        - environment: Values from magic environment variables.
         - runtime: keyworded arguments provided by ``settings.runtime_values`` context manager.
 
     Note that .ini configuration file should follow the specified format in order to be correctly parsed:
@@ -95,7 +101,7 @@ class Settings(object):
        ...
 
     """
-    _parser_names = ['runtime', 'local', 'user', 'global', 'defaults']
+    _parser_names = ['runtime', 'environment', 'local', 'user', 'global', 'defaults']
 
     @staticmethod
     def _new_parser(defaults=None):
@@ -114,19 +120,22 @@ class Settings(object):
 
         # Initialize the data dictionary for the default level
         # precedence (that is, the bottom of the totem pole).
-        defaults = {
+        defaults = {}
+        for key in CONFIG_OPTIONS:
+            defaults[key] = ''
+        defaults.update({
             'color': 'true',
             'format': 'human',
             'host': '127.0.0.1',
-            'password': '',
-            'username': '',
             'verify_ssl': 'true',
             'verbose': 'false',
             'description_on': 'false',
-            'certificate': '',
             'use_token': 'false',
-        }
+        })
         self._defaults = self._new_parser(defaults=defaults)
+
+        # environment variables as defaults
+        self._environment = self._new_parser(defaults=config_from_environment())
 
         # If there is a global settings file, initialize it.
         self._global = self._new_parser()
@@ -275,7 +284,6 @@ class Settings(object):
 
         =====API DOCS=====
         """
-        kwargs = config_from_environment(kwargs)
 
         # Coerce all values to strings (to be coerced back by configparser
         # later) and defenestrate any None values.
@@ -313,20 +321,16 @@ class Settings(object):
                 self._cache.pop(k, None)
 
 
-def config_from_environment(kwargs):
+def config_from_environment():
     """Read tower-cli config values from the environment if present, being
     careful not to override config values that were explicitly passed in.
     """
-    CONFIG_OPTIONS = ('host', 'username', 'password', 'verify_ssl', 'format',
-                      'color', 'verbose', 'description_on', 'certificate',
-                      'use_token')
-    kwargs = copy.copy(kwargs)
+    kwargs = {}
     for k in CONFIG_OPTIONS:
-        if k not in kwargs or kwargs[k] is None:
-            env = 'TOWER_' + k.upper()
-            v = os.getenv(env, None)
-            if v is not None:
-                kwargs[k] = v
+        env = 'TOWER_' + k.upper()
+        v = os.getenv(env, None)
+        if v is not None:
+            kwargs[k] = v
     return kwargs
 
 

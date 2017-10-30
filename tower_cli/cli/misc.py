@@ -113,6 +113,7 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
         seen = set()
         parser_desc = {
             'runtime': 'Runtime options.',
+            'environment': 'Options from environment variables.',
             'local': 'Local options (set with `tower-cli config '
                      '--scope=local`; stored in .tower_cli.cfg of this '
                      'directory or a parent)',
