@@ -32,6 +32,11 @@ from six import StringIO
 __all__ = ['settings', 'with_global_options', 'pop_option']
 
 
+tower_dir = '/etc/tower/'
+user_dir = os.path.expanduser('~')
+CONFIG_FILENAME = '.tower_cli.cfg'
+
+
 class Parser(configparser.ConfigParser):
     """ConfigParser subclass that doesn't strictly require section
     headers.
@@ -49,7 +54,7 @@ class Parser(configparser.ConfigParser):
         # other users, raise a warning
         if os.path.isfile(fpname):
             file_permission = os.stat(fpname)
-            if fpname != '/etc/tower/tower_cli.cfg' and (
+            if fpname != os.path.join(tower_dir, CONFIG_FILENAME) and (
                 (file_permission.st_mode & stat.S_IRGRP) or
                 (file_permission.st_mode & stat.S_IROTH)
             ):
@@ -125,7 +130,7 @@ class Settings(object):
 
         # If there is a global settings file, initialize it.
         self._global = self._new_parser()
-        if os.path.isdir('/etc/tower/'):
+        if os.path.isdir(tower_dir):
             # Sanity check: Try to get a list of files in `/etc/tower/`.
             #
             # The default Tower installation caused `/etc/tower/` to have
@@ -139,7 +144,7 @@ class Settings(object):
             # Therefore, check for that particular problem and give a warning
             # if we're in that situation.
             try:
-                os.listdir('/etc/tower/')
+                os.listdir(tower_dir)
             except OSError:
                 warnings.warn('/etc/tower/ is present, but not readable with '
                               'current permissions. Any settings defined in '
@@ -148,13 +153,13 @@ class Settings(object):
 
             # If there is a global settings file for Tower CLI, read in its
             # contents.
-            self._global.read('/etc/tower/tower_cli.cfg')
+            self._global.read(os.path.join(tower_dir, CONFIG_FILENAME))
 
         # Initialize a parser for the user settings file.
         self._user = self._new_parser()
 
         # If there is a user settings file, read it into the parser object.
-        user_filename = os.path.expanduser('~/.tower_cli.cfg')
+        user_filename = os.path.join(user_dir, CONFIG_FILENAME)
         self._user.read(user_filename)
 
         # Initialize a parser for the local settings file.
@@ -162,27 +167,24 @@ class Settings(object):
 
         # If there is a local settings file in the current working directory
         # or any parent, read it into the parser object.
-        #
-        # As a first step, we need to get each of the parents.
-        cwd = os.getcwd()
-        local_dirs = []
-        for i in range(0, len(cwd.split('/'))):
-            local_dir = '/'.join(cwd.split('/')[0:i + 1])
-            if len(local_dir) == 0:
-                local_dir = '/'
+        local_dir = os.getcwd()
+        local_dirs = [local_dir] if local_dir not in (user_dir, tower_dir) else []
+
+        # Loop while there are 2 parts to local_dir
+        while os.path.split(local_dir)[1]:
+
+            # Switch to parent of this directory
+            local_dir, _ = os.path.split(local_dir)
 
             # Sanity check: if this directory corresponds to our global or
             # user directory, skip it.
-            if local_dir in (os.path.expanduser('~'), '/etc/tower'):
-                continue
-
-            # Add this directory to the list.
-            local_dirs.append(local_dir)
+            if local_dir not in (user_dir, tower_dir):
+                local_dirs = [local_dir] + local_dirs
 
         # Iterate over each potential local config file and attempt to read
         # it (most won't exist, which is fine).
         for local_dir in local_dirs:
-            local_filename = '%s/.tower_cli.cfg' % local_dir
+            local_filename = os.path.join(local_dir, CONFIG_FILENAME)
             self._local.read(local_filename)
 
         # Put a stubbed runtime parser in.
