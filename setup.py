@@ -30,6 +30,20 @@ dashed_name = pkg_name.replace('_', '-')
 awx_entry = dashed_name.replace('tower', 'awx')
 
 
+# Avoid packaging any other API version of tower-cli with current one
+exclude_list = ['tests']
+primary_install = len(pkg_name.split('_')) == 2
+base_name = pkg_name[:9]
+if not primary_install:
+    exclude_list += [base_name, '{}.*'.format(base_name)]
+for v in (1, 2):
+    if pkg_name.endswith(str(v)):
+        continue
+    v_name = '{}_v{}'.format(base_name, v)
+    exclude_list += [v_name, '{}.*'.format(v_name)]
+discovered_packages = find_packages(exclude=exclude_list)
+
+
 class Tox(TestCommand):
     """The test command should install and then run tox.
 
@@ -149,7 +163,7 @@ setup(
             '%s=%s.cli.run:cli' % (awx_entry, pkg_name),
         ],
     },
-    packages=find_packages(exclude=['tests']),
+    packages=discovered_packages,
     include_package_data=True,
     # How to do the tests
     tests_require=['tox'],
