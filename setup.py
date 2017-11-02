@@ -173,4 +173,5 @@ setup(
         'Topic :: System :: Software Distribution',
         'Topic :: System :: Systems Administration',
     ],
+    zip_safe=False
 )
