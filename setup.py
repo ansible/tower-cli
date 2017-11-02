@@ -169,4 +169,7 @@ setup(
         'Topic :: System :: Software Distribution',
         'Topic :: System :: Systems Administration',
     ],
+
+    # Zipped install has problems with command discovery
+    zip_safe=False
 )
