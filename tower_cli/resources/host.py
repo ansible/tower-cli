@@ -34,45 +34,7 @@ class Resource(models.Resource):
                              help_text='Host variables, use "@" to get from file.')
     insights_system_id = models.Field(required=False, display=False)
 
-    @resources.command(use_fields_as_options=False)
-    @click.option('--host', type=types.Related('host'))
-    @click.option('--group', type=types.Related('group'))
-    def associate(self, host, group):
-        """Associate a group with this host.
-
-        =====API DOCS=====
-        Associate a group with this host.
-
-        :param host: Primary key or name of the host to be associated.
-        :type host: str
-        :param group: Primary key or name of the group to associate.
-        :type group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._assoc('groups', host, group)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--host', type=types.Related('host'))
-    @click.option('--group', type=types.Related('group'))
-    def disassociate(self, host, group):
-        """Disassociate a group from this host.
-
-        =====API DOCS=====
-        Disassociate a group from this host.
-
-        :param host: Primary key or name of the host to be disassociated.
-        :type host: str
-        :param group: Primary key or name of the group to disassociate.
-        :type group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._disassoc('groups', host, group)
+    groups = models.ManyToManyField('group', method_name='')
 
     @resources.command(ignore_defaults=True, no_args_is_help=False)
     @click.option('--group', type=types.Related('group'), help='List hosts that are children of this group.')

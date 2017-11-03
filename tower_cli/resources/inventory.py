@@ -37,6 +37,8 @@ class Resource(models.Resource):
                                help_text='The host_filter field. Only useful when kind=smart.')
     insights_credential = models.Field(display=False, required=False, type=types.Related('credential'))
 
+    instance_group = models.ManyToManyField('instance_group', method_name='ig')
+
     @resources.command(ignore_defaults=True)
     def batch_update(self, pk=None, **kwargs):
         """Update all related inventory sources of the given inventory.
@@ -58,44 +60,3 @@ class Resource(models.Resource):
         return client.post(url, data={}).json()
 
     batch_update.format_freezer = 'json'
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--inventory', type=types.Related('inventory'), required=True)
-    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
-    def associate_ig(self, inventory, instance_group):
-        """Associate an instance group with this inventory.
-        The instance group will be used to run jobs within the inventory.
-
-        =====API DOCS=====
-        Associate an instance group with this inventory.
-
-        :param inventory: Primary key or name of the inventory to associate to.
-        :type inventory: str
-        :param instance_group: Primary key or name of the instance group to be associated.
-        :type instance_group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._assoc('instance_groups', inventory, instance_group)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--inventory', type=types.Related('inventory'), required=True)
-    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
-    def disassociate_ig(self, inventory, instance_group):
-        """Disassociate an instance group from this inventory.
-
-        =====API DOCS=====
-        Disassociate an instance group with this inventory.
-
-        :param inventory: Primary key or name of the inventory to associate to.
-        :type inventory: str
-        :param instance_group: Primary key or name of the instance group to be associated.
-        :type instance_group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._disassoc('instance_groups', inventory, instance_group)

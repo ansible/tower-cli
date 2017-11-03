@@ -31,7 +31,7 @@ from click._compat import isatty as is_tty
 from tower_cli import resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import settings
-from tower_cli.models.fields import Field
+from tower_cli.models.fields import Field, ManyToManyField
 from tower_cli.utils import parser, debug, secho
 from tower_cli.utils.data_structures import OrderedDict
 from tower_cli.utils.resource_decorators import disabled_getter, disabled_setter, disabled_deleter
@@ -43,6 +43,28 @@ class ResourceMeta(type):
     """
     def __new__(cls, name, bases, attrs):
         super_new = super(ResourceMeta, cls).__new__
+
+        # ManyToManyField contributes extra methods, so those are
+        # added here, before the method processing
+        m2m_fields = []
+        if not attrs.get('abstract', False):
+
+            # Cowardly refuse to create a Resource with no endpoint (unless it's the base class).
+            if not attrs.get('endpoint', None):
+                raise TypeError('Resource subclass {} must have an `endpoint`.'.format(name))
+
+            # Find all m2m fields
+            for field_name, field in attrs.items():
+                if isinstance(field, ManyToManyField):
+                    field.configure_model(attrs, field_name)
+                    m2m_fields.append(field)
+
+            # Add associate / disassociate methods
+            for field in m2m_fields:
+                attrs[field.associate_method_name] = field.associate_method
+                attrs[field.disassociate_method_name] = field.disassociate_method
+                # tracked in m2m_fields, no longer need the field as direct attribute
+                attrs.pop(field.relationship)
 
         # Mark all `@resources.command` methods as CLI commands.
         commands = set()
@@ -117,11 +139,8 @@ class ResourceMeta(type):
             else:
                 newattrs[k] = v
         newattrs['fields'] = sorted(fields)
+        newattrs['m2m_fields'] = sorted(m2m_fields)
         newattrs['unique_fields'] = unique_fields
-
-        # Cowardly refuse to create a Resource with no endpoint (unless it's the base class).
-        if not newattrs.get('endpoint', None):
-            raise TypeError('Resource subclasses must have an `endpoint`.')
 
         # Ensure that the endpoint ends in a trailing slash, since we expect this when we build URLs based on it.
         if isinstance(newattrs['endpoint'], six.string_types):

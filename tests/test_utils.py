@@ -17,6 +17,7 @@ import click
 
 from tower_cli.conf import settings
 from tower_cli.utils import secho
+from tower_cli.utils import grammar
 
 from tests.compat import unittest, mock
 
@@ -43,3 +44,18 @@ class SechoTests(unittest.TestCase):
             with mock.patch.object(click, 'secho') as click_secho:
                 secho('foo bar baz', fg='green')
                 click_secho.assert_called_once_with('foo bar baz')
+
+
+class GrammarTests(unittest.TestCase):
+
+    def test_plurals(self):
+        """English words changed from singular to plural"""
+        self.assertEqual(grammar.pluralize("inventory"), "inventories")
+        self.assertEqual(grammar.pluralize("job_template"), "job_templates")
+        self.assertEqual(grammar.pluralize("workflow"), "workflow_job_templates")
+
+    def test_singulars(self):
+        """English words changed from singular to plural"""
+        self.assertEqual(grammar.singularize("inventories"), "inventory")
+        self.assertEqual(grammar.singularize("job_templates"), "job_template")
+        self.assertEqual(grammar.singularize("job_template"), "job_template")

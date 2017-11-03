@@ -15,7 +15,7 @@
 
 from tower_cli import models
 
-from tests.compat import unittest
+from tests.compat import unittest, mock
 
 
 class FieldTests(unittest.TestCase):
@@ -88,3 +88,87 @@ class FieldTests(unittest.TestCase):
         """
         f = models.Field(type=bool)
         self.assertEqual(f.flags, ['bool'])
+
+
+class ManyToManyFieldTests(unittest.TestCase):
+    """
+    Core functionality tests for the ManyToManyField
+    """
+    maxDiff = None
+
+    def test_method_name(self):
+        f = models.ManyToManyField('user', relationship='auditors', res_name='organization')
+        self.assertEqual(f.associate_method_name, 'associate_auditor')
+        self.assertEqual(f.disassociate_method_name, 'disassociate_auditor')
+
+    def test_configure_model(self):
+        f = models.ManyToManyField('user')
+        self.assertEqual(f.res_name, None)
+        self.assertEqual(f.relationship, None)
+        f.configure_model({'endpoint': '/organizations/'}, 'auditors')
+        self.assertEqual(f.res_name, 'organization')
+        self.assertEqual(f.relationship, 'auditors')
+
+    def test_associate_method(self):
+        f = models.ManyToManyField('user', res_name='organization', relationship='admins')
+        method = f.associate_method
+
+        class Resource:
+            def _assoc(self):
+                pass
+
+        res = Resource()
+        with mock.patch.object(res, '_assoc') as mock_assoc:
+            method(res, organization=1, user=2)
+            mock_assoc.assert_called_once_with('admins', 1, 2)
+
+    def test_disassociate_method(self):
+        f = models.ManyToManyField('user', res_name='organization', relationship='admins')
+        method = f.disassociate_method
+
+        class Resource:
+            def _disassoc(self):
+                pass
+
+        res = Resource()
+        with mock.patch.object(res, '_disassoc') as mock_disassoc:
+            method(res, organization=1, user=2)
+            mock_disassoc.assert_called_once_with('admins', 1, 2)
+
+    def test_resource_configuration(self):
+        f = models.ManyToManyField('user')
+
+        class Foo(models.BaseResource):
+            admins = f
+            endpoint = '/foos/'
+
+        self.assertEqual(Foo.m2m_fields, [f])
+        self.assertTrue(hasattr(Foo, 'associate_admin'))
+        self.assertTrue(hasattr(Foo, 'disassociate_admin'))
+
+    def test_method_docs(self):
+        f = models.ManyToManyField('user')
+
+        class Foo(models.BaseResource):
+            admins = f
+            endpoint = '/foos/'
+
+        expect_text = """Associate an admin with this foo.
+
+        =====API DOCS=====
+        Associate an admin with this foo.
+
+        :param foo: Primary key or name of the foo to associate to.
+        :type foo: str
+        :param user: Primary key or name of the user to be associated.
+        :type user: str
+        :returns: Dictionary of only one key "changed", which indicates whether the associate succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """.strip(' ')
+
+        self.assertEqual(Foo.associate_admin.__doc__.strip(' '), expect_text)
+        self.assertEqual(Foo.disassociate_admin.__doc__.strip(' '), expect_text.replace(
+            'associate', 'disassociate').replace('Associate', 'Disassociate')
+        )

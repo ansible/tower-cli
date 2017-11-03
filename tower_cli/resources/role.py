@@ -19,7 +19,7 @@ import click
 from tower_cli import models, resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.cli import types
-from tower_cli.utils import debug
+from tower_cli.utils import debug, grammar
 from tower_cli.conf import settings
 
 
@@ -87,15 +87,6 @@ class Resource(models.Resource):
             raise AttributeError
         else:
             return object.__getattribute__(self, name)
-
-    @staticmethod
-    def pluralize(kind):
-        if kind == 'inventory':
-            return 'inventories'
-        elif kind == 'workflow':
-            return 'workflow_job_templates'
-        else:
-            return '%ss' % kind
 
     @staticmethod
     def obj_res(data, fail_on=['type', 'obj', 'res']):
@@ -168,13 +159,13 @@ class Resource(models.Resource):
         if obj and obj_type == 'user':
             data['members__in'] = obj
         if obj and obj_type == 'team':
-            endpoint = '%s/%s/roles/' % (cls.pluralize(obj_type), obj)
+            endpoint = '%s/%s/roles/' % (grammar.pluralize(obj_type), obj)
             if res is not None:
                 # For teams, this is the best lookup we can do
                 #  without making the additional request for its member_role
                 data['object_id'] = res
         elif res:
-            endpoint = '%s/%s/object_roles/' % (cls.pluralize(res_type), res)
+            endpoint = '%s/%s/object_roles/' % (grammar.pluralize(res_type), res)
         else:
             endpoint = '/roles/'
         if in_data.get('type', False):
@@ -275,7 +266,7 @@ class Resource(models.Resource):
         post_data = {'id': role_id}
         if disassociate:
             post_data['disassociate'] = True
-        client.post('%s/%s/roles/' % (self.pluralize(obj_type), obj),
+        client.post('%s/%s/roles/' % (grammar.pluralize(obj_type), obj),
                     data=post_data)
         role_data['changed'] = True
         return role_data

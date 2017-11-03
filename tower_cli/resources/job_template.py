@@ -111,52 +111,15 @@ class Resource(models.SurveyResource):
         help_text='On write commands, perform extra POST to the '
                   'survey_spec endpoint.')
 
+    labels = models.ManyToManyField('label')
+    instance_groups = models.ManyToManyField('instance_group', method_name='ig')
+
     def write(self, *args, **kwargs):
         # Provide a default value for job_type, but only in creation of JT
         if (kwargs.get('create_on_missing', False) and
                 (not kwargs.get('job_type', None))):
             kwargs['job_type'] = 'run'
         return super(Resource, self).write(*args, **kwargs)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--job-template', type=types.Related('job_template'))
-    @click.option('--label', type=types.Related('label'))
-    def associate_label(self, job_template, label):
-        """Associate an label with this job template.
-
-        =====API DOCS=====
-        Associate an label with this job template.
-
-        :param job_template: The job template to associate to.
-        :type job_template: str
-        :param label: The label to be associated.
-        :type label: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._assoc('labels', job_template, label)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--job-template', type=types.Related('job_template'))
-    @click.option('--label', type=types.Related('label'))
-    def disassociate_label(self, job_template, label):
-        """Disassociate an label from this job template.
-
-        =====API DOCS=====
-        Disassociate an label from this job template.
-
-        :param job_template: The job template to disassociate from.
-        :type job_template: str
-        :param label: The label to be disassociated.
-        :type label: str
-        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._disassoc('labels', job_template, label)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
@@ -284,44 +247,3 @@ class Resource(models.SurveyResource):
         r = client.post(url, data=post_data, auth=None)
         if r.status_code == 201:
             return {'changed': True}
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--job-template', type=types.Related('job_template'), required=True)
-    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
-    def associate_ig(self, job_template, instance_group):
-        """Associate an instance group with this job_template.
-        The instance group will be used to run jobs within the job_template.
-
-        =====API DOCS=====
-        Associate an instance group with this job_template.
-
-        :param job_template: Primary key or name of the job_template to associate to.
-        :type job_template: str
-        :param instance_group: Primary key or name of the instance group to be associated.
-        :type instance_group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._assoc('instance_groups', job_template, instance_group)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--job-template', type=types.Related('job_template'), required=True)
-    @click.option('--instance-group', type=types.Related('instance_group'), required=True)
-    def disassociate_ig(self, job_template, instance_group):
-        """Disassociate an instance group from this job_template.
-
-        =====API DOCS=====
-        Disassociate an instance group with this job_template.
-
-        :param job_template: Primary key or name of the job_template to associate to.
-        :type job_template: str
-        :param instance_group: Primary key or name of the instance group to be associated.
-        :type instance_group: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._disassoc('instance_groups', job_template, instance_group)

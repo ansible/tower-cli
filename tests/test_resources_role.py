@@ -38,11 +38,6 @@ example_role_data = {
 class RoleUnitTests(unittest.TestCase):
     """Test role internal helper functions."""
 
-    def test_plurals(self):
-        """English words changed from singular to plural"""
-        self.assertEqual(Role.pluralize("inventory"), "inventories")
-        self.assertEqual(Role.pluralize("job_template"), "job_templates")
-
     def test_obj_res_team(self):
         """Test that the input format can be correctly translated into the
         object & resource data structure for granting the resource role
