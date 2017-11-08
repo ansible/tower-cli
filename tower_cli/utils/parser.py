@@ -67,7 +67,7 @@ def parse_kv(var_string):
             # If possible, convert into python data type, for instance "5"->5
             try:
                 return_dict[k] = ast.literal_eval(v)
-            except Exception:
+            except:
                 return_dict[k] = v
         else:
             # scenario where --extra-vars=42, will throw error
@@ -99,7 +99,7 @@ def string_to_dict(var_string, allow_kv=True, require_dict=True):
         try:
             assert allow_kv
             return_dict = parse_kv(var_string)
-        except Exception:
+        except:
             raise exc.TowerCLIError(
                 'failed to parse some of the extra '
                 'variables.\nvariables: \n%s' % var_string
@@ -145,7 +145,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
             assert type(try_dict) is dict
             debug.log('Using unprocessed YAML', header='decision', nl=2)
             return extra_vars_yaml.rstrip()
-        except Exception:
+        except:
             debug.log('Failed YAML parsing, defaulting to JSON',
                       header='decison', nl=2)
     if extra_vars == {}:
