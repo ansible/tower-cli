@@ -179,6 +179,10 @@ class Resource(models.Resource):
             endpoint = '/roles/'
         if in_data.get('type', False):
             data['role_field'] = '%s_role' % in_data['type'].lower()
+        # Add back fields unrelated to role lookup, such as all_pages
+        for key, value in in_data.items():
+            if key not in RESOURCE_FIELDS and key not in ['type', 'user', 'team']:
+                data[key] = value
         return data, endpoint
 
     @staticmethod
