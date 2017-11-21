@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 import pkgutil
 
@@ -41,7 +42,12 @@ class TowerCLI(click.MultiCommand):
         """Return a list of commands present in the commands and resources
         folders, but not subcommands.
         """
-        answer = set([name for _, name, _ in pkgutil.iter_modules(['tower_cli/resources'])])
+        resource_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),
+            os.pardir,
+            'resources'
+        ))
+        answer = set([name for _, name, _ in pkgutil.iter_modules([resource_path])])
         for cmd_name in misc.__all__:
             answer.add(cmd_name)
         return sorted(answer)
