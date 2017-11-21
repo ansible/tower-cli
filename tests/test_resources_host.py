@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 import tower_cli
 from tower_cli.api import client
 
@@ -27,29 +25,6 @@ class HostTests(unittest.TestCase):
     """
     def setUp(self):
         self.host_resource = tower_cli.get_resource('host')
-
-    def test_associate(self):
-        """Establish that the associate method makes the HTTP requests
-        that we expect.
-        """
-        with client.test_mode as t:
-            t.register_json('/hosts/42/groups/?id=84',
-                            {'count': 0, 'results': []})
-            t.register_json('/hosts/42/groups/', {}, method='POST')
-            self.host_resource.associate(42, 84)
-            self.assertEqual(t.requests[1].body, json.dumps({'associate': True, 'id': 84}))
-
-    def test_disassociate(self):
-        """Establish that the associate method makes the HTTP requests
-        that we expect.
-        """
-        with client.test_mode as t:
-            t.register_json('/hosts/42/groups/?id=84',
-                            {'count': 1, 'results': [{'id': 84}],
-                             'next': None, 'previous': None})
-            t.register_json('/hosts/42/groups/', {}, method='POST')
-            self.host_resource.disassociate(42, 84)
-            self.assertEqual(t.requests[1].body, json.dumps({'disassociate': True, 'id': 84}))
 
     def test_list_under_group(self):
         """Establish that a group flag is converted into query string."""

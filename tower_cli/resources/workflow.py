@@ -174,6 +174,8 @@ class Resource(models.SurveyResource):
         help_text='On write commands, perform extra POST to the '
                   'survey_spec endpoint.')
 
+    labels = models.ManyToManyField('label')
+
     @staticmethod
     def _workflow_node_structure(node_results):
         '''
@@ -292,45 +294,6 @@ class Resource(models.SurveyResource):
         if settings.format == 'human':
             settings.format = 'yaml'
         return self._get_schema(wfjt)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--workflow', type=types.Related('workflow'))
-    @click.option('--label', type=types.Related('label'))
-    def associate_label(self, workflow, label):
-        """Associate an label with this workflow.
-
-        =====API DOCS=====
-        Associate an label with this workflow job template.
-
-        :param workflow: The workflow job template to associate to.
-        :type workflow: str
-        :param label: The label to be associated.
-        :type label: str
-        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
-        :rtype: dict
-        =====API DOCS=====
-        """
-        return self._assoc('labels', workflow, label)
-
-    @resources.command(use_fields_as_options=False)
-    @click.option('--workflow', type=types.Related('workflow'))
-    @click.option('--label', type=types.Related('label'))
-    def disassociate_label(self, workflow, label):
-        """Disassociate an label from this workflow.
-
-        =====API DOCS=====
-        Disassociate an label from this workflow job template.
-
-        :param workflow: The workflow job template to disassociate from.
-        :type workflow: str
-        :param label: The label to be disassociated.
-        :type label: str
-        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
-        :rtype: dict
-
-        =====API DOCS=====
-        """
-        return self._disassoc('labels', workflow, label)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--workflow', type=types.Related('workflow'))

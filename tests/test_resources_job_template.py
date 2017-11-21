@@ -132,31 +132,6 @@ class TemplateTests(unittest.TestCase):
             self.assertEqual(t.requests[1].method, 'PATCH')
             self.assertEqual(len(t.requests), 2)
 
-    def test_associate_label(self):
-        """Establish that the associate method makes the HTTP requests
-        that we expect.
-        """
-        with client.test_mode as t:
-            t.register_json('/job_templates/42/labels/?id=84',
-                            {'count': 0, 'results': []})
-            t.register_json('/job_templates/42/labels/', {}, method='POST')
-            self.res.associate_label(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'associate': True, 'id': 84}))
-
-    def test_disassociate_label(self):
-        """Establish that the disassociate method makes the HTTP requests
-        that we expect.
-        """
-        with client.test_mode as t:
-            t.register_json('/job_templates/42/labels/?id=84',
-                            {'count': 1, 'results': [{'id': 84}],
-                             'next': None, 'previous': None})
-            t.register_json('/job_templates/42/labels/', {}, method='POST')
-            self.res.disassociate_label(42, 84)
-            self.assertEqual(t.requests[1].body,
-                             json.dumps({'disassociate': True, 'id': 84}))
-
     def test_associate_credential(self):
         """Establish that the associate method makes the HTTP requests
         that we expect.
