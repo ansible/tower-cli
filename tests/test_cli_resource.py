@@ -11,11 +11,6 @@ from tower_cli.conf import settings
 
 from tests.compat import unittest, mock
 
-try:
-    basestring
-except NameError:
-    basestring = None
-
 
 class SubcommandTests(unittest.TestCase):
     """A set of tests for establishing that the Subcommand class created
@@ -297,7 +292,7 @@ class SubcommandTests(unittest.TestCase):
         self.assertIn('2 Austin, TX', output)
 
     def test_unicode_human_formatting(self):
-        value = 'unicode ❤ ☀ ☆ ☂'
+        value = u'unicode ❤ ☀ ☆ ☂'
         data = {
             'count': 1,
             'results': [
@@ -308,11 +303,7 @@ class SubcommandTests(unittest.TestCase):
                 }
             ]
         }
-        if basestring:
-            # Python < 3
-            data['results'][1]['name'] = value.decode('utf-8')
-        else:
-            data['results'][1]['name'] = value
+        data['results'][1]['name'] = value
         output = self.command._format_human(data)
         assert value in output
 

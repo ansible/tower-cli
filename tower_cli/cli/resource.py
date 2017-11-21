@@ -32,11 +32,6 @@ from tower_cli.cli.action import ActionSubcommand
 from tower_cli.exceptions import MultipleRelatedError
 from tower_cli.cli.types import StructuredInput
 
-try:
-    basestring
-except NameError:
-    basestring = None
-
 
 class ResSubcommand(click.MultiCommand):
     """A subcommand that implements all command methods on the
@@ -154,9 +149,7 @@ class ResSubcommand(click.MultiCommand):
     def get_print_value(data, col):
         value = data.get(col, 'N/A')
         is_bool = isinstance(value, bool)
-        if basestring and isinstance(value, basestring) and type(value) is not str:
-            value = value.encode('utf-8')  # handle python 2 encoding problem
-        value = '%s' % value
+        value = six.text_type(value)
         if is_bool:
             value = value.lower()
         return value
@@ -250,7 +243,7 @@ class ResSubcommand(click.MultiCommand):
         for raw_row in raw_rows:
             data_row = ''
             for col in columns:
-                template = '{0:%d}' % widths[col]
+                template = six.text_type('{0:%d}') % widths[col]
                 value = self.get_print_value(raw_row, col)
                 # Right-align certain native data types
                 if isinstance(raw_row.get(col, 'N/A'), (bool, int)):
