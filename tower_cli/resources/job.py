@@ -42,13 +42,13 @@ class Resource(models.ExeResource):
         key='-J',
         type=types.Related('job_template'), required=False, display=True
     )
-    job_explanation = models.Field(required=False, display=False)
+    job_explanation = models.Field(required=False, display=False, read_only=True)
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
     elapsed = models.Field(required=False, display=True)
 
     @resources.command(
-        use_fields_as_options=('job_template', 'job_explanation')
+        use_fields_as_options=('job_template',)
     )
     @click.option('--monitor', is_flag=True, default=False,
                   help='If sent, immediately calls `job monitor` on the newly '
