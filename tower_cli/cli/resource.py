@@ -140,10 +140,9 @@ class ResSubcommand(click.MultiCommand):
         """Echos only the id"""
         if 'id' in payload:
             return str(payload['id'])
-        if 'results' in payload and payload['count'] == 1:
-            return str(payload['results'][0]['id'])
-        raise MultipleRelatedError(
-            'Can not use id format when multiple objects are returned.')
+        if 'results' in payload:
+            return ' '.join([six.text_type(item['id']) for item in payload['results']])
+        raise MultipleRelatedError('Could not serialize output with id format.')
 
     @staticmethod
     def get_print_value(data, col):
