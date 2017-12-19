@@ -14,7 +14,7 @@ Release History
 - Fixed bug with side-by-side install of v1 and v2
 - Fixed bug where --all-pages was ignored for roles
 - Allowed use of --format=id with multiple results
--	Added cleaner handling of Unicode
+- Added cleaner handling of Unicode
 
 3.2.0 (2017-10-04)
 ------------------
