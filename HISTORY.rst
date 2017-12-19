@@ -1,14 +1,20 @@
 Release History
 ===============
 
-3.2.1 (2017-xx-xx)
+3.2.1 (2017-12-19)
 ------------------
 
-- Install new CLI entry point, awx-cli
-- Allow setup and testing to proceed without root privileges
-- Add project and inventory update resources to enable more functionality
-- Fix bug when copying resources that use the variables field type
-- Fix bug that caused debug messages to hang with long line lengths
+- Added support for using settings from environment vars in normal CLI use
+- Made many-to-many relations easier to manage with a new field type
+- Installed new CLI entry point, awx-cli
+- Allowed setup and testing to proceed without root privileges
+- Added project and inventory update resources to enable more functionality
+- Fixed bug when copying resources that use the variables field type
+- Fixed bug that caused debug messages to hang with long line lengths
+- Fixed bug with side-by-side install of v1 and v2
+- Fixed bug where --all-pages was ignored for roles
+- Allowed use of --format=id with multiple results
+-	Added cleaner handling of Unicode
 
 3.2.0 (2017-10-04)
 ------------------
