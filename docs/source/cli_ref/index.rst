@@ -51,11 +51,22 @@ Some examples:
     # Delete a user.
     $ tower-cli user delete 42
 
+    # List all jobs
+    $ tower-cli job list
+    
+    # List specific page of job list
+    $ tower-cli job list --page=1
+
     # Launch a job.
     $ tower-cli job launch --job-template=144
 
     # Monitor a job.
     $ tower-cli job monitor 95
+    
+    # Filter job list for currently running jobs
+    $ tower-cli job list --status=running
+    
+
 
 When in doubt, help is available!
 

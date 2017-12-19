@@ -16,7 +16,7 @@ Fields Table
 +================+======================+===========================+==========+=======+===========+=========+
 |job_template    |Resource job_template |The job_template field.    |False     |False  |True       |False    |
 +----------------+----------------------+---------------------------+----------+-------+-----------+---------+
-|job_explanation |String                |The job_explanation field. |False     |False  |True       |False    |
+|job_explanation |String                |The job_explanation field. |True      |False  |True       |False    |
 +----------------+----------------------+---------------------------+----------+-------+-----------+---------+
 |created         |String                |The created field.         |False     |False  |True       |False    |
 +----------------+----------------------+---------------------------+----------+-------+-----------+---------+
