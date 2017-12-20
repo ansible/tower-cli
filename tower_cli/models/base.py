@@ -616,7 +616,9 @@ class Resource(BaseResource):
         return self.write(create_on_missing=True, **kwargs)
 
     @resources.command(ignore_defaults=True)
-    def copy(self, pk=None, **kwargs):
+    @click.option('--new-name', default=None,
+                  help='The name to give the new resource, if used, will deep copy in the backend.')
+    def copy(self, pk=None, new_name=None, **kwargs):
         """Copy an object.
 
         Only the ID is used for the lookup. All provided fields are used to override the old data from the
@@ -626,6 +628,7 @@ class Resource(BaseResource):
         Copy an object.
 
         :param pk: Primary key of the resource object to be copied
+        :param new_name: The new name to give the resource if deep copying via the API
         :type pk: int
         :param `**kwargs`: Keyword arguments of fields whose given value will override the original value.
         :returns: loaded JSON of the copied new resource object.
@@ -647,10 +650,18 @@ class Resource(BaseResource):
             if field.multiple and field.name in newresource:
                 newresource[field.name] = (newresource.get(field.name),)
 
-        newresource.update(kwargs)
-        newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+        if new_name is None:
+            # copy client-side, the old mechanism
+            newresource.update(kwargs)
+            newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
 
-        return self.write(create_on_missing=True, **newresource)
+            return self.write(create_on_missing=True, **newresource)
+        else:
+            # copy server-side, the new mechanism
+            if kwargs:
+                raise exc.TowerCLIError('Cannot override {} and also use --new-name.'.format(kwargs.keys()))
+            copy_endpoint = '{}/{}/copy/'.format(self.endpoint.strip('/'), pk)
+            return client.post(copy_endpoint, data={'name': new_name}).json()
 
     @resources.command(ignore_defaults=True)
     @click.option('--create-on-missing', default=False, show_default=True, type=bool, is_flag=True,
