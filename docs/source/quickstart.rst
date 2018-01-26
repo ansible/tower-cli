@@ -69,7 +69,7 @@ Alternatively, you can use the old way by using import alias:
 
 .. code:: python
 
-  import tower_cli.resources.job_template import Resource as JobTemplate
+  from tower_cli.resources.job_template import Resource as JobTemplate
 
   res = JobTemplate()
 
