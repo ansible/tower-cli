@@ -16,6 +16,7 @@
 import click
 import json
 import copy
+import six
 
 from tower_cli import get_resource, models, resources, exceptions as exc
 from tower_cli.utils import debug
@@ -26,6 +27,7 @@ class Resource(models.Resource):
     """A resource for notification templates."""
     cli_help = 'Manage notification templates within Ansible Tower.'
     endpoint = '/notification_templates/'
+    dependencies = ['organization']
 
     # Actual fields
     name = models.Field(unique=True)
@@ -157,6 +159,11 @@ class Resource(models.Resource):
             if field in kwargs:
                 result[field] = kwargs.pop(field)
                 if field in Resource.json_fields:
+
+                    # If result[field] is not a string we can continue on
+                    if not isinstance(result[field], six.string_types):
+                        continue
+
                     try:
                         data = json.loads(result[field])
                         result[field] = data

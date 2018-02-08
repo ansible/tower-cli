@@ -22,6 +22,7 @@ class Resource(models.Resource):
     cli_help = 'Manage credentials within Ansible Tower.'
     endpoint = '/credentials/'
     identity = ('organization', 'user', 'team', 'name')
+    dependencies = ['organization', 'credential_type']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

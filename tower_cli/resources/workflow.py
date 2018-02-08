@@ -155,6 +155,9 @@ class Resource(models.SurveyResource):
     cli_help = 'Manage workflow job templates.'
     endpoint = '/workflow_job_templates/'
     unified_job_type = '/workflow_jobs/'
+    dependencies = ['organization']
+    related = ['survey_spec', 'workflow_nodes']
+    workflow_node_types = ['success_nodes', 'failure_nodes', 'always_nodes']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

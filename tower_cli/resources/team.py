@@ -22,6 +22,7 @@ class Resource(models.Resource):
     cli_help = 'Manage teams within Ansible Tower.'
     endpoint = '/teams/'
     identity = ('organization', 'name')
+    dependencies = ['organization']
 
     name = models.Field(unique=True)
     organization = models.Field(type=types.Related('organization'))

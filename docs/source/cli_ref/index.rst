@@ -67,7 +67,25 @@ Some examples:
     
     # Filter job list for currently running jobs
     $ tower-cli job list --status=running
-    
+
+    # Export all objects
+    $ tower-cli receive --all
+
+    # Export all credentials
+    $ tower-cli receive --credential all
+
+    # Export a credential named "My Credential"
+    $ tower-cli receive --credential "My Credential"
+
+    # Import from a JSON file named assets.json
+    $ tower-cli send assets.json
+
+    # Import anything except an organization defined in a JSON file named assets.json
+    $ tower-cli send --prevent organization assets.json
+
+    # Copy all assets from one instance to another
+    $ tower-cli receive --tower-host tower1.example.com --all | tower-cli send --tower-host tower2.example.com
+
 
 
 When in doubt, help is available!
@@ -94,6 +112,7 @@ In specific, ``tower-cli --help`` lists all available resources in the current v
       config                 Read or write tower-cli configuration.
       credential             Manage credentials within Ansible Tower.
       credential_type        Manage credential types within Ansible Tower.
+      empty                  Empties assets from Tower.
       group                  Manage groups belonging to an inventory.
       host                   Manage hosts belonging to a group within an...
       instance               Check instances within Ansible Tower.
@@ -108,8 +127,10 @@ In specific, ``tower-cli --help`` lists all available resources in the current v
       notification_template  Manage notification templates within Ansible...
       organization           Manage organizations within Ansible Tower.
       project                Manage projects within Ansible Tower.
+      receive                Export assets from Tower.
       role                   Add and remove users/teams from roles.
       schedule               Manage schedules within Ansible Tower.
+      send                   Import assets into Tower.
       setting                Manage settings within Ansible Tower.
       team                   Manage teams within Ansible Tower.
       user                   Manage users within Ansible Tower.
