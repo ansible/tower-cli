@@ -38,9 +38,46 @@ class TowerCLI(click.MultiCommand):
     def _get_all_misc_cmds(self):
         pass
 
+    def format_command_subsection(self, ctx, formatter, commands, header):
+        """Writes help text for a sub-section of commands,
+        specifically to be reused for resource commands
+        and system/configuration commands.
+        """
+        rows = []
+        for subcommand in commands:
+            cmd = self.get_command(ctx, subcommand)
+            # What is this, the tool lied about a command.  Ignore it
+            if cmd is None:
+                continue
+
+            help = cmd.short_help or ''
+            rows.append((subcommand, help))
+
+        if rows:
+            with formatter.section(header):
+                formatter.write_dl(rows)
+
+    def format_commands(self, ctx, formatter):
+        """Extra format methods for multi methods that adds all the commands
+        after the options.
+        """
+        self.format_command_subsection(
+            ctx, formatter, self.list_misc_commands(), 'Commands'
+        )
+        self.format_command_subsection(
+            ctx, formatter, self.list_resource_commands(), 'Resources'
+        )
+
     def list_commands(self, ctx):
         """Return a list of commands present in the commands and resources
         folders, but not subcommands.
+        """
+        commands = set(self.list_resource_commands())
+        commands.union(set(self.list_misc_commands()))
+        return sorted(commands)
+
+    def list_resource_commands(self):
+        """Returns a list of multi-commands for each resource type.
         """
         resource_path = os.path.abspath(os.path.join(
             os.path.dirname(__file__),
@@ -48,6 +85,13 @@ class TowerCLI(click.MultiCommand):
             'resources'
         ))
         answer = set([name for _, name, _ in pkgutil.iter_modules([resource_path])])
+        return sorted(answer)
+
+    def list_misc_commands(self):
+        """Returns a list of global commands, realted to CLI
+        configuration or system management in general.
+        """
+        answer = set([])
         for cmd_name in misc.__all__:
             answer.add(cmd_name)
         return sorted(answer)
