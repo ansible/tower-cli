@@ -59,7 +59,7 @@ class Parser(configparser.ConfigParser):
         # other users, raise a warning
         if os.path.isfile(fpname):
             file_permission = os.stat(fpname)
-            if fpname != os.path.join(tower_dir, CONFIG_FILENAME) and (
+            if fpname != os.path.join(tower_dir, 'tower_cli.cfg') and (
                 (file_permission.st_mode & stat.S_IRGRP) or
                 (file_permission.st_mode & stat.S_IROTH)
             ):
@@ -162,7 +162,7 @@ class Settings(object):
 
             # If there is a global settings file for Tower CLI, read in its
             # contents.
-            self._global.read(os.path.join(tower_dir, CONFIG_FILENAME))
+            self._global.read(os.path.join(tower_dir, 'tower_cli.cfg'))
 
         # Initialize a parser for the user settings file.
         self._user = self._new_parser()
