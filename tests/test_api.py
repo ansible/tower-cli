@@ -19,7 +19,7 @@ from datetime import datetime as dt, timedelta
 import requests
 from requests.sessions import Session
 
-from tower_cli.api import APIResponse, client, TowerTokenAuth,\
+from tower_cli.api import APIResponse, client, BasicTowerAuth,\
         TOWER_DATETIME_FMT
 from tower_cli import exceptions as exc
 from tower_cli.conf import settings
@@ -180,9 +180,9 @@ class ClientTests(unittest.TestCase):
                 with settings.runtime_values(verify_ssl=False):
                     client.get('/ping/')
                     g.assert_called_once_with(
-                        # The pont is to assure verify=False below
+                        # The point is to assure verify=False below
                         'GET', mock.ANY, allow_redirects=True,
-                        auth=(mock.ANY, mock.ANY), verify=False
+                        auth=mock.ANY, verify=False
                     )
 
     def test_http_contradiction_error(self):
@@ -205,14 +205,15 @@ class ClientTests(unittest.TestCase):
                     self.assertTrue(secho.called)
 
 
-class TowerTokenAuthTests(unittest.TestCase):
+class TowerAuthTokenTests(unittest.TestCase):
     def setUp(self):
 
         class Req(object):
             def __init__(self):
                 self.headers = {}
 
-        self.auth = TowerTokenAuth('alice', 'pass', client)
+        with settings.runtime_values(use_token=True):
+            self.auth = BasicTowerAuth('alice', 'pass', client)
         self.req = Req()
         self.expires = dt.utcnow()
 
@@ -221,8 +222,10 @@ class TowerTokenAuthTests(unittest.TestCase):
         expires = self.expires.strftime(TOWER_DATETIME_FMT)
         with mock.patch('six.moves.builtins.open', new_callable=mock.mock_open()):
             with mock.patch('tower_cli.api.json.load', return_value={'token': 'foobar', 'expires': expires}):
-                self.auth(self.req)
-                self.assertEqual(self.req.headers['Authorization'], 'Token foobar')
+                with client.test_mode as t:
+                    t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
+                    self.auth(self.req)
+                    self.assertEqual(self.req.headers['Authorization'], 'Token foobar')
 
     def test_reading_invalid_token(self):
         self.expires += timedelta(hours=1)
@@ -230,6 +233,7 @@ class TowerTokenAuthTests(unittest.TestCase):
         with mock.patch('six.moves.builtins.open', new_callable=mock.mock_open()):
             with mock.patch('tower_cli.api.json.load', return_value="invalid"):
                 with client.test_mode as t:
+                    t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
                     t.register('/authtoken/', json.dumps({'token': 'barfoo', 'expires': expires}), status_code=200,
                                method='POST')
                     self.auth(self.req)
@@ -241,6 +245,7 @@ class TowerTokenAuthTests(unittest.TestCase):
         with mock.patch('six.moves.builtins.open', new_callable=mock.mock_open()):
             with mock.patch('tower_cli.api.json.load', return_value={'token': 'foobar', 'expires': expires}):
                 with client.test_mode as t:
+                    t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
                     t.register('/authtoken/', json.dumps({'token': 'barfoo', 'expires': expires}), status_code=200,
                                method='POST')
                     self.auth(self.req)
@@ -253,5 +258,16 @@ class TowerTokenAuthTests(unittest.TestCase):
             with mock.patch('tower_cli.api.json.load', return_value={'token': 'foobar', 'expires': expires}):
                 with client.test_mode as t:
                     with self.assertRaises(exc.AuthError):
+                        t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
                         t.register('/authtoken/', json.dumps({'invalid': 'invalid'}), status_code=200, method='POST')
                         self.auth(self.req)
+
+    def test_auth_token_unsupported(self):
+        # If the user specifies `use_token=True`, but `/authtoken/` doesn't
+        # exist (in Tower 3.3 and beyond), just fall back to basic auth
+        with client.test_mode as t:
+            with settings.runtime_values(use_token=True):
+                t.register('/authtoken/', json.dumps({}), status_code=404, method='OPTIONS')
+                auth = BasicTowerAuth('alice', 'pass', client)
+                auth(self.req)
+                assert self.req.headers == {'Authorization': 'Basic YWxpY2U6cGFzcw=='}

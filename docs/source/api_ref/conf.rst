@@ -29,7 +29,7 @@ available Tower CLI settings:
 +------------------+-------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |``certificate``   | String/''                                             | Path to a custom certificate file that will be used throughout the command. Ignored if `--insecure` flag if set in command or `verify_ssl` is set to false |
 +------------------+-------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|``use_token``     | Boolean/'false'                                       | Whether to use token-based authentication.                                                                                                                 |
+|``use_token``     | Boolean/'false'                                       | Whether to use token-based authentication.  No longer supported in Tower 3.3 and above                                                                     |
 +------------------+-------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 **Note:** Some settings are marked as 'CLI use only', this means although users are free to set values to those
