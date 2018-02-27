@@ -31,7 +31,9 @@ RESOURCE_FIELDS = [
 
 ROLE_TYPES = [
     'admin', 'read', 'member', 'execute', 'adhoc', 'update',
-    'use', 'auditor']
+    'use', 'auditor', 'project_admin', 'inventory_admin',
+    'credential_admin', 'workflow_admin', 'notification_admin'
+]
 
 
 class Resource(models.Resource):
