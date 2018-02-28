@@ -18,6 +18,7 @@ import contextlib
 import copy
 import functools
 import json
+import stat
 import warnings
 from datetime import datetime as dt
 
@@ -67,6 +68,13 @@ class BasicTowerAuth(AuthBase):
                 raise exc.AuthError('Invalid Tower auth token format: %s' % json.dumps(token_json))
             with open(filename, 'w') as f:
                 json.dump(token_json, f)
+            try:
+                os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR)
+            except Exception as e:
+                warnings.warn(
+                    'Unable to set permissions on {0} - {1} '.format(filename, e),
+                    UserWarning
+                )
             return 'Token ' + token_json['token']
 
     def __call__(self, r):
