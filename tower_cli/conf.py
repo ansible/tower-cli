@@ -446,8 +446,8 @@ def with_global_options(method):
     method = click.option(
         '--use-token',
         default=None,
-        help='Turn on Tower\'s token-based authentication. Set config'
-             ' use_token to make this permanent.',
+        help='Turn on Tower\'s token-based authentication. No longer supported '
+             'in Tower 3.3 and above.',
         is_flag=True,
         required=False, callback=_apply_runtime_setting,
         is_eager=True

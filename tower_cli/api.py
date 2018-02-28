@@ -25,7 +25,7 @@ from requests.exceptions import ConnectionError, SSLError
 from requests.sessions import Session
 from requests.models import Response
 from requests.packages import urllib3
-from requests.auth import AuthBase
+from requests.auth import AuthBase, HTTPBasicAuth
 
 from tower_cli import exceptions as exc
 from tower_cli.conf import settings
@@ -36,12 +36,13 @@ from tower_cli.constants import CUR_API_VERSION
 TOWER_DATETIME_FMT = r'%Y-%m-%dT%H:%M:%S.%fZ'
 
 
-class TowerTokenAuth(AuthBase):
+class BasicTowerAuth(AuthBase):
 
     def __init__(self, username, password, cli_client):
         self.username = username
         self.password = password
         self.cli_client = cli_client
+        self.use_legacy_token = settings.use_token
 
     def _acquire_token(self):
         return self.cli_client._make_request(
@@ -69,7 +70,20 @@ class TowerTokenAuth(AuthBase):
             return 'Token ' + token_json['token']
 
     def __call__(self, r):
-        r.headers['Authorization'] = self._get_auth_token()
+        if self.use_legacy_token:
+            resp = self.cli_client._make_request(
+                'OPTIONS', self.cli_client.prefix + 'authtoken/', [], {}
+            )
+            if resp.ok:
+                r.headers['Authorization'] = self._get_auth_token()
+            else:
+                warnings.warn(
+                    'use_token is not supported in this version of Tower '
+                    '(the Auth Token API has been replaced with OAuth2.0 support)',
+                )
+                HTTPBasicAuth(self.username, self.password)(r)
+        else:
+            HTTPBasicAuth(self.username, self.password)(r)
         return r
 
 
@@ -161,12 +175,11 @@ class Client(Session):
         # from settings if it's provided.
         kwargs.setdefault(
             'auth',
-            TowerTokenAuth(
+            BasicTowerAuth(
                 settings.username,
                 settings.password,
                 self
-            ) if settings.use_token else (settings.username,
-                                          settings.password)
+            )
         )
 
         # POST and PUT requests will send JSON by default; make this

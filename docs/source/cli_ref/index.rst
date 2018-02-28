@@ -166,8 +166,6 @@ and ``tower-cli {resource} {action} --help`` shows details of the usage of this 
                          False]
 
     Global Options:
-      --use-token                     Turn on Tower's token-based authentication.
-                                      Set config use_token to make this permanent.
       --certificate TEXT              Path to a custom certificate file that will
                                       be used throughout the command. Overwritten
                                       by --insecure flag if set.
@@ -192,6 +190,8 @@ and ``tower-cli {resource} {action} --help`` shows details of the usage of this 
                                       "http://" is explicitly provided. This will
                                       take precedence over a host provided to
                                       `tower config`, if any.
+      --use-token                     Turn on Tower's token-based authentication.
+                                      No longer supported in Tower 3.3 and above
 
     Other Options:
       --help  Show this message and exit.
