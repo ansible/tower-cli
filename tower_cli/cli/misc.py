@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import os
 import stat
 import warnings
@@ -19,15 +20,16 @@ import warnings
 import click
 import six
 
+from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 
 from tower_cli import __version__, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import with_global_options, Parser, settings
-from tower_cli.utils import secho
+from tower_cli.utils import secho, supports_oauth
 from tower_cli.constants import CUR_API_VERSION
 
-__all__ = ['version', 'config']
+__all__ = ['version', 'config', 'login']
 
 
 @click.command()
@@ -204,3 +206,30 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
             UserWarning
             )
     click.echo('Configuration updated successfully.')
+
+
+@click.command()
+@click.argument('username', required=True)
+@click.option('--password', required=True, prompt=True, hide_input=True)
+def login(username, password):
+    """
+    Retrieves and stores an OAuth2 personal auth token.
+    """
+    if not supports_oauth():
+        raise exc.TowerCLIError(
+            'This version of Tower does not support OAuth2.0'
+        )
+
+    # Explicitly set a basic auth header for PAT acquisition (so that we don't
+    # try to auth w/ an existing user+pass or oauth token in a config file)
+    req = collections.namedtuple('req', 'headers')({})
+    HTTPBasicAuth(username, password)(req)
+    r = client.post(
+        '/users/{}/personal_tokens/'.format(username),
+        data={"description": "Tower CLI", "application": None, "scope": "read"},
+        headers=req.headers
+    )
+
+    if r.status_code == 201:
+        token = r.json()['token']
+        config.main(['oauth_token', token, '--scope=user'])

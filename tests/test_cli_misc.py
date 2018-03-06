@@ -13,17 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os.path
 import stat
 import warnings
 
 import click
 from click.testing import CliRunner
+from fauxquests.response import Resp
 import requests
 
 import tower_cli
-from tower_cli.api import client
-from tower_cli.cli.misc import config, version, _echo_setting
+from tower_cli.api import client, Client
+from tower_cli.cli.misc import config, version, login, _echo_setting
 from tower_cli.conf import settings
 from tower_cli.constants import CUR_API_VERSION
 
@@ -267,6 +269,100 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(result.output.strip(),
                          'Error: /etc/tower/ does not exist, and this '
                          'command cowardly declines to create it.')
+
+
+class LoginTests(unittest.TestCase):
+    """Establish that the `tower-cli login` command works in the way
+    that we expect.
+    """
+    def setUp(self):
+        self.runner = CliRunner()
+
+    def test_no_arguments(self):
+        """
+        Establish that if `tower-cli login` is called with no arguments, it
+        complains
+        """
+        # Invoke the command.
+        result = self.runner.invoke(login)
+
+        # Ensure that we got a non-zero exit status
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn('Missing argument "username"', result.output)
+
+    def test_oauth_unsupported(self):
+        """Establish that if `tower-cli login` is used on a Tower that
+        doesn't support OAuth2, it shows a meaningful error
+        """
+        with client.test_mode as t:
+            # You have to modify this internal private registry to
+            # register a URL endpoint that _doesn't_ have the version
+            # prefix
+            prefix = Client().get_prefix(include_version=False)
+            t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 404, {})
+            result = self.runner.invoke(
+                login, ['bob', '--password', 'secret']
+            )
+
+        # Ensure that we got a non-zero exit status
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn(
+            'Error: This version of Tower does not support OAuth2.0',
+            result.output
+        )
+
+    def test_personal_access_token(self):
+        """Establish that if `tower-cli login` is called with a username and
+        password, we obtain and write an oauth token to the config file
+        """
+        # Invoke the command.
+        mock_open = mock.mock_open()
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
+                        create=True):
+            with mock.patch.object(os, 'chmod'):
+                with client.test_mode as t:
+                    # You have to modify this internal private registry to
+                    # register a URL endpoint that _doesn't_ have the version
+                    # prefix
+                    prefix = Client().get_prefix(include_version=False)
+                    t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 200, {})
+                    t.register('/users/bob/personal_tokens/', json.dumps({
+                        'token': 'abc123'
+                    }), status_code=201, method='POST')
+                    result = self.runner.invoke(
+                        login, ['bob', '--password', 'secret']
+                    )
+
+        # Ensure that we got a zero exit status
+        self.assertEqual(result.exit_code, 0)
+
+        # Ensure that the output seems to be correct.
+        self.assertIn(mock.call(os.path.expanduser('~/.tower_cli.cfg'), 'w'),
+                      mock_open.mock_calls)
+        self.assertIn(mock.call().write('oauth_token = abc123\n'),
+                      mock_open.mock_calls)
+
+    def test_personal_access_invalid(self):
+        """Establish that if `tower-cli login` is called with an invalid
+        username and password, it shows a meaningful error
+        """
+        with client.test_mode as t:
+            # You have to modify this internal private registry to
+            # register a URL endpoint that _doesn't_ have the version
+            # prefix
+            prefix = Client().get_prefix(include_version=False)
+            t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 200, {})
+            t.register('/users/bob/personal_tokens/', json.dumps({}),
+                       status_code=401, method='POST')
+            result = self.runner.invoke(
+                login, ['bob', '--password', 'secret']
+            )
+
+        # Ensure that we got a non-zero exit status
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn(
+            'Error: Invalid Tower authentication credentials', result.output
+        )
 
 
 class SupportTests(unittest.TestCase):

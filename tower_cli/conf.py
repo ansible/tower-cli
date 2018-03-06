@@ -38,7 +38,7 @@ CONFIG_FILENAME = '.tower_cli.cfg'
 CONFIG_OPTIONS = frozenset((
     'host', 'username', 'password', 'verify_ssl', 'format',
     'color', 'verbose', 'description_on', 'certificate',
-    'use_token'
+    'use_token', 'oauth_token'
 ))
 
 
@@ -344,8 +344,9 @@ def _apply_runtime_setting(ctx, param, value):
 
 
 SETTINGS_PARMS = set([
-    'tower_host', 'tower_password', 'format', 'tower_username', 'verbose',
-    'description_on', 'insecure', 'certificate', 'use_token'
+    'tower_host', 'tower_oauth_token', 'tower_password', 'format',
+    'tower_username', 'verbose', 'description_on', 'insecure', 'certificate',
+    'use_token'
 ])
 
 
@@ -374,6 +375,14 @@ def with_global_options(method):
         help='The location of the Ansible Tower host. '
              'HTTPS is assumed as the protocol unless "http://" is explicitly '
              'provided. This will take precedence over a host provided to '
+             '`tower config`, if any.',
+        required=False, callback=_apply_runtime_setting,
+        is_eager=True
+    )(method)
+    method = click.option(
+        '-t', '--tower-oauth-token',
+        help='OAuth2 token to use to authenticate to Ansible Tower. '
+             'This will take precedence over a token provided to '
              '`tower config`, if any.',
         required=False, callback=_apply_runtime_setting,
         is_eager=True
