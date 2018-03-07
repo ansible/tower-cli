@@ -330,11 +330,12 @@ class LoginTests(unittest.TestCase):
                         'token': 'abc123'
                     }), status_code=201, method='POST')
                     result = self.runner.invoke(
-                        login, ['bob', '--password', 'secret']
+                        login, ['bob', '--password', 'secret', '--scope', 'read']
                     )
 
         # Ensure that we got a zero exit status
         self.assertEqual(result.exit_code, 0)
+        assert json.loads(t.requests[-1].body)['scope'] == 'read'
 
         # Ensure that the output seems to be correct.
         self.assertIn(mock.call(os.path.expanduser('~/.tower_cli.cfg'), 'w'),
