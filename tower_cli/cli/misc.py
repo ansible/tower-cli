@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import collections
+import json
 import os
 import stat
 import warnings
@@ -25,7 +26,7 @@ from requests.exceptions import RequestException
 
 from tower_cli import __version__, exceptions as exc
 from tower_cli.api import client
-from tower_cli.conf import with_global_options, Parser, settings
+from tower_cli.conf import with_global_options, Parser, settings, _apply_runtime_setting
 from tower_cli.utils import secho, supports_oauth
 from tower_cli.constants import CUR_API_VERSION
 
@@ -211,6 +212,10 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
 @click.command()
 @click.argument('username', required=True)
 @click.option('--password', required=True, prompt=True, hide_input=True)
+@with_global_options
+@click.option('-v', '--verbose', default=None,
+              help='Show information about requests being made.', is_flag=True,
+              required=False, callback=_apply_runtime_setting, is_eager=True)
 def login(username, password):
     """
     Retrieves and stores an OAuth2 personal auth token.
@@ -221,7 +226,7 @@ def login(username, password):
         )
 
     # Explicitly set a basic auth header for PAT acquisition (so that we don't
-    # try to auth w/ an existing user+pass or oauth token in a config file)
+    # try to auth w/ an existing user+pass or oauth2 token in a config file)
     req = collections.namedtuple('req', 'headers')({})
     HTTPBasicAuth(username, password)(req)
     r = client.post(
@@ -231,5 +236,9 @@ def login(username, password):
     )
 
     if r.status_code == 201:
-        token = r.json()['token']
+        result = r.json()
+        result.pop('summary_fields', None)
+        result.pop('related', None)
+        token = result['token']
+        secho(json.dumps(result, indent=1), fg='blue', bold=True)
         config.main(['oauth_token', token, '--scope=user'])
