@@ -40,7 +40,7 @@ def supports_oauth():
     # Import here to avoid a circular import
     from tower_cli.api import client
     try:
-        resp = client.get('/o/')
+        resp = client.head('/o/')
     except exceptions.NotFound:
         return False
     return resp.ok

@@ -21,6 +21,7 @@ import warnings
 import click
 from click.testing import CliRunner
 from fauxquests.response import Resp
+from fauxquests.utils import URL
 import requests
 
 import tower_cli
@@ -299,7 +300,9 @@ class LoginTests(unittest.TestCase):
             # register a URL endpoint that _doesn't_ have the version
             # prefix
             prefix = Client().get_prefix(include_version=False)
-            t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 404, {})
+            t._registry[URL(prefix + 'o/', method='HEAD')] = Resp(
+                ''.encode('utf-8'), 404, {}
+            )
             result = self.runner.invoke(
                 login, ['bob', '--password', 'secret']
             )
@@ -325,7 +328,9 @@ class LoginTests(unittest.TestCase):
                     # register a URL endpoint that _doesn't_ have the version
                     # prefix
                     prefix = Client().get_prefix(include_version=False)
-                    t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 200, {})
+                    t._registry[URL(prefix + 'o/', method='HEAD')] = Resp(
+                        ''.encode('utf-8'), 200, {}
+                    )
                     t.register('/users/bob/personal_tokens/', json.dumps({
                         'token': 'abc123'
                     }), status_code=201, method='POST')
@@ -352,7 +357,9 @@ class LoginTests(unittest.TestCase):
             # register a URL endpoint that _doesn't_ have the version
             # prefix
             prefix = Client().get_prefix(include_version=False)
-            t._registry[prefix + 'o/'] = Resp(''.encode('utf-8'), 200, {})
+            t._registry[URL(prefix + 'o/', method='HEAD')] = Resp(
+                ''.encode('utf-8'), 200, {}
+            )
             t.register('/users/bob/personal_tokens/', json.dumps({}),
                        status_code=401, method='POST')
             result = self.runner.invoke(
