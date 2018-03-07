@@ -236,12 +236,12 @@ class Client(Session):
         # Sanity check: Did we fail to authenticate properly?
         # If so, fail out now; this is always a failure.
         if r.status_code == 401:
-            raise exc.AuthError('Invalid Tower authentication credentials.')
+            raise exc.AuthError('Invalid Tower authentication credentials (HTTP 401).')
 
         # Sanity check: Did we get a forbidden response, which means that
         # the user isn't allowed to do this? Report that.
         if r.status_code == 403:
-            raise exc.Forbidden("You don't have permission to do that.")
+            raise exc.Forbidden("You don't have permission to do that (HTTP 403).")
 
         # Sanity check: Did we get a 404 response?
         # Requests with primary keys will return a 404 if there is no response,

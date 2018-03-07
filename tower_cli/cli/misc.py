@@ -212,11 +212,12 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
 @click.command()
 @click.argument('username', required=True)
 @click.option('--password', required=True, prompt=True, hide_input=True)
-@with_global_options
+@click.option('--scope', required=False, default='write',
+              type=click.Choice(['read', 'write']))
 @click.option('-v', '--verbose', default=None,
               help='Show information about requests being made.', is_flag=True,
               required=False, callback=_apply_runtime_setting, is_eager=True)
-def login(username, password):
+def login(username, password, scope, verbose):
     """
     Retrieves and stores an OAuth2 personal auth token.
     """
@@ -231,7 +232,7 @@ def login(username, password):
     HTTPBasicAuth(username, password)(req)
     r = client.post(
         '/users/{}/personal_tokens/'.format(username),
-        data={"description": "Tower CLI", "application": None, "scope": "read"},
+        data={"description": "Tower CLI", "application": None, "scope": scope},
         headers=req.headers
     )
 
