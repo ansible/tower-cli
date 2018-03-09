@@ -189,7 +189,7 @@ class Client(Session):
         response.
         """
         # Piece together the full URL.
-        use_version = not url.endswith('/o/')
+        use_version = not url.startswith('/o/')
         url = '%s%s' % (self.get_prefix(use_version), url.lstrip('/'))
 
         # Ansible Tower expects authenticated requests; add the authentication

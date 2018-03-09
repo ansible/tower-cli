@@ -30,7 +30,7 @@ from tower_cli.conf import with_global_options, Parser, settings, _apply_runtime
 from tower_cli.utils import secho, supports_oauth
 from tower_cli.constants import CUR_API_VERSION
 
-__all__ = ['version', 'config', 'login']
+__all__ = ['version', 'config', 'login', 'logout']
 
 
 @click.command()
@@ -236,7 +236,7 @@ def login(username, password, scope, verbose):
         headers=req.headers
     )
 
-    if r.status_code == 201:
+    if r.ok:
         result = r.json()
         result.pop('summary_fields', None)
         result.pop('related', None)
@@ -246,3 +246,15 @@ def login(username, password, scope, verbose):
             result['token'] = token
         secho(json.dumps(result, indent=1), fg='blue', bold=True)
         config.main(['oauth_token', token, '--scope=user'])
+
+
+@click.command()
+def logout():
+    """
+    Removes an OAuth2 personal auth token from config.
+    """
+    if not supports_oauth():
+        raise exc.TowerCLIError(
+            'This version of Tower does not support OAuth2.0'
+        )
+    config.main(['oauth_token', '--unset', '--scope=user'])
