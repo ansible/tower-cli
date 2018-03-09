@@ -30,7 +30,7 @@ from requests.auth import AuthBase, HTTPBasicAuth
 
 from tower_cli import exceptions as exc
 from tower_cli.conf import settings
-from tower_cli.utils import data_structures, debug, secho
+from tower_cli.utils import data_structures, debug, secho, supports_oauth
 from tower_cli.constants import CUR_API_VERSION
 
 
@@ -47,7 +47,7 @@ class BasicTowerAuth(AuthBase):
 
     def _acquire_token(self):
         return self.cli_client._make_request(
-            'POST', self.cli_client.prefix + 'authtoken/', [],
+            'POST', self.cli_client.get_prefix() + 'authtoken/', [],
             {'data': json.dumps({'username': self.username, 'password': self.password}),
              'headers': {'Content-Type': 'application/json'}}
         ).json()
@@ -78,9 +78,19 @@ class BasicTowerAuth(AuthBase):
             return 'Token ' + token_json['token']
 
     def __call__(self, r):
+        if 'Authorization' in r.headers:
+            return r
+        if settings.oauth_token:
+            if supports_oauth:
+                r.headers['Authorization'] = 'Bearer {}'.format(settings.oauth_token)
+                return r
+            else:
+                warnings.warn(
+                    'This version of Tower does not support OAuth2.0'
+                )
         if self.use_legacy_token:
             resp = self.cli_client._make_request(
-                'OPTIONS', self.cli_client.prefix + 'authtoken/', [], {}
+                'OPTIONS', self.cli_client.get_prefix() + 'authtoken/', [], {}
             )
             if resp.ok:
                 r.headers['Authorization'] = self._get_auth_token()
@@ -156,8 +166,7 @@ class Client(Session):
                 'Right now it is: "%s".' % settings.host
             )
 
-    @property
-    def prefix(self):
+    def get_prefix(self, include_version=True):
         """Return the appropriate URL prefix to prepend to requests,
         based on the host provided in settings.
         """
@@ -169,7 +178,10 @@ class Client(Session):
                 'Can not verify ssl with non-https protocol. Change the '
                 'verify_ssl configuration setting to continue.'
             )
-        return '%s/api/%s/' % (host.rstrip('/'), CUR_API_VERSION)
+        prefix = os.path.sep.join([host.rstrip('/'), 'api', ''])
+        if include_version:
+            prefix = os.path.sep.join([prefix.rstrip('/'), CUR_API_VERSION, ''])
+        return prefix
 
     @functools.wraps(Session.request)
     def request(self, method, url, *args, **kwargs):
@@ -177,7 +189,8 @@ class Client(Session):
         response.
         """
         # Piece together the full URL.
-        url = '%s%s' % (self.prefix, url.lstrip('/'))
+        use_version = not url.startswith('/o/')
+        url = '%s%s' % (self.get_prefix(use_version), url.lstrip('/'))
 
         # Ansible Tower expects authenticated requests; add the authentication
         # from settings if it's provided.
@@ -223,12 +236,12 @@ class Client(Session):
         # Sanity check: Did we fail to authenticate properly?
         # If so, fail out now; this is always a failure.
         if r.status_code == 401:
-            raise exc.AuthError('Invalid Tower authentication credentials.')
+            raise exc.AuthError('Invalid Tower authentication credentials (HTTP 401).')
 
         # Sanity check: Did we get a forbidden response, which means that
         # the user isn't allowed to do this? Report that.
         if r.status_code == 403:
-            raise exc.Forbidden("You don't have permission to do that.")
+            raise exc.Forbidden("You don't have permission to do that (HTTP 403).")
 
         # Sanity check: Did we get a 404 response?
         # Requests with primary keys will return a 404 if there is no response,
@@ -286,7 +299,7 @@ class Client(Session):
                                      verbose=False, format='json'):
             adapters = copy.copy(self.adapters)
             faux_adapter = FauxAdapter(
-                url_pattern=self.prefix.rstrip('/') + '%s',
+                url_pattern=self.get_prefix().rstrip('/') + '%s',
             )
 
             try:

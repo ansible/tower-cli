@@ -34,3 +34,13 @@ def secho(message, **kwargs):
 
     # Okay, now call click.secho normally.
     return click.secho(message, **kwargs)
+
+
+def supports_oauth():
+    # Import here to avoid a circular import
+    from tower_cli.api import client
+    try:
+        resp = client.head('/o/')
+    except exceptions.NotFound:
+        return False
+    return resp.ok

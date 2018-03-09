@@ -2,27 +2,47 @@ Quick Start
 ===========
 
 This chapter walks you through the general process of setting up and using Tower CLI. It starts with CLI usage
-and ends with API usage. For details, please see API and CLI references in subsequent chapters.
+and ends with API usage. For futher details, please see :ref:`api_ref` and
+:ref:`cli_ref`.
 
-It is assumed you have a Tower backend available to talk to and Tower CLI installed. Please see 'Installation'
-chapter for instructions on installing Tower CLI.
+It is assumed you have a Tower backend available to talk to and Tower CLI installed. Please see the :ref:`installation` chapter for instructions on installing Tower CLI.
 
 First of all, make sure you know the name of the Tower backend, like ``tower.example.com``, as well as the
-username/password set of a user in that Tower backend, like ``user/pass``. These are connection information
+username/password set of a user in that Tower backend, like ``user/pass``. These are connection details
 necessary for Tower CLI to communicate to Tower. With these prerequisites, run
 
 .. code:: bash
 
     $ tower-cli config host tower.example.com
-    $ tower-cli config username user
-    $ tower-cli config password pass
+    $ tower-cli login username
+    Password:
 
-The first Tower CLI command, ``tower-cli config``. writes the connection information to a configuration file
-(``~/.tower-cli.cfg`` in this case), and subsequent commands and API calls will read this file, extract connection
-information and talk to Tower as the specified user. See details of Tower CLI configuration in API reference and
+The first Tower CLI command, ``tower-cli config``, writes the connection information to a configuration file
+(``~/.tower-cli.cfg``, by default), and subsequent commands and API calls will read this file, extract connection
+information and interact with Tower. See details of Tower CLI configuration in :ref:`api_ref` and
 ``tower-cli config --help``.
 
-Then, use Tower CLI to actually control your Tower backend. The CRUD operations against almost every Tower resource
+The second command, ``tower-cli login``, will prompt you for your password and
+will acquire an OAuth2 token (which will also be saved to a configuration
+file) with write scope.  You can also request read scope for read-only access:
+
+.. code:: bash
+
+    $ tower-cli login username --scope read
+    Password:
+
+.. note::
+
+    Older versions of Tower (prior to 3.3) do not support OAuth2 token
+    authentication, and instead utilize per-request basic HTTP authentication:
+
+.. code:: bash
+
+    $ tower-cli config host tower.example.com
+    $ tower-cli config username user
+    $ tower-cli config username pass
+
+Next, use Tower CLI to actually control your Tower backend. The CRUD operations against almost every Tower resource
 can be done using Tower CLI. Suppose we want to see the available job templates to choose for running:
 
 .. code:: bash

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import warnings
 from datetime import datetime as dt, timedelta
 
 import requests
@@ -43,14 +44,14 @@ class ClientTests(unittest.TestCase):
         URL prefix given a host with no specified protocol.
         """
         with settings.runtime_values(host='33.33.33.33'):
-            self.assertEqual(client.prefix, 'https://33.33.33.33/api/%s/' % CUR_API_VERSION)
+            self.assertEqual(client.get_prefix(), 'https://33.33.33.33/api/%s/' % CUR_API_VERSION)
 
     def test_prefix_explicit_protocol(self):
         """Establish that the prefix property returns the appropriate
         URL prefix and don't clobber over an explicit protocol.
         """
         with settings.runtime_values(host='bogus://33.33.33.33/'):
-            self.assertEqual(client.prefix, 'bogus://33.33.33.33/api/%s/' % CUR_API_VERSION)
+            self.assertEqual(client.get_prefix(), 'bogus://33.33.33.33/api/%s/' % CUR_API_VERSION)
 
     def test_request_ok(self):
         """Establish that a request that returns a valid JSON response
@@ -191,7 +192,7 @@ class ClientTests(unittest.TestCase):
         with settings.runtime_values(
                 host='http://33.33.33.33', verify_ssl=True):
             with self.assertRaises(exc.TowerCLIError):
-                client.prefix
+                client.get_prefix()
 
     def test_failed_suggestion_protocol(self):
         """Establish that if connection fails and protocol not given,
@@ -248,7 +249,9 @@ class TowerAuthTokenTests(unittest.TestCase):
                     t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
                     t.register('/authtoken/', json.dumps({'token': 'barfoo', 'expires': expires}), status_code=200,
                                method='POST')
-                    self.auth(self.req)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", UserWarning)
+                        self.auth(self.req)
                     self.assertEqual(self.req.headers['Authorization'], 'Token barfoo')
 
     def test_reading_invalid_token_from_server(self):
@@ -269,5 +272,16 @@ class TowerAuthTokenTests(unittest.TestCase):
             with settings.runtime_values(use_token=True):
                 t.register('/authtoken/', json.dumps({}), status_code=404, method='OPTIONS')
                 auth = BasicTowerAuth('alice', 'pass', client)
-                auth(self.req)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    auth(self.req)
                 assert self.req.headers == {'Authorization': 'Basic YWxpY2U6cGFzcw=='}
+
+    def test_oauth_bearer_token(self):
+        token = 'Azly3WBiYWeGKfImK25ftpJR1nvn6JABC123'
+        with settings.runtime_values(oauth_token=token):
+            auth = BasicTowerAuth(None, None, client)
+            auth(self.req)
+            assert self.req.headers == {
+                'Authorization': 'Bearer {}'.format(token)
+            }
