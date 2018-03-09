@@ -240,6 +240,9 @@ def login(username, password, scope, verbose):
         result = r.json()
         result.pop('summary_fields', None)
         result.pop('related', None)
-        token = result['token']
+        token = result.pop('token', None)
+        if settings.verbose:
+            # only print the actual token if -v
+            result['token'] = token
         secho(json.dumps(result, indent=1), fg='blue', bold=True)
         config.main(['oauth_token', token, '--scope=user'])
