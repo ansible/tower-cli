@@ -212,12 +212,14 @@ def config(key=None, value=None, scope='user', global_=False, unset=False):
 @click.command()
 @click.argument('username', required=True)
 @click.option('--password', required=True, prompt=True, hide_input=True)
+@click.option('--client-id', required=False)
+@click.option('--client-secret', required=False)
 @click.option('--scope', required=False, default='write',
               type=click.Choice(['read', 'write']))
 @click.option('-v', '--verbose', default=None,
               help='Show information about requests being made.', is_flag=True,
               required=False, callback=_apply_runtime_setting, is_eager=True)
-def login(username, password, scope, verbose):
+def login(username, password, scope, client_id, client_secret, verbose):
     """
     Retrieves and stores an OAuth2 personal auth token.
     """
@@ -228,19 +230,50 @@ def login(username, password, scope, verbose):
 
     # Explicitly set a basic auth header for PAT acquisition (so that we don't
     # try to auth w/ an existing user+pass or oauth2 token in a config file)
+
     req = collections.namedtuple('req', 'headers')({})
-    HTTPBasicAuth(username, password)(req)
-    r = client.post(
-        '/users/{}/personal_tokens/'.format(username),
-        data={"description": "Tower CLI", "application": None, "scope": scope},
-        headers=req.headers
-    )
+    if client_id and client_secret:
+        HTTPBasicAuth(client_id, client_secret)(req)
+        req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        r = client.post(
+            '/o/token/',
+            data={
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+                "scope": scope
+            },
+            headers=req.headers
+        )
+    elif client_id:
+        req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        r = client.post(
+            '/o/token/',
+            data={
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+                "client_id": client_id,
+                "scope": scope
+            },
+            headers=req.headers
+        )
+    else:
+        HTTPBasicAuth(username, password)(req)
+        r = client.post(
+            '/users/{}/personal_tokens/'.format(username),
+            data={"description": "Tower CLI", "application": None, "scope": scope},
+            headers=req.headers
+        )
 
     if r.ok:
         result = r.json()
         result.pop('summary_fields', None)
         result.pop('related', None)
-        token = result.pop('token', None)
+        if client_id:
+            token = result.pop('access_token', None)
+        else:
+            token = result.pop('token', None)
         if settings.verbose:
             # only print the actual token if -v
             result['token'] = token
