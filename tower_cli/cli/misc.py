@@ -296,6 +296,7 @@ def logout():
         )
     config.main(['oauth_token', '--unset', '--scope=user'])
 
+
 @click.command()
 @with_global_options
 @click.option('--organization', required=False, multiple=True)
