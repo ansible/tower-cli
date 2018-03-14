@@ -23,6 +23,7 @@ from click.testing import CliRunner
 from fauxquests.response import Resp
 from fauxquests.utils import URL
 import requests
+import six.moves.urllib.parse as urlparse
 
 import tower_cli
 from tower_cli.api import client, Client
@@ -371,6 +372,89 @@ class LoginTests(unittest.TestCase):
         self.assertIn(
             'Error: Invalid Tower authentication credentials', result.output
         )
+
+    def test_application_scoped_token(self):
+        """Establish that if `tower-cli login` is called with a username,
+        password, and OAuth2 client ID and secret, we obtain and write an oauth
+        token to the config file
+        """
+        # Invoke the command.
+        mock_open = mock.mock_open()
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
+                        create=True):
+            with mock.patch.object(os, 'chmod'):
+                with client.test_mode as t:
+                    # You have to modify this internal private registry to
+                    # register a URL endpoint that _doesn't_ have the version
+                    # prefix
+                    prefix = Client().get_prefix(include_version=False)
+                    t._registry[URL(prefix + 'o/', method='HEAD')] = Resp(
+                        ''.encode('utf-8'), 200, {}
+                    )
+                    t._registry[URL(prefix + 'o/token/', method='POST')] = Resp(
+                        json.dumps({'access_token': 'abc123'}).encode('utf-8'),
+                        201, {}
+                    )
+                    result = self.runner.invoke(
+                        login, ['bob', '--password', 'secret', '--client-id',
+                                'abc123', '--client-secret', 'some-secret']
+                    )
+
+        # Ensure that we got a zero exit status
+        self.assertEqual(result.exit_code, 0)
+        data = urlparse.parse_qs(t.requests[-1].body)
+        assert data['scope'] == ['write']
+        assert data['grant_type'] == ['password']
+        assert data['password'] == ['secret']
+        assert data['username'] == ['bob']
+
+        # Ensure that the output seems to be correct.
+        self.assertIn(mock.call(os.path.expanduser('~/.tower_cli.cfg'), 'w'),
+                      mock_open.mock_calls)
+        self.assertIn(mock.call().write('oauth_token = abc123\n'),
+                      mock_open.mock_calls)
+
+    def test_public_application_scoped_token(self):
+        """Establish that if `tower-cli login` is called with a username,
+        password, and public OAuth2 client ID, we obtain and write an oauth
+        token to the config file
+        """
+        # Invoke the command.
+        mock_open = mock.mock_open()
+        with mock.patch('tower_cli.cli.misc.open', mock_open,
+                        create=True):
+            with mock.patch.object(os, 'chmod'):
+                with client.test_mode as t:
+                    # You have to modify this internal private registry to
+                    # register a URL endpoint that _doesn't_ have the version
+                    # prefix
+                    prefix = Client().get_prefix(include_version=False)
+                    t._registry[URL(prefix + 'o/', method='HEAD')] = Resp(
+                        ''.encode('utf-8'), 200, {}
+                    )
+                    t._registry[URL(prefix + 'o/token/', method='POST')] = Resp(
+                        json.dumps({'access_token': 'abc123'}).encode('utf-8'),
+                        201, {}
+                    )
+                    result = self.runner.invoke(
+                        login, ['bob', '--password', 'secret', '--client-id',
+                                'abc123']
+                    )
+
+        # Ensure that we got a zero exit status
+        self.assertEqual(result.exit_code, 0)
+        data = urlparse.parse_qs(t.requests[-1].body)
+        assert data['scope'] == ['write']
+        assert data['grant_type'] == ['password']
+        assert data['password'] == ['secret']
+        assert data['username'] == ['bob']
+        assert data['client_id'] == ['abc123']
+
+        # Ensure that the output seems to be correct.
+        self.assertIn(mock.call(os.path.expanduser('~/.tower_cli.cfg'), 'w'),
+                      mock_open.mock_calls)
+        self.assertIn(mock.call().write('oauth_token = abc123\n'),
+                      mock_open.mock_calls)
 
 
 class SupportTests(unittest.TestCase):
