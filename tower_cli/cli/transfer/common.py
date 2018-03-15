@@ -74,7 +74,6 @@ def resolve_asset_dependencies(an_asset, asset_type):
             # Multiple credentials on things like job templates come through as:
             #   vault_credential
             #   machine_credential
-            #   extra_credential
             if relation.endswith("credential"):
                 model_type = "credential"
             else:
@@ -214,6 +213,14 @@ def extract_inventory_relations(asset, relation_type):
                         relation['source_script'], relation_type, e
                     ))
                 new_relation['source_script'] = script['name']
+            if 'credential' in relation and relation['credential']:
+                try:
+                    credential = tower_cli.get_resource('credential').get(relation['credential'])
+                except TowerCLIError as e:
+                    raise TowerCLIError("Unable to get inventory credential {} for {} : {}".format(
+                        relation['credential'], relation_type, e
+                    ))
+                new_relation['credential'] = credential['name']
 
         del new_relation['inventory']
 
@@ -353,3 +360,15 @@ def get_assets_from_input(all=False, asset_input=None):
         raise TowerCLIError("Nothing assets were specified")
 
     return return_assets
+
+
+def extract_extra_credentials(asset):
+    return_credentials = []
+    name_to_id_map = {}
+
+    extra_credentials = load_all_assets(asset['related']['extra_credentials'])
+    for a_credential in extra_credentials['results']:
+        name_to_id_map[a_credential['name']] = a_credential['id']
+        return_credentials.append(a_credential['name'])
+
+    return {'items': return_credentials, 'existing_name_to_id_map': name_to_id_map}

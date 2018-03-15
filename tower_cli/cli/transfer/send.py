@@ -15,6 +15,7 @@ class Sender(LoggingCommand):
     my_user = None
     secret_management = 'default'
     columns = None
+    sorted_assets = {}
 
     def __init__(self, no_color):
         self.no_color = no_color
@@ -30,18 +31,19 @@ class Sender(LoggingCommand):
             raise TowerCLIError("Unable to get assets from input")
 
         # Next we will sort all of the assets by their type again, will raise if there are errors
-        sorted_assets = self.prep_and_sort_all_assets(import_json, prevent)
+        # This is setting sorted_assets
+        self.prep_and_sort_all_assets(import_json, prevent)
 
         for asset_type in common.SEND_ORDER:
             # If we don't have any of this asset type we can move on
-            if asset_type not in sorted_assets or len(sorted_assets[asset_type]) == 0:
+            if asset_type not in self.sorted_assets or len(self.sorted_assets[asset_type]) == 0:
                 continue
 
             identifier = common.get_identity(asset_type)
             resource = tower_cli.get_resource(asset_type)
             post_options = common.get_api_options(asset_type)
 
-            for an_asset in sorted_assets[asset_type]:
+            for an_asset in self.sorted_assets[asset_type]:
                 asset_name = an_asset[identifier]
 
                 self.print_header_row(asset_type, asset_name)
@@ -276,6 +278,8 @@ class Sender(LoggingCommand):
                             self.import_inventory_groups(existing_object, relations[a_relation])
                         elif a_relation in common.NOTIFICATION_TYPES:
                             self.import_notification_relations(existing_object, relations[a_relation], a_relation)
+                        elif a_relation == 'extra_credentials':
+                            self.import_extra_credentials(existing_object, relations[a_relation])
 
                 # Checking for post update actions on the different objects
                 if asset_changed:
@@ -446,21 +450,39 @@ class Sender(LoggingCommand):
                             group['hosts'] = hosts
 
                 elif relation in common.NOTIFICATION_TYPES:
-                    # You can't really do anything with notifications because they are just names
-                    # We could try and resolve but if we are importing the notification we need
-                    #    we wouldn't be able to resolve the name beforehand.
-                    pass
+                    for notification_name in an_asset[common.ASSET_RELATION_KEY][relation]:
+                        if 'notification_template' in self.sorted_assets and\
+                                notification_name in self.sorted_assets['notification_template']:
+                            continue
+
+                        try:
+                            tower_cli.get_resource('notification_template').get(**{'name': notification_name})
+                        except TowerCLIError:
+                            self.log_error("Unable to resolve {} {}".format(relation, notification_name))
+                            post_check_succeeded = False
+
                 elif relation == 'inventory_source':
                     # TODO
                     # Someday we could go and try to resolve inventory projects or scripts
                     pass
+
+                elif relation == 'extra_credentials':
+                    for credential in an_asset[common.ASSET_RELATION_KEY][relation]:
+                        if 'credential' in self.sorted_assets and credential in self.sorted_assets['credential']:
+                            continue
+                        try:
+                            tower_cli.get_resource('credential').get(**{'name': credential})
+                        except TowerCLIError:
+                            self.log_error("Unable to resolve extra_credential {}".format(credential))
+                            post_check_succeeded = False
+
                 else:
                     self.log_warn("WARNING: Relation {} is not checked".format(relation))
 
         return post_check_succeeded
 
     def prep_and_sort_all_assets(self, import_json, prevent):
-        sorted_assets = {}
+        self.sorted_assets = {}
         had_sort_issues = False
         for asset in import_json:
             if common.ASSET_TYPE_KEY not in asset:
@@ -493,15 +515,13 @@ class Sender(LoggingCommand):
             del asset[common.ASSET_TYPE_KEY]
 
             # We made it here so the asset should be ok to try and import so add it to a list to import
-            if asset_type not in sorted_assets:
-                sorted_assets[asset_type] = []
-            sorted_assets[asset_type].append(asset)
+            if asset_type not in self.sorted_assets:
+                self.sorted_assets[asset_type] = []
+            self.sorted_assets[asset_type].append(asset)
 
         # If we got any errors when sorting the assets raise an exception
         if had_sort_issues:
             raise TowerCLIError("One or more errors encountered in provided assets, stopping import")
-
-        return sorted_assets
 
     def get_all_objects(self, source):
         all_objects = []
@@ -815,6 +835,38 @@ class Sender(LoggingCommand):
             del a_node['unified_job_type']
             del a_node['unified_job_name']
 
+    def import_extra_credentials(self, existing_object, new_creds):
+        existing_creds_data = common.extract_extra_credentials(existing_object)
+        existing_creds = existing_creds_data['items']
+        existing_name_to_id = existing_creds_data['existing_name_to_id_map']
+        if existing_creds == new_creds:
+            self.log_ok("All extra creds are up to date")
+            return
+
+        # Creds to remove is the difference between new_creds and existing_creds
+        for cred in list(set(existing_creds).difference(new_creds)):
+            try:
+                tower_cli.get_resource('job_template').disassociate_credential(
+                    existing_object['id'], existing_name_to_id[cred]
+                )
+                self.log_change("Removed extra credential {}".format(cred))
+            except TowerCLIError as e:
+                self.log_error("Unable to remove extra credential {} : {}".format(cred, e))
+
+        # Creds to add is the difference between existing_creds and extra_creds
+        for cred in list(set(new_creds).difference(existing_creds)):
+            try:
+                new_credential = tower_cli.get_resource('credential').get(**{'name': cred})
+            except TowerCLIError as e:
+                self.log_error("Unable to resolve extra credential {} : {}".format(cred, e))
+                continue
+
+            try:
+                tower_cli.get_resource('job_template').associate_credential(existing_object['id'], new_credential['id'])
+                self.log_change("Added extra credential {}".format(cred))
+            except TowerCLIError as e:
+                self.log_error("Unable to add extra credential {} : ".format(cred, e))
+
     def import_inventory_groups(self, existing_object, groups):
         existing_groups_data = common.extract_inventory_groups(existing_object)
         existing_groups = existing_groups_data['items']
@@ -1056,6 +1108,17 @@ class Sender(LoggingCommand):
                     resolve_errors.append(
                         "Unable to resolve script {} as source script for inventory source {} : {}".format(
                             item['source_script'], item['name'], e
+                        )
+                    )
+
+            if 'credential' in item:
+                try:
+                    credential = tower_cli.get_resource('credential').get(**{'name': item['credential']})
+                    item['credential'] = credential['id']
+                except TowerCLIError as e:
+                    resolve_errors.append(
+                        "Unable to resolve credential {} as credential for inventory source {} : {}".format(
+                            item['credential'], item['name'], e
                         )
                     )
 

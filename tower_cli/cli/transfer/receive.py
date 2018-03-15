@@ -96,6 +96,10 @@ class Receiver:
                             exported_asset[common.ASSET_RELATION_KEY][notification_type] = \
                                 common.extract_notifications(asset, notification_type)
 
+                    elif relation == 'extra_credentials':
+                        exported_asset[common.ASSET_RELATION_KEY][relation] =\
+                            common.extract_extra_credentials(asset)['items']
+
                 # Finally add the object to the list of objects that are being exported
                 exported_objects.append(exported_asset)
 

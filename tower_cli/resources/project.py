@@ -26,7 +26,7 @@ class Resource(models.Resource, models.MonitorableResource):
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
     unified_job_type = '/project_updates/'
-    dependencies = ['organization']
+    dependencies = ['organization', 'credential']
     related = ['notification_templates']
 
     name = models.Field(unique=True)
