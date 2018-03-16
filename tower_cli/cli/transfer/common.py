@@ -72,6 +72,11 @@ def get_api_options(asset_type):
 # Using these we are going to go through the existing node and see if an option
 # is required or set to the default value and only take required and non-default values
 def map_node_to_post_options(post_options, source_node, target_node):
+    # If the get_api_post_options fail we could get None.
+    # if that is the case, just return
+    if post_options is None:
+        return
+
     # First map over the POST option fields
     for option in post_options:
         # Get the default value for this field from the post_options
