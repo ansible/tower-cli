@@ -100,6 +100,10 @@ class Receiver:
                         exported_asset[common.ASSET_RELATION_KEY][relation] =\
                             common.extract_extra_credentials(asset)['items']
 
+                    elif relation == 'schedules':
+                        exported_asset[common.ASSET_RELATION_KEY][relation] =\
+                            common.extract_schedules(asset)['items']
+
                 # Finally add the object to the list of objects that are being exported
                 exported_objects.append(exported_asset)
 

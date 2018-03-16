@@ -50,7 +50,7 @@ class Cleaner(LoggingCommand):
                 self.print_header_row(asset_type, asset[identifier])
 
                 if 'managed_by_tower' in asset and asset['managed_by_tower']:
-                    self.log_warn("{} is managed by tower and can not be deleted".format(identifier))
+                    self.log_warn("{} is managed by tower and can not be deleted".format(asset[identifier]))
                     continue
 
                 try:

@@ -27,7 +27,7 @@ class Resource(models.Resource, models.MonitorableResource):
     endpoint = '/projects/'
     unified_job_type = '/project_updates/'
     dependencies = ['organization', 'credential']
-    related = ['notification_templates']
+    related = ['notification_templates', 'schedules']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

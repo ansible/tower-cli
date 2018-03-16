@@ -16,6 +16,7 @@ class Sender(LoggingCommand):
     secret_management = 'default'
     columns = None
     sorted_assets = {}
+    credential_type_objects = {}
 
     def __init__(self, no_color):
         self.no_color = no_color
@@ -101,7 +102,11 @@ class Sender(LoggingCommand):
                                 self.my_user = response_json['results'][0]['id']
                             an_asset['user'] = self.my_user
 
-                        # Second we need to make sure that any required passwords are set
+                        # Second, if this is a custom defined template we need to see if there is a required
+                        # password field in it
+                        self.set_password_in_custom_credential(an_asset, asset_name)
+
+                        # Third we need to make sure that any required passwords are set
                         if 'inputs' in an_asset:
                             if 'vault_password' in an_asset['inputs'] and an_asset['inputs']['vault_password'] == '':
                                 an_asset['inputs']['vault_password'] = self.get_secret(
@@ -280,6 +285,8 @@ class Sender(LoggingCommand):
                             self.import_notification_relations(existing_object, relations[a_relation], a_relation)
                         elif a_relation == 'extra_credentials':
                             self.import_extra_credentials(existing_object, relations[a_relation])
+                        elif a_relation == 'schedules':
+                            self.import_schedules(existing_object, relations[a_relation], asset_type)
 
                 # Checking for post update actions on the different objects
                 if asset_changed:
@@ -475,6 +482,15 @@ class Sender(LoggingCommand):
                         except TowerCLIError:
                             self.log_error("Unable to resolve extra_credential {}".format(credential))
                             post_check_succeeded = False
+
+                elif relation == 'schedules':
+                    for schedule in an_asset[common.ASSET_RELATION_KEY][relation]:
+                        # A unified job template is required to post a schedule
+                        # But the exported schedules won't have a template
+                        # So we are going to add one, check it and then remove it
+                        schedule['unified_job_template'] = 1
+                        self.can_object_post('schedules', schedule, common.get_api_options('schedules'))
+                        del schedule['unified_job_template']
 
                 else:
                     self.log_warn("WARNING: Relation {} is not checked".format(relation))
@@ -814,6 +830,7 @@ class Sender(LoggingCommand):
             unified_job_results = client.request('get', "unified_job_templates", {'name': job_name, 'type': job_type})
 
             # If it failed, move on
+
             if unified_job_results.status_code != 200:
                 self.log_error("Unable to lookup unified job template {}/{} for {} ({})".format(
                     job_type, job_name, a_node['name'], unified_job_results.status_code
@@ -823,6 +840,7 @@ class Sender(LoggingCommand):
             possible_unified_jobs = unified_job_results.json()
 
             # If we got 0 or >1 move on
+
             if possible_unified_jobs['count'] == 0:
                 self.log_error("Could not find a unified job for {}/{}".format(job_type, job_name))
                 continue
@@ -836,6 +854,8 @@ class Sender(LoggingCommand):
             del a_node['unified_job_name']
 
     def import_extra_credentials(self, existing_object, new_creds):
+        # Credentials are just an array of names
+        # So importing these can be done very easily by comparing new_creds vs existing_creds
         existing_creds_data = common.extract_extra_credentials(existing_object)
         existing_creds = existing_creds_data['items']
         existing_name_to_id = existing_creds_data['existing_name_to_id_map']
@@ -866,6 +886,54 @@ class Sender(LoggingCommand):
                 self.log_change("Added extra credential {}".format(cred))
             except TowerCLIError as e:
                 self.log_error("Unable to add extra credential {} : ".format(cred, e))
+
+    def import_schedules(self, existing_object, new_schedules, asset_type):
+        existing_schedules_data = common.extract_schedules(existing_object)
+        existing_schedules = existing_schedules_data['items']
+        existing_name_to_object = existing_schedules_data['existing_name_to_object_map']
+        if existing_schedules == new_schedules:
+            self.log_ok("All schedules are up to date")
+            return
+
+        # Loop over all of the new schedules
+        for schedule in new_schedules:
+            schedule_name = schedule['name']
+
+            # If the name of the new schedule is not in the existing_name_to_id we can just create it
+            if schedule_name not in existing_name_to_object:
+                try:
+                    # For creating we need to add a unified_job_template to the schedule
+                    schedule[asset_type] = existing_object['id']
+                    tower_cli.get_resource('schedule').create(**schedule)
+                    self.log_change("Added schedule {}".format(schedule_name))
+                except TowerCLIError as e:
+                    self.log_error("Failed to add schedule {} : {}".format(schedule_name, e))
+
+            else:
+                # The schedule_name is in the existing_name_to_id
+
+                # See if we need to change it
+                if schedule == existing_name_to_object[schedule_name]:
+                    self.log_ok("Schedule {} is up to date".format(schedule_name))
+                else:
+                    # We need to update the schedule
+                    try:
+                        existing_id = existing_name_to_object[schedule_name]['id']
+                        tower_cli.get_resource('schedule').get(existing_id).update(schedule)
+                        self.log_change("Updated schedule {}".format(schedule_name))
+                    except TowerCLIError as e:
+                        self.log_error("Failed to modify schedule {} : {}".format(schedule_name, e))
+
+                # Delete this from the existing schedules so we don't delete it
+                del existing_name_to_object[schedule_name]
+
+        # Now we need to delete any schedules which were previous added but no longer need to be
+        for schedule_name in existing_name_to_object:
+            try:
+                tower_cli.get_resource('schedule').delete(existing_name_to_object[schedule_name]['id'])
+                self.log_change("Removed existing schedule named {}".format(schedule_name))
+            except TowerCLIError as e:
+                self.log_error("Failed to delete schedule {} : {}".format(schedule_name, e))
 
     def import_inventory_groups(self, existing_object, groups):
         existing_groups_data = common.extract_inventory_groups(existing_object)
@@ -1037,7 +1105,15 @@ class Sender(LoggingCommand):
 
         # Now we are going to do the comparison
         for relation_name in new_relations_dict:
+            new_schedules = None
+            if 'schedules' in new_relations_dict[relation_name]:
+                new_schedules = new_relations_dict[relation_name]['schedules']
+                del new_relations_dict[relation_name]['schedules']
+
+            existing_schedules = []
             if relation_name in existing_relations_dict:
+                if 'schedules' in existing_relations_dict[relation_name]:
+                    existing_schedules = existing_relations_dict[relation_name]['schedules']
                 if not self.does_asset_need_update(
                         new_relations_dict[relation_name],
                         existing_relations_dict[relation_name],
@@ -1074,6 +1150,37 @@ class Sender(LoggingCommand):
                     tower_cli.get_resource(relation_type).create(**new_relations_dict[relation_name])
                 except TowerCLIError as e:
                     self.log_error("Unable to create {} named {} : {}".format(relation_type, relation_name, e))
+
+            if new_schedules is not None:
+
+                if new_schedules == existing_schedules:
+                    self.log_ok("Schedules are up to date")
+                else:
+                    for a_schedule in new_schedules:
+                        if a_schedule in existing_schedules:
+                            self.log_ok("Schedule {} is up to date".format(a_schedule['name']))
+                            existing_schedules.remove(a_schedule)
+                        else:
+                            try:
+                                # We have to look up the inventory_source ID to use for this schedule
+                                inventory_source = tower_cli.get_resource('inventory_source').get(
+                                    **{'name': relation_name}
+                                )
+                                # Since we are in this method we know we are working on an inventory
+                                a_schedule['inventory_source'] = inventory_source['id']
+
+                                # Now we can create the schedule
+                                tower_cli.get_resource('schedule').create(**a_schedule)
+                                self.log_change("Added schedule {}".format(a_schedule['name']))
+                            except TowerCLIError as e:
+                                self.log_error("Unable to add schedule {} : {}".format(a_schedule['name'], e))
+
+                    for a_schedule in existing_schedules:
+                        try:
+                            tower_cli.get_resource('schedule').delete(**{'name': a_schedule['name']})
+                            self.log_change("Removed schedule {}".format(a_schedule['name']))
+                        except TowerCLIError as e:
+                            self.log_error("Unable to remove schedule {}".format(a_schedule['name']))
 
         for relation_name in existing_relations_dict:
             # We have to add in the inventory field in order to delete this
@@ -1240,3 +1347,27 @@ class Sender(LoggingCommand):
         if 'extra_vars' in asset:
             if type(asset['extra_vars']) == str:
                 asset['extra_vars'] = [asset['extra_vars']]
+
+    def set_password_in_custom_credential(self, credential, asset_name):
+        credential_type_id = credential['credential_type']
+
+        # Get the credential type object
+        if credential_type_id not in self.credential_type_objects:
+            credential_type_object = tower_cli.get_resource('credential_type').get(credential_type_id)
+            self.credential_type_objects[credential_type_id] = credential_type_object
+        else:
+            credential_type_object = self.credential_type_objects[credential_type_id]
+
+        if 'managed_by_tower' in credential_type_object and credential_type_object['managed_by_tower']:
+            return
+
+        for field in credential_type_object['inputs']['fields']:
+            # If the field is in the required list
+            if field['id'] in credential_type_object['inputs']['required']:
+                # If the field is a secret
+                if 'secret' in field and field['secret']:
+                    credential['inputs'][field['id']] = self.get_secret(
+                        'Enter {} for {}'.format(field['label'], asset_name),
+                        "Setting {} for {}".format(field['id'], asset_name),
+                        'password'
+                    )

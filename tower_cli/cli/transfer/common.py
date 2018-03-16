@@ -19,14 +19,41 @@ SEND_ORDER = [
     'workflow'
 ]
 ENCRYPTED_VALUE = '$encrypted$'
-API_POST_OPTIONS = {}
+API_POST_OPTIONS = {
+    # The post options of a schedule re buried under the asset type (i.e. job_template) so we are manually adding them
+    'schedules': {
+        "name": {
+            "required": True,
+            "max_length": 512,
+        },
+        "description": {
+            "required": False,
+            "default": ""
+        },
+        "unified_job_template": {
+            "required": True,
+        },
+        "enabled": {
+            "required": False,
+            "default": True
+        },
+        "rrule": {
+            "required": True,
+            "max_length": 255
+        },
+        "extra_data": {
+            "required": False,
+            "default": {}
+        }
+    }
+}
 NOTIFICATION_TYPES = ['notification_templates_error', 'notification_templates_success']
 
 
 # Gets the POST options for the specified resource asset_type
 def get_api_options(asset_type):
-    endpoint = tower_cli.get_resource(asset_type).endpoint
     if asset_type not in API_POST_OPTIONS:
+        endpoint = tower_cli.get_resource(asset_type).endpoint
         response = client.options(endpoint)
         return_json = response.json()
         if "actions" not in return_json or "POST" not in return_json["actions"]:
@@ -90,7 +117,10 @@ def resolve_asset_dependencies(an_asset, asset_type):
 
 
 def get_identity(asset_type):
-    identity_options = tower_cli.get_resource(asset_type).identity
+    lookup_type = asset_type
+    if asset_type == 'schedules':
+        lookup_type = 'schedule'
+    identity_options = tower_cli.get_resource(lookup_type).identity
     return identity_options[-1]
 
 
@@ -221,6 +251,11 @@ def extract_inventory_relations(asset, relation_type):
                         relation['credential'], relation_type, e
                     ))
                 new_relation['credential'] = credential['name']
+
+            # Now get the schedules for this source
+            if 'related' in relation and 'schedules' in relation['related']:
+                schedule_data = extract_schedules(relation)
+                new_relation['schedules'] = schedule_data['items']
 
         del new_relation['inventory']
 
@@ -372,3 +407,19 @@ def extract_extra_credentials(asset):
         return_credentials.append(a_credential['name'])
 
     return {'items': return_credentials, 'existing_name_to_id_map': name_to_id_map}
+
+
+def extract_schedules(asset):
+    return_schedules = []
+    name_to_object_map = {}
+
+    schedule_options = get_api_options('schedules')
+    schedules = load_all_assets(asset['related']['schedules'])
+    for a_schedule in schedules['results']:
+        name_to_object_map[a_schedule['name']] = a_schedule
+        reduced_schedule = {}
+        map_node_to_post_options(schedule_options, a_schedule, reduced_schedule)
+        del(reduced_schedule['unified_job_template'])
+        return_schedules.append(reduced_schedule)
+
+    return {'items': return_schedules, 'existing_name_to_object_map': name_to_object_map}

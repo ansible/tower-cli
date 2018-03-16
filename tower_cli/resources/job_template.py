@@ -28,7 +28,7 @@ class Resource(models.SurveyResource):
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
     dependencies = ['inventory', 'credential', 'project', 'vault_credential']
-    related = ['survey_spec', 'notification_templates', 'extra_credentials']
+    related = ['survey_spec', 'notification_templates', 'extra_credentials', 'schedules']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
