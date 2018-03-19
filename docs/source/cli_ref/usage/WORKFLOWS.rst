@@ -1,5 +1,8 @@
 .. _cli_ref:
 
+Workflow Management
+===================
+
 These docs show how to populate an example workflow in Tower and how to
 automate the creation or copying of workflows.
 

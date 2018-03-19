@@ -1,5 +1,8 @@
 .. _cli_ref:
 
+Role Management
+===============
+
 Introduction - What Roles Are
 -----------------------------
 

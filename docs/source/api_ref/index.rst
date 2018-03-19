@@ -73,14 +73,15 @@ resource fields, unless specified.
 Any usage errors or connection exceptions are thrown as subclasses of ``tower_cli.exceptions.TowerCLIError``, see
 'Exceptions' section below for details.
 
-Table of Contents
------------------
 .. toctree::
    :maxdepth: 1
    :caption: Environment Setup
 
    conf.rst
    exceptions.rst
+
+API Reference Table of Contents
+===============================
 
 .. toctree::
    :maxdepth: 1

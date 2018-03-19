@@ -1,5 +1,8 @@
 .. _cli_ref:
 
+Config Command Options
+======================
+
 key-value options available for ``tower-cli config <key> <value>`` command
 --------------------------------------------------------------------------
 
@@ -57,16 +60,34 @@ All of the above options can also be set using environment variables.
 The default behavior is to allow environment variables to override your
 tower-cli.cfg settings, but they will not override config values that
 are passed in on the command line at runtime. Below is a table of the
-available environment variables. ## Variable Mapping \| *Environment
-Variable* \| *Tower Config Key* \|
-\|------------------------\|--------------------\| \| ``TOWER_COLOR`` \|
-``color`` \| \| ``TOWER_FORMAT`` \| ``format`` \| \| ``TOWER_HOST`` \|
-``host`` \| \| ``TOWER_PASSWORD`` \| ``password`` \| \|
-``TOWER_USERNAME`` \| ``username`` \| \| ``TOWER_VERIFY_SSL`` \|
-``verify_ssl`` \| \| ``TOWER_VERBOSE`` \| ``verbose`` \| \|
-``TOWER_DESCRIPTION_ON`` \| ``description_on`` \| \|
-``TOWER_CERTIFICATE`` \| ``certificate`` \| \| ``TOWER_USE_TOKEN`` \|
-``use_token`` \|
+available environment variables.
+
+Variable Mapping
+~~~~~~~~~~~~~~~~
+
++---------------------------+--------------------+
+| *Environment Variable*    | *Tower Config Key* |
++===========================+====================+
+| ``TOWER_COLOR``           | ``color``          | 
++---------------------------+--------------------+
+| ``TOWER_FORMAT``          | ``format``         |
++---------------------------+--------------------+ 
+| ``TOWER_HOST``            | ``host``           |
++---------------------------+--------------------+ 
+| ``TOWER_PASSWORD``        | ``password``       |
++---------------------------+--------------------+ 
+| ``TOWER_USERNAME``        | ``username``       |
++---------------------------+--------------------+ 
+| ``TOWER_VERIFY_SSL``      | ``verify_ssl``     |
++---------------------------+--------------------+ 
+| ``TOWER_VERBOSE``         | ``verbose``        |
++---------------------------+--------------------+ 
+| ``TOWER_DESCRIPTION_ON``  | ``description_on`` |
++---------------------------+--------------------+
+| ``TOWER_CERTIFICATE``     | ``certificate``    | 
++---------------------------+--------------------+
+| ``TOWER_USE_TOKEN``       | ``use_token``      |
++---------------------------+--------------------+
 
 Notes
 -----

@@ -1,5 +1,8 @@
 .. _cli_ref:
 
+Notification Template Management
+================================
+
 Introduction - What Notification Templates Are
 ----------------------------------------------
 
@@ -16,14 +19,6 @@ To see the commands available for notification templates, see
 ``tower-cli notification_template --help``. Within a specific command,
 get the help text with
 ``tower-cli notification_template <command> --help``.
-
-The arguments for all notification template commands follow the same
-pattern, although not all arguments are mandatory for all commands. The
-structure follows the following pattern:
-
-::
-
-    tower-cli role <action> <options>
 
 Notification templates suppport all typical CRUD operations that control
 other resources through tower-cli: ``get``, ``list``, ``create``,

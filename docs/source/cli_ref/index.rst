@@ -207,10 +207,11 @@ exists in Tower backend; global options are used to set runtime configuration se
 as context manager ``tower_cli.conf.Settings.runtime_values`` in :ref:`api-ref-conf`.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 0
    :caption: Usage Guides
 
    usage/CONFIG_CMD_OPTIONS.rst
+   usage/VERSIONING.rst
    usage/NOTIFICATION_TEMPLATE_MANAGEMENT.rst
    usage/ROLE_MANAGEMENT.rst
    usage/SURVEYS.rst
@@ -221,6 +222,4 @@ as context manager ``tower_cli.conf.Settings.runtime_values`` in :ref:`api-ref-c
    :caption: Examples
 
    examples/README.rst
-   examples/fake_data_creator.rst
-   examples/workflow_demo.rst
 

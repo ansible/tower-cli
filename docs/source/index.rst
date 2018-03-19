@@ -34,11 +34,10 @@ Table of Contents
 -----------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    install.rst
    quickstart.rst
-   VERSIONING.rst
    cli_ref/index.rst
    api_ref/index.rst
    CONTRIBUTING.rst

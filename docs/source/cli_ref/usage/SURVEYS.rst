@@ -1,7 +1,7 @@
 .. _cli_ref:
 
-How to manage surveys of job templates and workflows through tower-cli
-======================================================================
+Survey Management
+=================
 
 This feature is added in v3.1.0, and v3.1.3 or higher, at least, is
 recommended.
