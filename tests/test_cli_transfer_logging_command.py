@@ -25,14 +25,14 @@ class LoggingCommandTests(unittest.TestCase):
 
             # Test default play recap (no starting new line)
             my_logging_command.print_recap()
-            recap_msg = "PLAY RECAP *********************************************************************\n"+\
-                              "    ok=0    changed=0    warnings=0    failed=0\n\n"
+            recap_msg = "PLAY RECAP *********************************************************************\n" +\
+                        "    ok=0    changed=0    warnings=0    failed=0\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "First recap message failed")
 
             # Test second play recap (has starting new line)
             self.clear_string_buffer()
             my_logging_command.print_recap()
-            recap_msg = "\nPLAY RECAP *********************************************************************\n"+ \
+            recap_msg = "\nPLAY RECAP *********************************************************************\n" +\
                         "    ok=0    changed=0    warnings=0    failed=0\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "Second recap message failed")
 
@@ -40,7 +40,7 @@ class LoggingCommandTests(unittest.TestCase):
             self.clear_string_buffer()
             my_logging_command.ok_messages = 1
             my_logging_command.print_recap()
-            recap_msg = "\nPLAY RECAP *********************************************************************\n"+ \
+            recap_msg = "\nPLAY RECAP *********************************************************************\n" +\
                         "    ok=1    changed=0    warnings=0    failed=0\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "OK recap message failed")
 
@@ -48,7 +48,7 @@ class LoggingCommandTests(unittest.TestCase):
             self.clear_string_buffer()
             my_logging_command.changed_messages = 1
             my_logging_command.print_recap()
-            recap_msg = "\nPLAY RECAP *********************************************************************\n"+ \
+            recap_msg = "\nPLAY RECAP *********************************************************************\n" +\
                         "    ok=1    changed=1    warnings=0    failed=0\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "Changed recap message failed")
 
@@ -56,7 +56,7 @@ class LoggingCommandTests(unittest.TestCase):
             self.clear_string_buffer()
             my_logging_command.warn_messages = 1
             my_logging_command.print_recap()
-            recap_msg = "\nPLAY RECAP *********************************************************************\n"+ \
+            recap_msg = "\nPLAY RECAP *********************************************************************\n" +\
                         "    ok=1    changed=1    warnings=1    failed=0\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "Warn recap message failed")
 
@@ -64,16 +64,16 @@ class LoggingCommandTests(unittest.TestCase):
             self.clear_string_buffer()
             my_logging_command.error_messages = 1
             my_logging_command.print_recap()
-            recap_msg = "\nPLAY RECAP *********************************************************************\n"+ \
+            recap_msg = "\nPLAY RECAP *********************************************************************\n" +\
                         "    ok=1    changed=1    warnings=1    failed=1\n\n"
             self.assertEquals(sys.stdout.getvalue(), recap_msg, "Error recap message failed")
 
     def test_my_print_no_color(self):
-       # Validate that with no_color specified a message comes out straight
-       my_logging_command = LoggingCommand()
-       my_logging_command.no_color = True
-       my_logging_command.my_print("Test Message", fg="red", bold="True", nl="False")
-       self.assertEquals(sys.stdout.getvalue(), "Test Message\n", "Message with no color did not come out correctly")
+        # Validate that with no_color specified a message comes out straight
+        my_logging_command = LoggingCommand()
+        my_logging_command.no_color = True
+        my_logging_command.my_print("Test Message", fg="red", bold="True", nl="False")
+        self.assertEquals(sys.stdout.getvalue(), "Test Message\n", "Message with no color did not come out correctly")
 
     def test_print_into(self):
         # Validate that the intro just prints a blank line
@@ -83,14 +83,14 @@ class LoggingCommandTests(unittest.TestCase):
 
     def test_get_terminal_size(self):
         with mock.patch.object(click, 'get_terminal_size') as mock_method:
-            mock_method.return_value = [ 80, 128 ]
+            mock_method.return_value = [80, 128]
             my_logging_command = LoggingCommand()
             my_logging_command.get_rows()
             self.assertEquals(my_logging_command.columns, 80, "Did not correctly get back the terminal size")
 
     def test_print_header_row(self):
         with mock.patch.object(click, 'get_terminal_size') as mock_method:
-            mock_method.return_value = [ 80, 128 ]
+            mock_method.return_value = [80, 128]
             my_logging_command = LoggingCommand()
             my_logging_command.print_header_row("inventory", "test inventory")
             first_inv_msg = "INVENTORY [test inventory] *****************************************************\n"
@@ -123,4 +123,3 @@ class LoggingCommandTests(unittest.TestCase):
         my_logging_command.log_change("TestChange")
         self.assertEquals(sys.stdout.getvalue(), "TestChange\n", "Change did not come out correctly")
         self.assertEquals(my_logging_command.changed_messages, 1)
-

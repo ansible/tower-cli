@@ -2,24 +2,13 @@ from tower_cli.api import client
 from tower_cli.cli.transfer import common
 from tower_cli.utils.data_structures import OrderedDict
 
-from six.moves import StringIO
-import sys
-import click
-from tests.compat import unittest, mock
-
+from tests.compat import unittest
 
 
 class TransferCommonTests(unittest.TestCase):
     """A set of tests to establish that the Common class works
     in the way we expect.
     """
-
-    #def setUp(self):
-    #    self.held, sys.stdout = sys.stdout, StringIO()
-
-    #def clear_string_buffer(self):
-    #    sys.stdout.seek(0)
-    #    sys.stdout.truncate(0)
 
     def test_get_api_options(self):
         # Assert that an entry without a POST section returns None
@@ -30,14 +19,14 @@ class TransferCommonTests(unittest.TestCase):
 
         # Assert that an entry with a POST section returns the post section
         with client.test_mode as t:
-            t.register_json('/job_templates/', {'actions': {'POST': {'test' : 'string'}}}, method='OPTIONS')
+            t.register_json('/job_templates/', {'actions': {'POST': {'test': 'string'}}}, method='OPTIONS')
             job_template_options = common.get_api_options('job_template')
-            self.assertEqual(job_template_options, {'test' : 'string'}, "Failed to extract POST options")
+            self.assertEqual(job_template_options, {'test': 'string'}, "Failed to extract POST options")
             # Test a cached API options
             job_template_options = common.get_api_options('job_template')
-            self.assertEqual(job_template_options, {'test' : 'string'}, "Failed to extract POST options")
+            self.assertEqual(job_template_options, {'test': 'string'}, "Failed to extract POST options")
 
-    def test_map_node_to_post_optins(self):
+    def test_map_node_to_post_options(self):
         source_node = {
             "name": "My Name",
             "created_on": "now",
@@ -48,11 +37,11 @@ class TransferCommonTests(unittest.TestCase):
         target_node = {}
 
         post_options = {
-            "name" : { "required" : True},
-            "some_value": { "required": False, "default": "the default value" },
+            "name": {"required": True},
+            "some_value": {"required": False, "default": "the default value"},
             # Note, this function does not care if a required value is missing
-            "some_missing_required_value" : { "required": True },
-            "some_other_value": { "default": "The default"},
+            "some_missing_required_value": {"required": True},
+            "some_other_value": {"default": "The default"},
         }
 
         # First test that nothing happens if post_options is None
@@ -66,7 +55,8 @@ class TransferCommonTests(unittest.TestCase):
 #        # Takes an asset and loops over the defined dependences
 #        # These are things that may be other objects in Tower
 #        # For example, a credential can be tied to an Organization
-#        # If the user gave me an Organization like Default (which is what is expected) we need to resolve that to Defaults ID
+#        # If the user gave me an Organization like Default (which is what is expected) we need
+#        #   to resolve that to Defaults ID
 #        def resolve_asset_dependencies(an_asset, asset_type):
 #            for relation in an_asset['related']:
 #                if relation in an_asset:
@@ -97,19 +87,19 @@ class TransferCommonTests(unittest.TestCase):
 
     def test_remove_encrypted_value(self):
         test_hash = {
-            'first' : 'ok',
-            'second' : common.ENCRYPTED_VALUE,
-            'sub' : OrderedDict({
-                'first' : common.ENCRYPTED_VALUE,
-                'second' : 'ok',
+            'first': 'ok',
+            'second': common.ENCRYPTED_VALUE,
+            'sub': OrderedDict({
+                'first': common.ENCRYPTED_VALUE,
+                'second': 'ok',
             }),
         }
         result_hash = {
-            'first' : 'ok',
-            'second' : '',
-            'sub' : {
-                'first' : '',
-                'second' : 'ok',
+            'first': 'ok',
+            'second': '',
+            'sub': {
+                'first': '',
+                'second': 'ok',
             },
         }
         common.remove_encrypted_values(test_hash)
@@ -349,14 +339,15 @@ class TransferCommonTests(unittest.TestCase):
 #
 #            return notifications
 #
+
     def test_remove_local_path_from_scm_project(self):
         asset = {
-            'scm_type' : 'Manual',
-            'local_path' : 'somewhere',
+            'scm_type': 'Manual',
+            'local_path': 'somewhere',
         }
         result_asset = {
-            'scm_type' : 'Manual',
-            'local_path' : 'somewhere',
+            'scm_type': 'Manual',
+            'local_path': 'somewhere',
         }
         # Test a no change for either Manual or '' scm_type
         common.remove_local_path_from_scm_project(asset)
