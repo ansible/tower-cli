@@ -337,6 +337,9 @@ class Sender(LoggingCommand):
             return True
 
         post_check_succeeded = True
+        if common.get_identity(asset_type) not in an_asset:
+            return False
+
         name = an_asset[common.get_identity(asset_type)]
 
         # First, make sure that all of the required options were given to us
@@ -950,6 +953,10 @@ class Sender(LoggingCommand):
 
         # Loop over all of the new groups
         for group in groups:
+            if 'name' not in group:
+                self.log_error("Unable to manage group due to name field missing")
+                continue
+
             group_name = group['name']
 
             # See if we have the group
