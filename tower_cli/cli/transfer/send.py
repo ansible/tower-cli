@@ -822,7 +822,7 @@ class Sender(LoggingCommand):
 
             # Validate the unified job type
             if a_node['unified_job_type'] == 'job':
-                job_type = 'job_template'
+                job_type = 'job'
             elif a_node['unified_job_type'] == 'project_update':
                 job_type = 'project'
             elif a_node['unified_job_type'] == 'inventory_update':
@@ -835,7 +835,7 @@ class Sender(LoggingCommand):
 
             # Lookup the unified job
             job_name = a_node['unified_job_name']
-            unified_job_results = client.request('get', "unified_job_templates", {'name': job_name, 'type': job_type})
+            unified_job_results = client.request('get', "unified_job_templates", {'name': job_name, 'type__contains': job_type})
 
             # If it failed, move on
 
