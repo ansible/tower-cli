@@ -769,7 +769,12 @@ class Sender(LoggingCommand):
                 continue
 
             # Build an asset for this node
-            built_node = tower_cli.get_resource("node").create(**node_to_import)
+            try:
+                built_node = tower_cli.get_resource("node").create(**node_to_import)
+            except TowerCLIError as e:
+                self.log_error("Failed to create new workflow node : {}".format(e))
+                node_errors = True
+                continue
 
             # If it failed gawk
             if built_node is None:
