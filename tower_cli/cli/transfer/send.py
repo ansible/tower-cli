@@ -835,7 +835,11 @@ class Sender(LoggingCommand):
 
             # Lookup the unified job
             job_name = a_node['unified_job_name']
-            unified_job_results = client.request('get', "unified_job_templates", {'name': job_name, 'type__contains': job_type})
+            unified_job_results = client.request(
+                'get',
+                "unified_job_templates",
+                {'name': job_name, 'type__contains': job_type}
+            )
 
             # If it failed, move on
 
