@@ -164,6 +164,8 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
     cli_help = ''
     endpoint = None
     identity = ('name',)
+    dependencies = []
+    related = []
 
     # The basic methods for interacting with a resource are `read`, `write`,
     # and `delete`; these cover basic CRUD situations and have options

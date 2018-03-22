@@ -25,6 +25,8 @@ class Resource(models.Resource):
     cli_help = 'Manage inventory within Ansible Tower.'
     endpoint = '/inventories/'
     identity = ('organization', 'name')
+    dependencies = ['organization']
+    related = ['host', 'group', 'inventory_source']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

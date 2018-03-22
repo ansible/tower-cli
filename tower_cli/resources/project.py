@@ -26,6 +26,8 @@ class Resource(models.Resource, models.MonitorableResource):
     cli_help = 'Manage projects within Ansible Tower.'
     endpoint = '/projects/'
     unified_job_type = '/project_updates/'
+    dependencies = ['organization', 'credential']
+    related = ['notification_templates', 'schedules']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -38,7 +40,7 @@ class Resource(models.Resource, models.MonitorableResource):
             ('hg', 'hg'),
             ('svn', 'svn'),
             ('insights', 'insights'),
-        ]),
+        ]), required=False
     )
     scm_url = models.Field(required=False)
     local_path = models.Field(

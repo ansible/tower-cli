@@ -21,6 +21,7 @@ class Resource(models.Resource):
     cli_help = 'Manage users within Ansible Tower.'
     endpoint = '/users/'
     identity = ('username',)
+    dependencies = ['organization']
 
     username = models.Field(unique=True)
     password = models.Field(required=False, display=False)

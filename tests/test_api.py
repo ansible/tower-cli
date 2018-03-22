@@ -225,6 +225,8 @@ class TowerAuthTokenTests(unittest.TestCase):
             with mock.patch('tower_cli.api.json.load', return_value={'token': 'foobar', 'expires': expires}):
                 with client.test_mode as t:
                     t.register('/authtoken/', json.dumps({}), status_code=200, method='OPTIONS')
+                    t.register('/authtoken/', json.dumps({'token': 'foobar', 'expires': expires}), status_code=200,
+                               method='POST')
                     self.auth(self.req)
                     self.assertEqual(self.req.headers['Authorization'], 'Token foobar')
 

@@ -22,6 +22,7 @@ class Resource(models.Resource):
     """A resource for inventory scripts."""
     cli_help = 'Manage inventory scripts within Ansible Tower.'
     endpoint = '/inventory_scripts/'
+    dependencies = ['organization']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)

@@ -54,18 +54,27 @@ class BasicTowerAuth(AuthBase):
 
     def _get_auth_token(self):
         filename = os.path.expanduser('~/.tower_cli_token.json')
+        token_json = None
         try:
             with open(filename) as f:
                 token_json = json.load(f)
-            if not isinstance(token_json, dict) or 'token' not in token_json or 'expires' not in token_json or \
-                    dt.utcnow() > dt.strptime(token_json['expires'], TOWER_DATETIME_FMT):
+            if not isinstance(token_json, dict) or self.cli_client.get_prefix() not in token_json or \
+                    'token' not in token_json[self.cli_client.get_prefix()] or \
+                    'expires' not in token_json[self.cli_client.get_prefix()] or \
+                    dt.utcnow() > dt.strptime(token_json[self.cli_client.get_prefix()]['expires'], TOWER_DATETIME_FMT):
                 raise Exception("Current token expires.")
-            return 'Token ' + token_json['token']
+            return 'Token ' + token_json[self.cli_client.get_prefix()]['token']
         except Exception as e:
             debug.log('Acquiring and caching auth token due to:\n%s' % str(e), fg='blue', bold=True)
-            token_json = self._acquire_token()
-            if not isinstance(token_json, dict) or 'token' not in token_json or 'expires' not in token_json:
-                raise exc.AuthError('Invalid Tower auth token format: %s' % json.dumps(token_json))
+            if not isinstance(token_json, dict):
+                token_json = {}
+            token_json[self.cli_client.get_prefix()] = self._acquire_token()
+            if not isinstance(token_json[self.cli_client.get_prefix()], dict) or \
+                    'token' not in token_json[self.cli_client.get_prefix()] or \
+                    'expires' not in token_json[self.cli_client.get_prefix()]:
+                raise exc.AuthError('Invalid Tower auth token format: %s' % json.dumps(
+                    token_json[self.cli_client.get_prefix()]
+                ))
             with open(filename, 'w') as f:
                 json.dump(token_json, f)
             try:
@@ -75,7 +84,7 @@ class BasicTowerAuth(AuthBase):
                     'Unable to set permissions on {0} - {1} '.format(filename, e),
                     UserWarning
                 )
-            return 'Token ' + token_json['token']
+            return 'Token ' + token_json[self.cli_client.get_prefix()]['token']
 
     def __call__(self, r):
         if 'Authorization' in r.headers:
@@ -188,6 +197,13 @@ class Client(Session):
         """Make a request to the Ansible Tower API, and return the
         response.
         """
+
+        # If the URL has the api/vX at the front strip it off
+        # This is common to have if you are extracting a URL from an existing object.
+        # For example, any of the 'related' fields of an object will have this
+        import re
+        url = re.sub("^/?api/v[0-9]+/", "", url)
+
         # Piece together the full URL.
         use_version = not url.startswith('/o/')
         url = '%s%s' % (self.get_prefix(use_version), url.lstrip('/'))
