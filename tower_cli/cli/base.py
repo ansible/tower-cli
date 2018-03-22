@@ -84,7 +84,11 @@ class TowerCLI(click.MultiCommand):
             os.pardir,
             'resources'
         ))
-        answer = set([name for _, name, _ in pkgutil.iter_modules([resource_path])])
+        answer = set([])
+        for _, name, _ in pkgutil.iter_modules([resource_path]):
+            res = tower_cli.get_resource(name)
+            if not getattr(res, 'internal', False):
+                answer.add(name)
         return sorted(answer)
 
     def list_misc_commands(self):
