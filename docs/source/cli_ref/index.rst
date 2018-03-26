@@ -226,3 +226,21 @@ are action-specific options, they provide fine-grained modification of the behav
 example, ``--fail-on-found`` option of a ``create`` action will fail the command if a matching record already
 exists in Tower backend; global options are used to set runtime configuration settings, functioning the same way
 as context manager ``tower_cli.conf.Settings.runtime_values`` in :ref:`api-ref-conf`.
+
+.. toctree::
+   :maxdepth: 0
+   :caption: Usage Guides
+
+   usage/CONFIG_CMD_OPTIONS.rst
+   usage/VERSIONING.rst
+   usage/NOTIFICATION_TEMPLATE_MANAGEMENT.rst
+   usage/ROLE_MANAGEMENT.rst
+   usage/SURVEYS.rst
+   usage/WORKFLOWS.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Examples
+
+   examples/README.rst
+

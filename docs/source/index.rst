@@ -37,9 +37,8 @@ Table of Contents
    :maxdepth: 2
 
    install.rst
-   VERSIONING.rst
    quickstart.rst
-   api_ref/index.rst
    cli_ref/index.rst
+   api_ref/index.rst
    CONTRIBUTING.rst
    HISTORY.rst
