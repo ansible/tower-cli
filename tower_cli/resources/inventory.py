@@ -39,7 +39,7 @@ class Resource(models.Resource):
                                help_text='The host_filter field. Only useful when kind=smart.')
     insights_credential = models.Field(display=False, required=False, type=types.Related('credential'))
 
-    instance_group = models.ManyToManyField('instance_group', method_name='ig')
+    instance_groups = models.ManyToManyField('instance_group', method_name='ig')
 
     @resources.command(ignore_defaults=True)
     def batch_update(self, pk=None, **kwargs):
