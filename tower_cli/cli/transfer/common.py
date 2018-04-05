@@ -7,8 +7,8 @@ from tower_cli.resources.role import ACTOR_FIELDS
 ASSET_TYPE_KEY = "asset_type"
 ASSET_RELATION_KEY = "asset_relation"
 SEND_ORDER = [
-    'organization',
     'user',
+    'organization',
     'team',
     'credential_type',
     'credential',
