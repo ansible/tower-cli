@@ -4,6 +4,7 @@ from tower_cli.exceptions import TowerCLIError, CannotStartJob, JobFailure
 import tower_cli.cli.transfer.common as common
 from tower_cli.cli.transfer.logging_command import LoggingCommand
 from tower_cli.utils import parser
+from tower_cli.resources.role import ACTOR_FIELDS
 import click
 import os
 import sys
@@ -287,6 +288,10 @@ class Sender(LoggingCommand):
                             self.import_extra_credentials(existing_object, relations[a_relation])
                         elif a_relation == 'schedules':
                             self.import_schedules(existing_object, relations[a_relation], asset_type)
+                        elif a_relation == 'roles':
+                            self.import_roles(existing_object, relations[a_relation], asset_type)
+                        else:
+                            self.log_error("Relation {} is not supported".format(a_relation))
 
                 # Checking for post update actions on the different objects
                 if asset_changed:
@@ -494,6 +499,28 @@ class Sender(LoggingCommand):
                         schedule['unified_job_template'] = 1
                         self.can_object_post('schedules', schedule, common.get_api_options('schedules'))
                         del schedule['unified_job_template']
+
+                elif relation == 'roles':
+                    for role in an_asset[common.ASSET_RELATION_KEY][relation]:
+                        # For each role we are going to look at each user and team
+                        # And make sure that the user/team is either defined in Tower
+                        # or is specified as something to import
+                        for actor in ACTOR_FIELDS:
+                            if actor in role:
+                                for item in role[actor]:
+                                    if actor in self.sorted_assets and item in self.sorted_assets[actor]:
+                                        continue
+                                    try:
+                                        identity_field = common.get_identity(actor)
+                                        existing_item = tower_cli.get_resource(actor).list(**{identity_field: item})
+                                        if existing_item['count'] != 1:
+                                            raise TowerCLIError("Unable to find user")
+                                        continue
+                                    except TowerCLIError:
+                                        pass
+
+                                    self.log_error("Unable to resolve {} name {} to add roles".format(actor, item))
+                                    post_check_succeeded = False
 
                 else:
                     self.log_warn("WARNING: Relation {} is not checked".format(relation))
@@ -946,6 +973,95 @@ class Sender(LoggingCommand):
                 self.log_change("Removed existing schedule named {}".format(schedule_name))
             except TowerCLIError as e:
                 self.log_error("Failed to delete schedule {} : {}".format(schedule_name, e))
+
+    def import_roles(self, existing_asset, new_roles, asset_type):
+        existing_role_data = common.extract_roles(existing_asset)
+        existing_roles = existing_role_data['items']
+        existing_name_to_id = existing_role_data['existing_name_to_object_map']
+
+        if new_roles == existing_roles:
+            self.log_ok("All roles are up to date")
+            return
+
+        existing_roles_by_name = {}
+        for role in existing_roles:
+            existing_roles_by_name[role['name']] = role
+
+        # Loop over all of the new roles
+        for role in new_roles:
+            # There should never be an instance where the target item does not have the same roles
+            # But just in case
+            if role['name'] not in existing_roles_by_name:
+                self.log_error("Role {} does not exist on the target node".format(role['name']))
+                continue
+
+            for actor in ACTOR_FIELDS:
+                existing_items = existing_roles_by_name[role['name']][actor]
+                new_items = role[actor]
+
+                # Get the existing role via CLI
+                try:
+                    existing_role = tower_cli.get_resource('role').get(existing_name_to_id['role'][role['name']])
+                except TowerCLIError as e:
+                    self.log_error('Failed to find existing role by ID')
+                    continue
+
+                # Items to remove is the difference between new_items and existing_items
+                for item_to_remove in list(set(existing_items).difference(new_items)):
+                    # Get the user or team
+                    try:
+                        existing_item = tower_cli.get_resource(actor).get(**{
+                            common.get_identity(actor): item_to_remove
+                        })
+                    except TowerCLIError as e:
+                        self.log_error("Failed to get {} {} : {}".format(actor, item_to_remove, e))
+                        continue
+
+                    # Revoke the permissions
+                    try:
+                        tower_cli.get_resource('role').revoke(**{
+                            'type': existing_role['type'],
+                            actor: existing_item['id'],
+                            asset_type: existing_asset['id'],
+                        })
+                        self.log_change("Removed {} {} from {} role".format(actor, item_to_remove, role['name']))
+                    except TowerCLIError as e:
+                        self.log_error("Unable to remove {} {} from {} role: {}".format(
+                            actor, item_to_remove, role['name'], e)
+                        )
+
+                # Items that need to be added is the difference between existing_items and new_items
+                for item_to_add in list(set(new_items).difference(existing_items)):
+                    # Get the user or team
+                    try:
+                        existing_item = tower_cli.get_resource(actor).get(**{
+                            common.get_identity(actor): item_to_add
+                        })
+                    except TowerCLIError as e:
+                        self.log_error("Failed to get {} {} : {}".format(actor, item_to_add, e))
+                        continue
+
+                    # Grant the permissions
+                    try:
+                        role_type = existing_role['type']
+                        if role_type == 'Ad Hoc':
+                            role_type = 'adhoc'
+                        # Some of the workflow roles come out funky so we need to straighten them out.
+                        elif role_type == 'role' and existing_role['name'] == 'Admin':
+                            role_type = 'admin'
+                        elif role_type == 'role' and existing_role['name'] == 'Execute':
+                            role_type = 'execute'
+
+                        tower_cli.get_resource('role').grant(**{
+                            'type': role_type,
+                            actor: existing_item['id'],
+                            asset_type: existing_asset['id'],
+                        })
+                        self.log_change("Added {} {} to {} role".format(actor, item_to_add, role['name']))
+                    except TowerCLIError as e:
+                        self.log_error("Unable to add {} {} to {} role: {}".format(
+                            actor, item_to_add, role['name'], e)
+                        )
 
     def import_inventory_groups(self, existing_object, groups):
         existing_groups_data = common.extract_inventory_groups(existing_object)

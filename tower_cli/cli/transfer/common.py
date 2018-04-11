@@ -2,12 +2,13 @@ import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import debug
 from tower_cli.exceptions import TowerCLIError
+from tower_cli.resources.role import ACTOR_FIELDS
 
 ASSET_TYPE_KEY = "asset_type"
 ASSET_RELATION_KEY = "asset_relation"
 SEND_ORDER = [
-    'organization',
     'user',
+    'organization',
     'team',
     'credential_type',
     'credential',
@@ -428,3 +429,42 @@ def extract_schedules(asset):
         return_schedules.append(reduced_schedule)
 
     return {'items': return_schedules, 'existing_name_to_object_map': name_to_object_map}
+
+
+def extract_roles(existing_asset):
+    return_roles = []
+    name_to_object_map = {'role': {}}
+
+    # Get the roles from the object
+    if 'related' not in existing_asset or 'object_roles' not in existing_asset['related']:
+        return [], {}
+
+    roles = load_all_assets(existing_asset['related']['object_roles'])
+
+    if 'results' not in roles:
+        return [], {}
+
+    for role in roles['results']:
+        exported_role = {
+            'name': role['name'],
+        }
+        name_to_object_map['role'][role['name']] = role['id']
+
+        for actor in ACTOR_FIELDS:
+            plural_actor = "{}s".format(actor)
+            exported_role[actor] = []
+            name_to_object_map[actor] = {}
+
+            if plural_actor in role['related']:
+                role_items = load_all_assets(role['related'][plural_actor])
+                if 'results' not in role_items:
+                    continue
+
+                for role_object in role_items['results']:
+                    identity = role_object[get_identity(actor)]
+                    exported_role[actor].append(identity)
+                    name_to_object_map[actor][identity] = role_object['id']
+
+        return_roles.append(exported_role)
+
+    return {'items': return_roles, 'existing_name_to_object_map': name_to_object_map}

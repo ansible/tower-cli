@@ -3,6 +3,7 @@ from tower_cli.exceptions import TowerCLIError
 from tower_cli.cli.transfer import common
 from tower_cli.conf import settings
 from tower_cli.utils import parser
+from tower_cli.resources.role import RESOURCE_FIELDS
 import click
 
 
@@ -103,6 +104,12 @@ class Receiver:
                     elif relation == 'schedules':
                         exported_asset[common.ASSET_RELATION_KEY][relation] =\
                             common.extract_schedules(asset)['items']
+
+                # If this asset type is in the RESOURCE_FIELDS of the Role object than export its roles
+                if asset_type in RESOURCE_FIELDS:
+                    if common.ASSET_RELATION_KEY not in exported_asset:
+                        exported_asset[common.ASSET_RELATION_KEY] = {}
+                    exported_asset[common.ASSET_RELATION_KEY]['roles'] = common.extract_roles(asset)['items']
 
                 # Finally add the object to the list of objects that are being exported
                 exported_objects.append(exported_asset)
