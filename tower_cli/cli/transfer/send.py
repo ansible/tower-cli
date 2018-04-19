@@ -242,10 +242,10 @@ class Sender(LoggingCommand):
                                 reduced_object['credential_type'] = an_asset['credential_type']
 
                         # TowerCLI wants extra_vars to be in a list, not a string
-                        self.touchup_extra_vars(an_asset)
+                        self.touchup_extra_vars(reduced_object)
 
                         try:
-                            resource.write(pk=object_id, **an_asset)
+                            resource.write(pk=object_id, **reduced_object)
                             asset_changed = True
                             self.log_change("Updated asset")
                         except TowerCLIError as e:
