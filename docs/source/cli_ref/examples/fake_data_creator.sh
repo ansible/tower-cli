@@ -25,10 +25,9 @@ echo "Tower-CLI DATA FAKER: reading config settings"
 hostval=$(tower-cli config host)
 USER_OUTPUT=$(tower-cli config username)
 userval=$(echo $USER_OUTPUT| cut -d' ' -f 2)
-passwordval=$(tower-cli config password)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [[ $userval == "username: " ]] || [[ $passwordval == "password: " ]]
+if [[ $userval == "username: " ]]
 then
   echo "WARNING: Configuration has not been fully set";
   echo "   You will want to run the $ tower-cli config ";
@@ -108,13 +107,13 @@ ssh_key_data: |
 
 echo "Tower-CLI DATA FAKER: creating credentials"
 # Example credentials for cloud and machine
-tower-cli credential create --name="SSH example" --user=$userval --inputs="$machine_cred_inputs" --credential-type="Machine"
-tower-cli credential create --name="blank SSH" --user=$userval --inputs="{}" --credential-type="Machine"
-tower-cli credential create --name="vault password" --user=$userval --inputs="vault_password: password" --credential-type="Vault"
+tower-cli credential create --name="SSH example" --organization="Default" --inputs="$machine_cred_inputs" --credential-type="Machine"
+tower-cli credential create --name="blank SSH" --organization="Default" --inputs="{}" --credential-type="Machine"
+tower-cli credential create --name="vault password" --organization="Default" --inputs="vault_password: password" --credential-type="Vault"
 tower-cli credential create --name="AWS creds" --team=Ops --credential-type="Amazon Web Services" --inputs='{"username": "your_username", "password": "password"}'
 # Two users who can become the other to escalate a task
-tower-cli credential create --credential-type="Machine" --name=user1 --inputs='{"username": "user1", "password": "pass1", "become_method": "su", "become_username": "user2"}' --user=$userval
-tower-cli credential create --credential-type="Machine" --name=user2 --inputs='{"username": "user2", "password": "pass1", "become_method": "su", "become_username": "user1"}' --user=$userval
+tower-cli credential create --credential-type="Machine" --name=user1 --inputs='{"username": "user1", "password": "pass1", "become_method": "su", "become_username": "user2"}' --organization="Default"
+tower-cli credential create --credential-type="Machine" --name=user2 --inputs='{"username": "user2", "password": "pass1", "become_method": "su", "become_username": "user1"}' --organization="Default"
 
 echo "Tower-CLI DATA FAKER: creating inventories and groups"
 # Basic localhost examples
