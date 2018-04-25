@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-VERSION = '3.2.1'
+VERSION = '3.3.0'
 CUR_API_VERSION = 'v2'
 
 LAUNCH_TYPE_CHOICES = [
