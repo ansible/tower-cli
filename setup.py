@@ -149,7 +149,10 @@ setup(
 
     # Additional information
     description='A CLI tool for Ansible Tower and AWX.',
-    long_description=combine_files('README.rst', 'HISTORY.rst'),
+    long_description=combine_files(
+        'README.rst',
+        os.path.join('docs', 'source', 'HISTORY.rst')
+    ),
     license='Apache 2.0',
 
     # How to do the install
