@@ -40,7 +40,7 @@ file) with write scope.  You can also request read scope for read-only access:
 
     $ tower-cli config host tower.example.com
     $ tower-cli config username user
-    $ tower-cli config username pass
+    $ tower-cli config password pass
 
 Next, use Tower CLI to actually control your Tower backend. The CRUD operations against almost every Tower resource
 can be done using Tower CLI. Suppose we want to see the available job templates to choose for running:
