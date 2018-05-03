@@ -85,6 +85,10 @@ Some examples:
 
     # Copy all assets from one instance to another
     $ tower-cli receive --tower-host tower1.example.com --all | tower-cli send --tower-host tower2.example.com
+    
+    # Set OAuth2 Token for Authentication
+    $ tower-cli login <username>            
+    # you will be prompted for a password, then an OAuth2 token will be created in AWX/Tower and used for future Authentication.
 
 
 
