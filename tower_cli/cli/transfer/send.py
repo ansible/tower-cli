@@ -290,6 +290,8 @@ class Sender(LoggingCommand):
                             self.import_schedules(existing_object, relations[a_relation], asset_type)
                         elif a_relation == 'roles':
                             self.import_roles(existing_object, relations[a_relation], asset_type)
+                        elif a_relation == 'labels':
+                            self.import_labels(existing_object, relations[a_relation], asset_type)
                         else:
                             self.log_error("Relation {} is not supported".format(a_relation))
 
@@ -411,7 +413,7 @@ class Sender(LoggingCommand):
                 continue
             # We will remove the remaining "known" types of checks and then see if there is anything left
             known_types = ["help_text", "default", "required", "type", "label", "max_length",
-                           "choices", "min_value", "max_value"]
+                           "choices", "min_value", "max_value", "filterable"]
             if len(set(post_options[option].keys()).difference(known_types)) > 0:
                 self.log_warn("BUG, unknown keys for option {} found in asset type of {}:\n{}".format(
                     option, asset_type, json.dumps(post_options[option], indent=4)
@@ -521,6 +523,24 @@ class Sender(LoggingCommand):
 
                                     self.log_error("Unable to resolve {} name {} to add roles".format(actor, item))
                                     post_check_succeeded = False
+
+                elif relation == 'labels':
+                    for label in an_asset[common.ASSET_RELATION_KEY][relation]:
+                        # Make sure it can post, this will also validate that the label has an org
+                        self.can_object_post('label', label, common.get_api_options('label'))
+
+                        # We also need to manually check the name (the post options don't include that)
+                        if 'name' not in label:
+                            self.log_error("Label is missing a name")
+                            post_check_succeeded = False
+
+                        # Now lets make sure that the org resolves
+                        try:
+                            tower_cli.get_resource('organization').get(**{'name': label['organization']})
+                        except TowerCLIError:
+                            self.log_error("Unable to resolve organization {} for label {}".format(
+                                label['organization'], label['name']))
+                            post_check_succeeded = False
 
                 else:
                     self.log_warn("WARNING: Relation {} is not checked".format(relation))
@@ -925,6 +945,67 @@ class Sender(LoggingCommand):
                 self.log_change("Added extra credential {}".format(cred))
             except TowerCLIError as e:
                 self.log_error("Unable to add extra credential {} : ".format(cred, e))
+
+    def import_labels(self, existing_object, new_labels, asset_type):
+        existing_labels_data = common.extract_labels(existing_object)
+        existing_labels = existing_labels_data['items']
+        existing_name_to_object = existing_labels_data['existing_name_to_object_map']
+        # Existing_name_to_object is a dict of dicts because labels live in an organization
+        if existing_labels == new_labels:
+            self.log_ok("All labels are up to date")
+            return
+
+        keyword_arg_template_id = "job_template"
+        if asset_type == 'workflow':
+            keyword_arg_template_id = "workflow_job_template"
+
+        for existing_label in existing_labels:
+            # Any label that is in existing_labels that is not in new_labels needs to be removed
+            if existing_label not in new_labels:
+                try:
+                    label_name = existing_label['name']
+                    label_org = existing_label['organization']
+                    label_id = existing_name_to_object[label_org][label_name]['id']
+                    tower_cli.get_resource(asset_type).disassociate_label(**{
+                        keyword_arg_template_id: existing_object['id'],
+                        'label': label_id,
+                    })
+                    self.log_change("Removed label {}".format(label_name))
+                except TowerCLIError as e:
+                    self.log_error("Unable to remove label {} : {}".format(label_name, e))
+            else:
+                # If the label is in both new_labels and existing_labels we don't need to do anything with it.
+                new_labels.remove(existing_label)
+
+        # Any labels left in new_labels need to be added
+        for new_label in new_labels:
+            label_name = new_label['name']
+            label_org_name = new_label['organization']
+            # We need to resolve the organization of this new label
+            # This is check in post checks so this should never fail.
+            # Unless someone was able to delete an org between the post check and now.
+            try:
+                org = tower_cli.get_resource('organization').get(**{'name': label_org_name})
+                label_org_id = org['id']
+            except TowerCLIError as e:
+                self.log_error("Failed to lookup organization {} for label : {}".format(label_org_name, label_name))
+                continue
+
+            try:
+                new_label['organization'] = label_org_id
+                created_label = tower_cli.get_resource('label').create(**new_label)
+                self.log_change("Added label {}".format(label_name))
+            except TowerCLIError as e:
+                self.log_error("Unable to build new label {} : {}".format(label_name, e))
+                continue
+
+            try:
+                tower_cli.get_resource(asset_type).associate_label(**{
+                    keyword_arg_template_id: existing_object['id'],
+                    'label': created_label['id'],
+                })
+            except TowerCLIError as e:
+                self.log_error("Unable to add label {} : {}".format(label_name, e))
 
     def import_schedules(self, existing_object, new_schedules, asset_type):
         existing_schedules_data = common.extract_schedules(existing_object)

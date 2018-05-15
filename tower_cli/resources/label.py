@@ -24,6 +24,7 @@ class Resource(models.Resource):
     """A resource for labels."""
     cli_help = 'Manage labels within Ansible Tower.'
     endpoint = '/labels/'
+    related = ['organization']
 
     name = models.Field(unique=True)
     organization = models.Field(type=types.Related('organization'), display=False)

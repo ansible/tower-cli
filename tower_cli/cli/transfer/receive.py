@@ -105,6 +105,10 @@ class Receiver:
                         exported_asset[common.ASSET_RELATION_KEY][relation] =\
                             common.extract_schedules(asset)['items']
 
+                    elif relation == 'labels':
+                        exported_asset[common.ASSET_RELATION_KEY][relation] =\
+                            common.extract_labels(asset)['items']
+
                 # If this asset type is in the RESOURCE_FIELDS of the Role object than export its roles
                 if asset_type in RESOURCE_FIELDS:
                     if common.ASSET_RELATION_KEY not in exported_asset:
