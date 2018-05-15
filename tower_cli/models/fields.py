@@ -138,7 +138,6 @@ class ManyToManyField(BaseField):
 
         self.other_name = other_name
         self.res_name = res_name
-        self.method_name = method_name
         self.relationship = relationship
         self.method_name = None
         self._set_method_names(method_name, relationship)
@@ -161,18 +160,17 @@ class ManyToManyField(BaseField):
             self.res_name = grammar.singularize(attrs.get('endpoint', 'unknown').strip('/'))
 
     def _set_method_names(self, method_name=None, relationship=None):
-        if self.method_name is None:
-            if method_name is not None:
-                self.method_name = method_name
-                suffix = ''
-                if method_name != '':
-                    suffix = '_{}'.format(method_name)
-            elif relationship is not None:
-                suffix = '_{}'.format(grammar.singularize(relationship))
-            else:
-                return
-            self.associate_method_name = 'associate{}'.format(suffix)
-            self.disassociate_method_name = 'disassociate{}'.format(suffix)
+        if method_name is not None:
+            self.method_name = method_name
+            suffix = ''
+            if method_name != '':
+                suffix = '_{}'.format(method_name)
+        elif relationship is not None:
+            suffix = '_{}'.format(grammar.singularize(relationship))
+        else:
+            return
+        self.associate_method_name = 'associate{}'.format(suffix)
+        self.disassociate_method_name = 'disassociate{}'.format(suffix)
 
     @property
     def associate_method(self):
