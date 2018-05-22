@@ -59,7 +59,7 @@ Release History
 - Disabled launching a job using the jobs endpoint.
 - Removed scan jobs in favor of new job fact cache.
 - Removed Rackspace options.
-- Remove outdated association function for project’s organization.
+- Remove outdated association function for project's organization.
 
 *Reflected from 3.1.8:*
 
