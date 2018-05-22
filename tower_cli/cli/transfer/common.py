@@ -1,3 +1,5 @@
+import copy
+
 import tower_cli
 from tower_cli.api import client
 from tower_cli.utils import debug
@@ -100,7 +102,6 @@ def map_node_to_post_options(post_options, source_node, target_node):
 # Takes an asset and loops over the defined dependences
 # These are things that may be other objects in Tower
 # For example, a credential can be tied to an Organization
-# If the user gave me an Organization like Default (which is what is expected) we need to resolve that to Defaults ID
 def resolve_asset_dependencies(an_asset, asset_type):
     for relation in an_asset['related']:
         if relation in an_asset:
@@ -413,6 +414,35 @@ def extract_extra_credentials(asset):
         return_credentials.append(a_credential['name'])
 
     return {'items': return_credentials, 'existing_name_to_id_map': name_to_id_map}
+
+
+def extract_labels(asset):
+    return_labels = []
+    name_to_object_map = {}
+
+    # Labels exist in an organization so the name_to_object_map will be a dict of dicts.
+    # The first tier will be the org and the second the name
+
+    label_options = get_api_options('label')
+    labels = load_all_assets(asset['related']['labels'])
+    for a_label in labels['results']:
+        # First take a copy of this label (this will have the org as an integer)
+        pristine_label = copy.deepcopy(a_label)
+
+        reduced_label = {}
+        # Resolve the org name in the label (a_label will now have the org as a name)
+        resolve_asset_dependencies(a_label, 'label')
+        # Map a_label into the reduced label and append the reduced labels to the labels to return
+        map_node_to_post_options(label_options, a_label, reduced_label)
+        return_labels.append(reduced_label)
+
+        # Now, add the pristine_label to the map of objects to return.
+        # The keys of the objects to return will be [<the name of the org>][<the name of the label>]
+        if a_label['organization'] not in name_to_object_map:
+            name_to_object_map[a_label['organization']] = {}
+        name_to_object_map[a_label['organization']][a_label['name']] = pristine_label
+
+    return {'items': return_labels, 'existing_name_to_object_map': name_to_object_map}
 
 
 def extract_schedules(asset):
