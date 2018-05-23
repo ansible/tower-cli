@@ -22,7 +22,7 @@ class Sender(LoggingCommand):
     def __init__(self, no_color):
         self.no_color = no_color
 
-    def send(self, source, prevent, secret_management):
+    def send(self, source, prevent, exclude, secret_management):
         self.secret_management = secret_management
 
         self.print_intro()
@@ -34,7 +34,7 @@ class Sender(LoggingCommand):
 
         # Next we will sort all of the assets by their type again, will raise if there are errors
         # This is setting sorted_assets
-        self.prep_and_sort_all_assets(import_json, prevent)
+        self.prep_and_sort_all_assets(import_json, prevent, exclude)
 
         for asset_type in common.SEND_ORDER:
             # If we don't have any of this asset type we can move on
@@ -547,7 +547,7 @@ class Sender(LoggingCommand):
 
         return post_check_succeeded
 
-    def prep_and_sort_all_assets(self, import_json, prevent):
+    def prep_and_sort_all_assets(self, import_json, prevent, exclude):
         self.sorted_assets = {}
         had_sort_issues = False
         for asset in import_json:
@@ -562,6 +562,11 @@ class Sender(LoggingCommand):
             if asset_type not in common.SEND_ORDER:
                 self.log_error("Asset type of {} is invalid".format(asset_type))
                 had_sort_issues = True
+                continue
+
+            # Make sure we want to import this asset type
+            if exclude is not None and asset_type in exclude:
+                self.log_ok("Asset of type {} is prevented from importation".format(asset_type))
                 continue
 
             # Make sure we are able to import this asset type
