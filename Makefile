@@ -1,34 +1,15 @@
 VERSION := $(shell python -c "exec(open('''tower_cli/constants.py''').read(), globals()); print VERSION")
+RELEASE := $(shell python -c "exec(open('''tower_cli/constants.py''').read(), globals()); print RELEASE")
 
-DISTS = el6 el7
-DIST_SUFFIX_el6 = 
-DIST_SUFFIX_el7 = .centos
-MOCK_CFG_el6 = epel-6-x86_64
-MOCK_CFG_el7 = epel-7-x86_64
+el6: dist/ansible-tower-cli-$(VERSION).tar.gz rpm-build/ansible-tower-cli-${VERSION}.spec
+	mock -r epel-6-x86_64 --buildsrpm --spec rpm-build/ansible-tower-cli-${VERSION}.spec --sources dist/ --resultdir rpm-build
+	mock -r epel-6-x86_64 --rebuild rpm-build/ansible-tower-cli-${VERSION}-${RELEASE}.el6.src.rpm --resultdir rpm-build
 
-.PHONY: all clean $(DISTS)
-.DEFAULT_GOAL = all
+el7: dist/ansible-tower-cli-$(VERSION).tar.gz rpm-build/ansible-tower-cli-${VERSION}.spec
+	mock -r epel-7-x86_64 --buildsrpm --spec rpm-build/ansible-tower-cli-${VERSION}.spec --sources dist/ --resultdir rpm-build
+	mock -r epel-7-x86_64 --rebuild rpm-build/ansible-tower-cli-${VERSION}-${RELEASE}.el7.src.rpm --resultdir rpm-build
 
-define RPM_DIST_RULE
-
-$(eval $(1)_SRPM=rpm-build/ansible-tower-cli-$(VERSION)-1.$(1)$(DIST_SUFFIX_$(1)).src.rpm)
-$(eval $(1)_RPM=rpm-build/ansible-tower-cli-$(VERSION)-1.$(1)$(DIST_SUFFIX_$(1)).noarch.rpm)
-SRPMS += $($(1)_SRPM)
-RPMS += $($(1)_RPM)
-
-$($(1)_SRPM): rpm-build/.exists dist/ansible-tower-cli-$(VERSION).tar.gz packaging/rpm/ansible-tower-cli.spec
-	mock -r $(MOCK_CFG_$(1)) --buildsrpm --spec packaging/rpm/ansible-tower-cli.spec --sources dist/ --resultdir rpm-build
-
-$($(1)_RPM): $($(1)_SRPM)
-	mock -r $(MOCK_CFG_$(1)) --rebuild $($(1)_SRPM) --resultdir rpm-build
-
-$(1): $($(1)_RPM)
-
-endef
-
-$(foreach DIST, $(DISTS), $(eval $(call RPM_DIST_RULE,$(DIST))))
-
-all: $(RPMS)
+all: el6 el7
 
 remove_complied:
 	find . -type d -name "__pycache__" -delete
@@ -40,8 +21,11 @@ clean: remove_complied
 	rm -rf ansible_tower_cli.egg-info
 	rm -rf rpm-build
 
-dist/ansible-tower-cli-$(VERSION).tar.gz: HISTORY.rst LICENSE MANIFEST.in README.rst requirements.txt setup.py setup.cfg
+dist/ansible-tower-cli-$(VERSION).tar.gz: docs/source/HISTORY.rst LICENSE MANIFEST.in README.rst requirements.txt setup.py setup.cfg
 	@python setup.py sdist
+
+rpm-build/ansible-tower-cli-${VERSION}.spec: packaging/rpm/ansible-tower-cli.spec rpm-build/.exists
+	cat packaging/rpm/ansible-tower-cli.spec | sed 's:__VERSION__:$(VERSION):' | sed 's:__RELEASE__:$(RELEASE):' > ./rpm-build/ansible-tower-cli-${VERSION}.spec
 
 rpm-build/.exists:
 	mkdir -p rpm-build
@@ -50,6 +34,9 @@ rpm-build/.exists:
 # For devel convenience
 install:
 	python setup.py install
+
+local_install:
+	python setup.py install --user
 
 refresh: clean install
 
