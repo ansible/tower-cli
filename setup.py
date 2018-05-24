@@ -31,16 +31,17 @@ awx_entry = dashed_name.replace('tower', 'awx')
 
 
 # Avoid packaging any other API version of tower-cli with current one
+# Note: The 0,1 in the format strings are for building el6 rpms with python 2.6.6
 exclude_list = ['tests']
 primary_install = len(pkg_name.split('_')) == 2
 base_name = pkg_name[:9]
 if not primary_install:
-    exclude_list += [base_name, '{}.*'.format(base_name)]
+    exclude_list += [base_name, '{0}.*'.format(base_name)]
 for v in (1, 2):
     if pkg_name.endswith(str(v)):
         continue
-    v_name = '{}_v{}'.format(base_name, v)
-    exclude_list += [v_name, '{}.*'.format(v_name)]
+    v_name = '{0}_v{1}'.format(base_name, v)
+    exclude_list += [v_name, '{0}.*'.format(v_name)]
 discovered_packages = find_packages(exclude=exclude_list)
 
 

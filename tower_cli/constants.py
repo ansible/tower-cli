@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 VERSION = '3.3.0'
+RELEASE = 1
 CUR_API_VERSION = 'v2'
 
 LAUNCH_TYPE_CHOICES = [

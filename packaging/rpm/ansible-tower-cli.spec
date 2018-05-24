@@ -1,14 +1,16 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
-%global srcname tower-cli
+%global srcname ansible-tower-cli
+%define version __VERSION__
+%define release __RELEASE__
 
-Name:           ansible-%{srcname}
-Version:        3.3.0
-Release:        2%{?dist}
+Name:           %{srcname}
+Version:        %{version}
+Release:        %{release}%{?dist}
 Summary:        Commandline interface for Ansible Tower
 Group:          Development/Tools
 License:        ASL 2.0
 URL:            https://github.com/ansible/tower-cli
-Source0:        https://pypi.python.org/packages/f7/7d/ee885225933bb498c34e2ad704194ed188662489a4ca4936a2d82248b6e8/%{srcname}-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/source/a/%{srcname}/%{srcname}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
@@ -47,10 +49,13 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE README.rst HISTORY.rst
+%doc LICENSE README.rst docs/source/HISTORY.rst
 %config(noreplace) %ghost %{_sysconfdir}/tower/tower_cli.cfg
 %{python_sitelib}/ansible*
 %{python_sitelib}/tower_cli*
+%{_bindir}/awx-cli
+%{_bindir}/tower-cli
+
 
 %changelog
 * Sun Mar 26 2017 Satoru SATOH <satoru.satoh@gmail.com> - 3.1.3-2
