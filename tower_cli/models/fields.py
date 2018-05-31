@@ -160,9 +160,11 @@ class ManyToManyField(BaseField):
             self.res_name = grammar.singularize(attrs.get('endpoint', 'unknown').strip('/'))
 
     def _set_method_names(self, method_name=None, relationship=None):
+        if self.method_name is not None:
+            return  # provided in __init__, do not let metaclass override
+        suffix = ''
         if method_name is not None:
             self.method_name = method_name
-            suffix = ''
             if method_name != '':
                 suffix = '_{}'.format(method_name)
         elif relationship is not None:
