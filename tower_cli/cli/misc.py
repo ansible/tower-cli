@@ -337,9 +337,10 @@ def receive(organization=None, user=None, team=None, credential_type=None, crede
 @click.argument('source', required=False, nargs=-1)
 @click.option('--prevent', multiple=True, required=False,
               help='Prevents import of a specific asset type.\n'
-              'Multiple prevent options can be passed.')
+              'Multiple prevent options can be passed.\n'
+              'If an asset type in the prevent list tries to be imported an error will occur')
 @click.option('--exclude', multiple=True, required=False, help='Ignore specific asset type. Multiple exclude options '
-              'can be passed.')
+              'can be passed. If an asset type in the exclude list tries to be imprted it will be ignored without an error')
 @click.option('--secret_management', multiple=False, required=False, default='default',
               type=click.Choice(['default', 'prompt', 'random']),
               help='What to do with secrets for new items.\n'
