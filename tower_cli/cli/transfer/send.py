@@ -564,15 +564,15 @@ class Sender(LoggingCommand):
                 had_sort_issues = True
                 continue
 
-            # Make sure we want to import this asset type
-            if exclude is not None and asset_type in exclude:
-                self.log_ok("Asset of type {} is prevented from importation".format(asset_type))
-                continue
-
             # Make sure we are able to import this asset type
             if prevent is not None and asset_type in prevent:
                 self.log_error("Asset of type {} is prevented from importation".format(asset_type))
                 had_sort_issues = True
+                continue
+
+            # Make sure we want to import this asset type
+            if exclude is not None and asset_type in exclude:
+                self.log_ok("Asset of type {} is prevented from importation".format(asset_type))
                 continue
 
             # Make sure the object has its identifier field
