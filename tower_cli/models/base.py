@@ -746,8 +746,7 @@ class MonitorableResource(BaseResource):
         debug.log('Requesting a copy of job standard output', header='details')
         resp = client.get(stdout_url, params=payload).json()
         content = b64decode(resp['content'])
-
-        return content
+        return content.decode('utf-8', 'replace')
 
     @resources.command
     @click.option('--start-line', required=False, type=int, help='Line at which to start printing the standard out.')
@@ -837,7 +836,7 @@ class MonitorableResource(BaseResource):
 
             # In the first moments of running the job, the standard out
             # may not be available yet
-            if not six.text_type(content).startswith("Waiting for results"):
+            if not content.startswith("Waiting for results"):
                 line_count = len(content.splitlines())
                 start_line += line_count
                 click.echo(content, nl=0)
