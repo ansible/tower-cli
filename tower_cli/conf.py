@@ -353,9 +353,6 @@ SETTINGS_PARMS = set([
 def runtime_context_manager(method):
     @wraps(method)
     def method_with_context_managed(*args, **kwargs):
-        # Remove the settings before running the method
-        for key in SETTINGS_PARMS:
-            kwargs.pop(key, None)
         method(*args, **kwargs)
         # Destroy the runtime settings
         settings._runtime = settings._new_parser()
@@ -377,7 +374,8 @@ def with_global_options(method):
              'provided. This will take precedence over a host provided to '
              '`tower config`, if any.',
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     method = click.option(
         '-t', '--tower-oauth-token',
@@ -385,7 +383,8 @@ def with_global_options(method):
              'This will take precedence over a token provided to '
              '`tower config`, if any.',
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     method = click.option(
         '-u', '--tower-username',
@@ -393,7 +392,8 @@ def with_global_options(method):
              'This will take precedence over a username provided to '
              '`tower config`, if any.',
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     method = click.option(
         '-p', '--tower-password',
@@ -401,7 +401,8 @@ def with_global_options(method):
              'This will take precedence over a password provided to '
              '`tower config`, if any.',
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
 
     # Create a global verbose/debug option.
@@ -412,7 +413,8 @@ def with_global_options(method):
              'provide more data, and "id" echos the object id only.',
         type=click.Choice(['human', 'json', 'yaml', 'id']),
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     method = click.option(
         '-v', '--verbose',
@@ -420,7 +422,8 @@ def with_global_options(method):
         help='Show information about requests being made.',
         is_flag=True,
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     method = click.option(
         '--description-on',
@@ -428,7 +431,8 @@ def with_global_options(method):
         help='Show description in human-formatted output.',
         is_flag=True,
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
 
     # Create a global SSL warning option.
@@ -439,7 +443,8 @@ def with_global_options(method):
              'to make this permanent.',
         is_flag=True,
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
 
     # Create a custom certificate specification option.
@@ -449,7 +454,8 @@ def with_global_options(method):
         help='Path to a custom certificate file that will be used throughout'
              ' the command. Overwritten by --insecure flag if set.',
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
 
     method = click.option(
@@ -459,7 +465,8 @@ def with_global_options(method):
              'in Tower 3.3 and above.',
         is_flag=True,
         required=False, callback=_apply_runtime_setting,
-        is_eager=True
+        is_eager=True,
+        expose_value=False
     )(method)
     # Manage the runtime settings context
     method = runtime_context_manager(method)

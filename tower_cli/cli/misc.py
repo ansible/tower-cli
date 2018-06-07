@@ -36,7 +36,7 @@ __all__ = ['version', 'config', 'login', 'logout', 'receive', 'send', 'empty']
 
 @click.command()
 @with_global_options
-def version(**kwargs):
+def version():
     """Display full version information."""
 
     # Print out the current version of Tower CLI.

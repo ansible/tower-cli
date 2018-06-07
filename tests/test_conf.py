@@ -22,7 +22,7 @@ import warnings
 
 from six.moves import StringIO
 
-from tower_cli.conf import Parser, Settings, runtime_context_manager
+from tower_cli.conf import Parser, Settings
 
 from tests.compat import unittest, mock
 
@@ -146,13 +146,3 @@ class CommandTests(unittest.TestCase):
 
         # Ensure that it's a command.
         self.assertIsInstance(foo, click.core.Command)
-
-    def test_runtime_context_manager(self):
-        """Test that the kwargs from settings are removed before
-        running the command from the resource itself.
-        """
-        def foo(**kwargs):
-            self.assertEqual(kwargs, {})
-
-        foo = runtime_context_manager(foo)
-        foo(tower_username='foobear')
