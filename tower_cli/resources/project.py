@@ -114,7 +114,7 @@ class Resource(models.Resource, models.MonitorableResource):
             # Processing the organization flag depends on version
             debug.log('Checking Organization Relationship.', header='details')
             r = client.options('/projects/')
-            if 'organization' in r.json()['actions']['POST']:
+            if 'organization' in r.json().get('actions', {}).get('POST', {}):
                 kwargs['organization'] = organization
             else:
                 post_associate = True
