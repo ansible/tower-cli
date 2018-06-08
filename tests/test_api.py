@@ -46,12 +46,24 @@ class ClientTests(unittest.TestCase):
         with settings.runtime_values(host='33.33.33.33'):
             self.assertEqual(client.get_prefix(), 'https://33.33.33.33/api/%s/' % CUR_API_VERSION)
 
+    def test_prefix_https_protocol(self):
+        """Establish that the http protocol works
+        """
+        with settings.runtime_values(host='https://33.33.33.33'):
+            self.assertEqual(client.get_prefix(), 'https://33.33.33.33/api/%s/' % CUR_API_VERSION)
+
+    def test_prefix_http_protocol(self):
+        """Establish that the http protocol works
+        """
+        with settings.runtime_values(host='http://33.33.33.33', verify_ssl=False):
+            self.assertEqual(client.get_prefix(), 'http://33.33.33.33/api/%s/' % CUR_API_VERSION)
+
     def test_prefix_explicit_protocol(self):
-        """Establish that the prefix property returns the appropriate
-        URL prefix and don't clobber over an explicit protocol.
+        """Establish that the prefix property can not start with non-http protocol.
         """
         with settings.runtime_values(host='bogus://33.33.33.33/'):
-            self.assertEqual(client.get_prefix(), 'bogus://33.33.33.33/api/%s/' % CUR_API_VERSION)
+            with self.assertRaises(exc.ConnectionError):
+                client.get_prefix()
 
     def test_request_ok(self):
         """Establish that a request that returns a valid JSON response
