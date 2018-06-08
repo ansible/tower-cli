@@ -20,6 +20,12 @@ import functools
 import json
 import stat
 import warnings
+
+try:
+    from urlparse import urljoin, urlparse
+except Exception as e:
+    from urllib.parse import urljoin, urlparse
+
 from datetime import datetime as dt
 
 from requests.exceptions import ConnectionError, SSLError
@@ -187,9 +193,16 @@ class Client(Session):
                 'Can not verify ssl with non-https protocol. Change the '
                 'verify_ssl configuration setting to continue.'
             )
-        prefix = os.path.sep.join([host.rstrip('/'), 'api', ''])
+        # Validate that we have either an http or https based URL
+        url_pieces = urlparse(host)
+        if url_pieces[0] not in ['http', 'https']:
+            raise exc.ConnectionError('URL must be http(s), {} is not valid'.format(url_pieces[0]))
+
+        prefix = urljoin(host, '/api/')
         if include_version:
-            prefix = os.path.sep.join([prefix.rstrip('/'), CUR_API_VERSION, ''])
+            # We add the / to the end of {} so that our URL has the ending slash.
+            prefix = urljoin(prefix, "{}/".format(CUR_API_VERSION))
+
         return prefix
 
     @functools.wraps(Session.request)
