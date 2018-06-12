@@ -45,7 +45,7 @@ class Resource(models.ExeResource):
     job_explanation = models.Field(required=False, display=False, read_only=True)
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
-    elapsed = models.Field(required=False, display=True)
+    elapsed = models.Field(required=False, display=True, type=float)
 
     @resources.command(
         use_fields_as_options=('job_template',)

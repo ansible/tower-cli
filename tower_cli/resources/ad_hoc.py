@@ -33,7 +33,7 @@ class Resource(models.ExeResource):
     job_explanation = models.Field(required=False, display=False)
     created = models.Field(required=False, display=True)
     status = models.Field(required=False, display=True)
-    elapsed = models.Field(required=False, display=True)
+    elapsed = models.Field(required=False, display=True, type=float)
 
     # Parameters similar to job_template
     job_type = models.Field(
