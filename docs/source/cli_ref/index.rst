@@ -209,6 +209,8 @@ and ``tower-cli {resource} {action} --help`` shows details of the usage of this 
       -p, --tower-password TEXT       Password to use to authenticate to Ansible
                                       Tower. This will take precedence over a
                                       password provided to `tower config`, if any.
+                                      If set to ASK you will be prompted to
+                                      input the password.
       -u, --tower-username TEXT       Username to use to authenticate to Ansible
                                       Tower. This will take precedence over a
                                       username provided to `tower config`, if any.

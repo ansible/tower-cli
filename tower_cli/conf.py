@@ -23,6 +23,7 @@ import os
 import stat
 import warnings
 from functools import wraps
+from sys import argv
 
 import six
 from six.moves import configparser
@@ -340,6 +341,8 @@ settings = Settings()
 
 
 def _apply_runtime_setting(ctx, param, value):
+    if param.name == 'tower_password' and value == 'ASK' and '--help' not in argv:
+        value = click.prompt('Enter tower password', type=str, hide_input=True)
     settings.set_or_reset_runtime_param(param.name, value)
 
 
@@ -399,7 +402,8 @@ def with_global_options(method):
         '-p', '--tower-password',
         help='Password to use to authenticate to Ansible Tower. '
              'This will take precedence over a password provided to '
-             '`tower config`, if any.',
+             '`tower config`, if any. If value is ASK you will be '
+             'prompted for the password',
         required=False, callback=_apply_runtime_setting,
         is_eager=True
     )(method)
