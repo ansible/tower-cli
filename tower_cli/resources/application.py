@@ -13,19 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import click
+
 from tower_cli import models
 from tower_cli.cli import types
+
+
+CLIENT_TYPES = [
+    'confidential',
+    'public'
+]
+
+GRANT_TYPES = [
+    "authorization-code",
+    "implicit",
+    "password",
+    "client-credentials",
+]
 
 
 class Resource(models.Resource):
     """A resource for OAuth2 applications."""
     cli_help = 'Manage OAuth2 applications.'
     endpoint = '/applications/'
-
-    user = models.Field(type=types.Related('user'), required=True)
+    dependencies = ['organization']
 
     name = models.Field(unique=True)
-    client_type = models.Field(required=True)
+    client_type = models.Field(type=click.Choice(CLIENT_TYPES), required=True)
     redirect_uris = models.Field(required=False)
-    authorization_grant_type = models.Field(required=True)
-    skip_authorization = models.Field(required=False)
+    authorization_grant_type = models.Field(type=click.Choice(GRANT_TYPES), required=True)
+    skip_authorization = models.Field(type=click.BOOL, required=False)
+    organization = models.Field(type=types.Related('organization'), required=True)
