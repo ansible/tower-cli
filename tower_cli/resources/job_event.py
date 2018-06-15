@@ -42,7 +42,7 @@ class Resource(models.BaseResource):
     event_data = models.Field(display=False)
     failed = models.Field(display=False, type=bool)
     changed = models.Field(type=bool)
-    verbosity = models.Field(display=False)
+    verbosity = models.Field(display=False, type=int)
 
     def __getattribute__(self, attr):
         if attr == 'delete':

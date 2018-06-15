@@ -26,4 +26,4 @@ class Resource(models.Resource):
     type = models.Field(required=False, display=True, col_width=14)
     status = models.Field(required=False, display=True, col_width=10)
     created = models.Field(required=False, display=True, col_width=24)
-    elapsed = models.Field(required=False, display=True, col_width=7)
+    elapsed = models.Field(required=False, display=True, col_width=7, type=float)

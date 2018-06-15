@@ -40,7 +40,7 @@ class Resource(models.ExeResource):
     )
     job_explanation = models.Field(required=False, display=False, read_only=True)
     created = models.Field(required=False, display=True, read_only=True)
-    elapsed = models.Field(required=False, display=True, read_only=True)
+    elapsed = models.Field(required=False, display=True, read_only=True, type=float)
     source = models.Field(
         type=click.Choice(INVENTORY_SOURCE_CHOICES), display=True
     )
