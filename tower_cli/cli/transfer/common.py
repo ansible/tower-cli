@@ -229,6 +229,9 @@ def extract_inventory_relations(asset, relation_type):
 
     name_to_id_map = {}
     for relation in relations['results']:
+        # if this relation is controlled by an inventory source we can skip it
+        if 'has_inventory_sources' in relation and relation['has_inventory_sources']:
+            continue
         name_to_id_map[relation['name']] = relation['id']
         new_relation = {}
         map_node_to_post_options(post_options, relation, new_relation)
@@ -281,6 +284,9 @@ def extract_inventory_groups(asset):
 
     root_groups_response = load_all_assets(asset['related']['root_groups'])
     for root_group in root_groups_response['results']:
+        # If this groups is controlled by a source, we can skip it
+        if 'has_inventory_sources' in root_group and root_group['has_inventory_sources']:
+            continue
         name_to_id_map[root_group['name']] = {
             'id': root_group['id'],
             'sub_groups': {}
