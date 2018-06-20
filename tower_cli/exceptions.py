@@ -17,6 +17,26 @@ import click
 from click._compat import get_text_stderr
 
 
+__all__ = [
+    'TowerCLIError',
+    'UsageError',
+    'BadRequest',
+    'AuthError',
+    'Forbidden',
+    'MethodNotAllowed',
+    'MultipleResults',
+    'ServerError',
+    'Found',
+    'RelatedError',
+    'MultipleRelatedError',
+    'ValidationError',
+    'CannotStartJob',
+    'Timeout',
+    'JobFailure',
+    'ConnectionError'
+]
+
+
 class TowerCLIError(click.ClickException):
     """Base exception class for problems raised within Tower CLI.
     This class adds coloring to exceptions.
