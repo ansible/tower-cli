@@ -1,13 +1,15 @@
 VERSION := $(shell python -c "exec(open('''tower_cli/constants.py''').read(), globals()); print VERSION")
 RELEASE := $(shell python -c "exec(open('''tower_cli/constants.py''').read(), globals()); print RELEASE")
 
+MOCK_BIN ?= mock
+
 el6: dist/ansible-tower-cli-$(VERSION).tar.gz rpm-build/ansible-tower-cli-${VERSION}.spec
 	mock -r epel-6-x86_64 --buildsrpm --spec rpm-build/ansible-tower-cli-${VERSION}.spec --sources dist/ --resultdir rpm-build
 	mock -r epel-6-x86_64 --rebuild rpm-build/ansible-tower-cli-${VERSION}-${RELEASE}.el6.src.rpm --resultdir rpm-build
 
 el7: dist/ansible-tower-cli-$(VERSION).tar.gz rpm-build/ansible-tower-cli-${VERSION}.spec
-	mock -r epel-7-x86_64 --buildsrpm --spec rpm-build/ansible-tower-cli-${VERSION}.spec --sources dist/ --resultdir rpm-build
-	mock -r epel-7-x86_64 --rebuild rpm-build/ansible-tower-cli-${VERSION}-${RELEASE}.el7.src.rpm --resultdir rpm-build
+	$(MOCK_BIN) -r epel-7-x86_64 --buildsrpm --spec rpm-build/ansible-tower-cli-${VERSION}.spec --sources dist/ --resultdir rpm-build
+	$(MOCK_BIN) -r epel-7-x86_64 --rebuild rpm-build/ansible-tower-cli-${VERSION}-${RELEASE}.el7.src.rpm --resultdir rpm-build
 
 all: el6 el7
 
