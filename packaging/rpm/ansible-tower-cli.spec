@@ -15,10 +15,11 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 BuildArch:      noarch
-Requires:	python-six >= 1.7.2
-Requires:	PyYAML >= 3.10
-Requires: 	python-requests >= 2.3.0
-Requires:	python-click >= 2.1
+Requires: python-six >= 1.7.2
+Requires: PyYAML >= 3.10
+Requires: python-requests >= 2.3.0
+Requires: python-click >= 2.1
+Requires: python-colorama
 %if 0%{?rhel} == 6
 Requires: python-importlib >= 1.0.2
 Requires: python-ordereddict >= 1.1
