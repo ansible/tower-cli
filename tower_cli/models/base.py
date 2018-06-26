@@ -839,7 +839,7 @@ class MonitorableResource(BaseResource):
             if not content.startswith("Waiting for results"):
                 line_count = len(content.splitlines())
                 start_line += line_count
-                click.echo(content, nl=0)
+                click.echo(content, nl=0, file=outfile)
 
             if timeout and time.time() - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
