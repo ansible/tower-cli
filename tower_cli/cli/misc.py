@@ -229,7 +229,7 @@ def login(username, password, scope, client_id, client_secret, verbose):
     """
     if not supports_oauth():
         raise exc.TowerCLIError(
-            'This version of Tower does not support OAuth2.0'
+            'This version of Tower does not support OAuth2.0. Set credentials using tower-cli config.'
         )
 
     # Explicitly set a basic auth header for PAT acquisition (so that we don't

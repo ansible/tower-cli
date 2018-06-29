@@ -16,7 +16,7 @@
 
 import os
 import sys
-from tests.compat import unittest
+from test.compat import unittest
 
 # Ensure that the tests directory is part of our Python path.
 APP_ROOT = os.path.realpath(os.path.dirname(__file__) + '/../')

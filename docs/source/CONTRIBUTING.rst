@@ -28,8 +28,8 @@ please be patient while we process your request. We will ping you on github once
 Architecture Overview
 ---------------------
 
-All available Tower CLI resources descent from abstract class ``tower_cli.models.base.BaseResource``, which provides
-two fundamental methods, ``read`` and ``write``. ``read`` wraps around a GET method to the specified resource, while
+All available Tower CLI resources descend from the abstract class ``tower_cli.models.base.BaseResource``, which provides
+two fundamental methods, ``read`` and ``write``. The ``read`` method wraps around a GET method to the specified resource, while
 ``write`` wraps around a POST or PATCH on condition. Most public resource APIs, like ``create`` or ``list``, are
 essentially using a combination of ``read`` and ``write`` to communicate with Tower REST APIs.
 
