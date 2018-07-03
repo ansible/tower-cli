@@ -279,15 +279,6 @@ class ResourceTests(unittest.TestCase):
             self.res.list(query=[('bar', 'baz')])
             self.assertTrue(t.requests[0].url.endswith('bar=baz'))
 
-    def test_list_duplicate_kwarg(self):
-        """Establish that if we attempt to query on the same field twice,
-        that we get an error.
-        """
-        with client.test_mode as t:
-            with self.assertRaises(exc.BadRequest):
-                self.res.list(name='Batman', query=[('name', 'Robin')])
-            self.assertEqual(len(t.requests), 0)
-
     def test_get_unexpected_zero_results(self):
         """Establish that if a read method gets 0 results when it should have
         gotten one or more, that it raises NotFound.

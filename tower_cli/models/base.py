@@ -31,6 +31,7 @@ from click._compat import isatty as is_tty
 from tower_cli import resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.conf import settings
+from tower_cli.constants import STATUS_CHOICES
 from tower_cli.models.fields import Field, ManyToManyField
 from tower_cli.utils import parser, debug, secho
 from tower_cli.utils.data_structures import OrderedDict
@@ -279,13 +280,12 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 kwargs.pop(field.name)
 
         # If queries were provided, process them.
+        params = list(kwargs.items())
         for query in queries:
-            if query[0] in kwargs:
-                raise exc.BadRequest('Attempted to set %s twice.' % query[0].replace('_', '-'))
-            kwargs[query[0]] = query[1]
+            params.append((query[0], query[1]))
 
         # Make the request to the Ansible Tower API.
-        r = client.get(url, params=kwargs)
+        r = client.get(url, params=params)
         resp = r.json()
 
         # If this was a request with a primary key included, then at the
@@ -519,6 +519,18 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
 
         =====API DOCS=====
         """
+        # TODO: Move to a field callback method to make it generic
+        # If multiple statuses where given, add OR queries for each of them
+        if kwargs.get('status', None) and ',' in kwargs['status']:
+            all_status = kwargs.pop('status').strip(',').split(',')
+            queries = list(kwargs.pop('query', ()))
+            for status in all_status:
+                if status in STATUS_CHOICES:
+                    queries.append(('or__status', status))
+                else:
+                    raise exc.TowerCLIError('This status does not exist: {}'.format(status))
+            kwargs['query'] = tuple(queries)
+
         # If the `all_pages` flag is set, then ignore any page that might also be sent.
         if all_pages:
             kwargs.pop('page', None)
@@ -545,6 +557,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
             while cursor['next']:
                 cursor = self.list(**dict(kwargs, page=cursor['next']))
                 response['results'] += cursor['results']
+                response['count'] += cursor['count']
 
         # Done; return the response
         return response

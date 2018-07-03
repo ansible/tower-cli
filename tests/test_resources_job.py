@@ -27,6 +27,7 @@ from tower_cli.cli.resource import ResSubcommand
 
 from tests.compat import unittest, mock
 from tower_cli.conf import settings
+from tower_cli.constants import CUR_API_VERSION
 
 
 # Standard functions used for space and readability
@@ -363,6 +364,248 @@ class StatusTests(unittest.TestCase):
                 'status': 'successful',
             })
             self.assertEqual(len(t.requests), 1)
+
+
+class ListStatusesTests(unittest.TestCase):
+    """A set of tests to establish that the job list command works in the
+    way that we expect when passing a single status or multiple statuses.
+    """
+    def setUp(self):
+        self.res = tower_cli.get_resource('job')
+
+    def test_list_lone_status(self):
+        """Establish that the list command is still able to handle single
+        status.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?status=running', {
+                'elapsed': 4567.0,
+                'extra': 'ignored',
+                'failed': False,
+                'status': 'running',
+                'extra': 'ignored'
+            })
+            result = self.res.list(status='running')
+            self.assertEqual(result, {
+                'elapsed': 4567.0,
+                'failed': False,
+                'status': 'running',
+                'extra': 'ignored'
+            })
+            self.assertEqual(len(t.requests), 1)
+
+    def test_list_multiple_statuses_with_bad_one(self):
+        """Establish that when passing multiple statuses, the list command errors
+        when a status is not found among the registered statuses.
+        """
+        with client.test_mode as t:
+            with self.assertRaises(exc.TowerCLIError) as e:
+                self.res.list(status='pending,runin')
+            self.assertEqual(len(t.requests), 0)
+            self.assertEqual(str(e.exception), 'This status does not exist: runin')
+
+    def test_list_multiple_statuses_first_page(self):
+        """Establish that when passing multiple statuses, the list command returns
+        only the first page of jobs matching the requested statuses.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?or__status=pending&or__status=running', {
+                'count': 3,
+                'previous': None,
+                'next': '/api/%s/jobs/?or__status=pending&or__status=running&page=2' % CUR_API_VERSION,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 7823.0,
+                    'failed': False,
+                    'status': 'running',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            t.register_json('/jobs/?or__status=pending&or__status=running&page=2', {
+                'count': 2,
+                'previous': '/api/%s/jobs/?or__status=pending&or__status=running&page=2' % CUR_API_VERSION,
+                'next': None,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            result = self.res.list(status='pending,running')
+            self.assertEqual(result, {
+                'count': 3,
+                'previous': None,
+                'next': 2,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 7823.0,
+                    'failed': False,
+                    'status': 'running',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            self.assertEqual(len(t.requests), 1)
+
+    def test_list_multiple_statuses_second_page(self):
+        """Establish that when passing multiple statuses, the list command returns
+        only the second page of jobs matching the requested statuses.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?or__status=pending&or__status=running', {
+                'count': 3,
+                'previous': None,
+                'next': '/api/%s/jobs/?or__status=pending&or__status=running&page=2' % CUR_API_VERSION,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 7823.0,
+                    'failed': False,
+                    'status': 'running',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            t.register_json('/jobs/?or__status=pending&or__status=running&page=2', {
+                'count': 2,
+                'previous': '/api/%s/jobs/?or__status=pending&or__status=running&page=1' % CUR_API_VERSION,
+                'next': None,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            result = self.res.list(status='pending,running', page=2)
+            self.assertEqual(result, {
+                'count': 2,
+                'previous': 1,
+                'next': None,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            self.assertEqual(len(t.requests), 1)
+
+    def test_list_multiple_statuses_all_pages(self):
+        """Establish that when passing multiple statuses, the list command returns
+        the entire set of jobs matching the requested statuses.
+        """
+        with client.test_mode as t:
+            t.register_json('/jobs/?or__status=pending&or__status=running', {
+                'count': 3,
+                'previous': None,
+                'next': '/api/%s/jobs/?or__status=pending&or__status=running&page=2' % CUR_API_VERSION,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 7823.0,
+                    'failed': False,
+                    'status': 'running',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            t.register_json('/jobs/?or__status=pending&or__status=running&page=2', {
+                'count': 2,
+                'previous': '/api/%s/jobs/?or__status=pending&or__status=running&page=1' % CUR_API_VERSION,
+                'next': None,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            result = self.res.list(status='pending,running', all_pages=True)
+            self.assertEqual(result, {
+                'count': 5,
+                'previous': None,
+                'next': 2,
+                'results': [{
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 7823.0,
+                    'failed': False,
+                    'status': 'running',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }, {
+                    'elapsed': 0.0,
+                    'failed': False,
+                    'status': 'pending',
+                    'extra': 'ignored',
+                }]
+            })
+            self.assertEqual(len(t.requests), 2)
 
 
 class MonitorWaitTests(unittest.TestCase):
