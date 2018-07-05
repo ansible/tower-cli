@@ -171,7 +171,16 @@ def extract_workflow_nodes(asset):
         map_node_to_post_options(workflow_node_post_options, workflow_node, node_to_add)
 
         # We can delete the workflow_job_template since we will be applying it to this workflow
-        del node_to_add["workflow_job_template"]
+        if 'workflow_job_template' in node_to_add:
+            del node_to_add["workflow_job_template"]
+
+        # If the unified job template is missing, we can raise an error for this workflow
+        if 'unified_job_template' not in node_to_add:
+            raise TowerCLIError(
+                "Workflow export exception: workflow {} has a node whose job template has been deleted".format(
+                    asset['name']
+                )
+            )
 
         # Now we need to resolve the unified job template
         del node_to_add["unified_job_template"]
