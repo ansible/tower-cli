@@ -16,6 +16,8 @@
 import time
 import click
 
+from six.moves import StringIO
+
 import tower_cli
 from tower_cli.api import client
 
@@ -58,11 +60,12 @@ class StandardOutTests(unittest.TestCase):
         with mock.patch.object(type(self.res), 'lookup_stdout') as lookup:
             with mock.patch.object(type(self.res), 'last_job_data') as job:
                 with mock.patch.object(click, 'echo') as mock_echo:
-                    job.return_value = {'id': 42}
-                    lookup.return_value = 'foobar'
-                    result = self.res.stdout(42)
-                    assert not result['changed']
-                    mock_echo.assert_called_once_with('foobar', nl=1)
+                    with mock.patch('sys.stdout', new=StringIO()) as fake_out:
+                        job.return_value = {'id': 42}
+                        lookup.return_value = 'foobar'
+                        result = self.res.stdout(42, outfile=fake_out)
+                        assert not result['changed']
+                        mock_echo.assert_called_once_with('foobar', nl=1, file=fake_out)
 
     def test_stdout_with_lookup(self):
         "Test that unified job will be automatically looked up."
