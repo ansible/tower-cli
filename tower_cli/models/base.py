@@ -764,14 +764,36 @@ class MonitorableResource(BaseResource):
     @resources.command
     @click.option('--start-line', required=False, type=int, help='Line at which to start printing the standard out.')
     @click.option('--end-line', required=False, type=int, help='Line at which to end printing the standard out.')
-    def stdout(self, pk, start_line=None, end_line=None, **kwargs):
+    @click.option('--outfile', required=False, type=str, help='Destination file for stdout (default stdout)')
+    def stdout(self, pk, start_line=None, end_line=None, outfile=sys.stdout, **kwargs):
         """
-        Print out the standard out of a unified job to the command line.
+        Print out the standard out of a unified job to the command line or output file.
         For Projects, print the standard out of most recent update.
         For Inventory Sources, print standard out of most recent sync.
         For Jobs, print the job's standard out.
         For Workflow Jobs, print a status table of its jobs.
+
+        =====API DOCS=====
+        Print out the standard out of a unified job to the command line or output file.
+        For Projects, print the standard out of most recent update.
+        For Inventory Sources, print standard out of most recent sync.
+        For Jobs, print the job's standard out.
+        For Workflow Jobs, print a status table of its jobs.
+
+        :param pk: Primary key of the job resource object to be monitored.
+        :type pk: int
+        :param start_line: Line at which to start printing job output
+        :param end_line: Line at which to end printing job output
+        :param outfile: Alternative file than stdout to write job stdout to.
+        :type outfile: file
+        :param `**kwargs`: Keyword arguments used to look up job resource object to monitor if ``pk`` is
+                           not provided.
+        :returns: A dictionary containing changed=False
+        :rtype: dict
+
+        =====API DOCS=====
         """
+
         # resource is Unified Job Template
         if self.unified_job_type != self.endpoint:
             unified_job = self.last_job_data(pk, **kwargs)
@@ -782,8 +804,14 @@ class MonitorableResource(BaseResource):
             pk = unified_job['id']
 
         content = self.lookup_stdout(pk, start_line, end_line)
+        opened = False
+        if isinstance(outfile, six.string_types):
+            outfile = open(outfile, 'w')
+            opened = True
         if len(content) > 0:
-            click.echo(content, nl=1)
+            click.echo(content, nl=1, file=outfile)
+        if opened:
+            outfile.close()
 
         return {"changed": False}
 
@@ -821,6 +849,7 @@ class MonitorableResource(BaseResource):
 
         =====API DOCS=====
         """
+
         # If we do not have the unified job info, infer it from parent
         if pk is None:
             pk = self.last_job_data(parent_pk, **kwargs)['id']
@@ -852,7 +881,7 @@ class MonitorableResource(BaseResource):
             if not content.startswith("Waiting for results"):
                 line_count = len(content.splitlines())
                 start_line += line_count
-                click.echo(content, nl=0)
+                click.echo(content, nl=0, file=outfile)
 
             if timeout and time.time() - start > timeout:
                 raise exc.Timeout('Monitoring aborted due to timeout.')
