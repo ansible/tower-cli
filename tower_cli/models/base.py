@@ -856,7 +856,7 @@ class MonitorableResource(BaseResource):
         job_endpoint = '%s%s/' % (self.unified_job_type, pk)
 
         # Pause until job is in running state
-        self.wait(pk, exit_on=['running', 'successful'])
+        self.wait(pk, exit_on=['running', 'successful'], outfile=outfile)
 
         # Loop initialization
         start = time.time()
