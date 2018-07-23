@@ -1100,8 +1100,10 @@ class Sender(LoggingCommand):
 
                     # Revoke the permissions
                     try:
+                        role_type = self.get_role_type(existing_role['type'], existing_role['name'])
+
                         tower_cli.get_resource('role').revoke(**{
-                            'type': existing_role['type'],
+                            'type': role_type,
                             actor: existing_item['id'],
                             asset_type: existing_asset['id'],
                         })
@@ -1124,14 +1126,7 @@ class Sender(LoggingCommand):
 
                     # Grant the permissions
                     try:
-                        role_type = existing_role['type']
-                        if role_type == 'Ad Hoc':
-                            role_type = 'adhoc'
-                        # Some of the workflow roles come out funky so we need to straighten them out.
-                        elif role_type == 'role' and existing_role['name'] == 'Admin':
-                            role_type = 'admin'
-                        elif role_type == 'role' and existing_role['name'] == 'Execute':
-                            role_type = 'execute'
+                        role_type = self.get_role_type(existing_role['type'], existing_role['name'])
 
                         tower_cli.get_resource('role').grant(**{
                             'type': role_type,
@@ -1143,6 +1138,19 @@ class Sender(LoggingCommand):
                         self.log_error("Unable to add {} {} to {} role: {}".format(
                             actor, item_to_add, role['name'], e)
                         )
+
+    def get_role_type(self, type, name):
+        role_type = type
+        if role_type == 'Ad Hoc':
+            role_type = 'adhoc'
+        # Some of the workflow roles come out funky so we need to straighten them out.
+        elif role_type == 'role' and name == 'Read':
+            role_type = 'read'
+        elif role_type == 'role' and name == 'Admin':
+            role_type = 'admin'
+        elif role_type == 'role' and name == 'Execute':
+            role_type = 'execute'
+        return role_type
 
     def import_inventory_groups(self, existing_object, groups):
         existing_groups_data = common.extract_inventory_groups(existing_object)
