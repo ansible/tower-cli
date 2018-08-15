@@ -23,6 +23,7 @@ UNIFIED_JT = {
     'job_template': '/job_templates',
     'inventory_source': '/inventory_sources',
     'project': '/projects',
+    'workflow': '/workflow_job_templates',
 }
 CLICK_ATTRS = ('__click_params__', '_cli_command', '_cli_command_attrs')
 
@@ -110,6 +111,9 @@ class Resource(models.Resource):
                                     required=False, display=False)
     project = models.Field(type=types.Related('project'), required=False,
                            display=False)
+    workflow = models.Field(
+        type=types.Related('workflow'), required=False, display=False
+    )
 
     # Schedule-specific fields.
     unified_job_template = models.Field(required=False, type=int,
