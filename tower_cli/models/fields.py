@@ -205,12 +205,12 @@ class ManyToManyField(BaseField):
 
         # Apply options for user to specify the 2 resources to associate
         method = click.option(
-            '--{}'.format(self.other_name),
+            '--{}'.format(self.other_name.replace('_', '-')),
             type=types.Related(self.other_name),
             required=True
         )(method)
         method = click.option(
-            '--{}'.format(self.res_name),
+            '--{}'.format(self.res_name.replace('_', '-')),
             type=types.Related(self.res_name),
             required=True
         )(method)
