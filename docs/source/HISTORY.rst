@@ -1,6 +1,12 @@
 Release History
 ===============
 
+3.3.1 (TBD)
+-----------
+
+ - Fixed associating labels to workflows
+ - Associating labels to job template now takes option as --job-template
+
 3.3.0 (2018-04-25)
 ------------------
 
