@@ -5,7 +5,7 @@ Env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
-tower-cli from a git checkout using python 2.6+.
+tower-cli from a git checkout using python 2.7+.
 
 First, set up your environment to run from the checkout:
 
