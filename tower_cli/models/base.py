@@ -667,10 +667,11 @@ class Resource(BaseResource):
 
         if new_name is None:
             # copy client-side, the old mechanism
-            newresource.update(kwargs)
             newresource['name'] = "%s @ %s" % (basename, time.strftime('%X'))
+            newresource.update(kwargs)
 
-            return self.write(create_on_missing=True, **newresource)
+            return self.write(create_on_missing=True, fail_on_found=True,
+                              **newresource)
         else:
             # copy server-side, the new mechanism
             if kwargs:
