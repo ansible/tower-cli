@@ -152,7 +152,10 @@ class Resource(models.Resource):
         r = client.options(self.endpoint)
         to_type = r.json()['actions']['PUT'].get(key, {}).get('type')
         if to_type == 'integer':
-            return int(value)
+            if value != 'null':
+                return int(value)
+            else:
+                return None
         elif to_type == 'boolean':
             return bool(strtobool(value))
         elif to_type in ('list', 'nested object'):
