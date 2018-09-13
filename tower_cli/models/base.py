@@ -632,7 +632,8 @@ class Resource(BaseResource):
 
     @resources.command(ignore_defaults=True)
     @click.option('--new-name', default=None,
-                  help='The name to give the new resource, if used, will deep copy in the backend.')
+                  help='The name to give the new resource, if used, will deep copy in the backend. '
+                       'Only compatible with Tower 3.3 or later.')
     def copy(self, pk=None, new_name=None, **kwargs):
         """Copy an object.
 
