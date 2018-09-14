@@ -1,5 +1,6 @@
 from tower_cli.utils import secho
 import click
+import six
 
 
 class LoggingCommand:
@@ -24,7 +25,9 @@ class LoggingCommand:
 
         # The 4 is from 2 spaces and 2 brackets
         stars = '*' * (int(self.columns) - (len(asset_type + asset_name) + 4))
-        self.my_print("{} [{}] {}".format(asset_type.replace("_", " ").upper(), asset_name, stars))
+        self.my_print(six.text_type("{} [{}] {}").format(
+            asset_type.replace("_", " ").upper(), asset_name, stars)
+        )
 
     def print_recap(self):
         if self.columns is None:
