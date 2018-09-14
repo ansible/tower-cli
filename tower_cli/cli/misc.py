@@ -337,7 +337,11 @@ def receive(organization=None, user=None, team=None, credential_type=None, crede
 @click.argument('source', required=False, nargs=-1)
 @click.option('--prevent', multiple=True, required=False,
               help='Prevents import of a specific asset type.\n'
-              'Multiple prevent options can be passed.')
+              'Multiple prevent options can be passed.\n'
+              'If an asset type in the prevent list tries to be imported an error will occur')
+@click.option('--exclude', multiple=True, required=False, help='Ignore specific asset type.\n'
+              'Multiple exclude options can be passed.\n'
+              'If an asset type in the exclude list tries to be imprted it will be ignored without an error')
 @click.option('--secret_management', multiple=False, required=False, default='default',
               type=click.Choice(['default', 'prompt', 'random']),
               help='What to do with secrets for new items.\n'
@@ -348,7 +352,7 @@ def receive(organization=None, user=None, team=None, credential_type=None, crede
 @click.option('--no-color', is_flag=True,
               help="Disable color output"
               )
-def send(source=None, prevent=None, secret_management='default', no_color=False):
+def send(source=None, prevent=None, exclude=None, secret_management='default', no_color=False):
     """Import assets into Tower.
 
     'tower send' imports one or more assets into a Tower instance
@@ -363,7 +367,7 @@ def send(source=None, prevent=None, secret_management='default', no_color=False)
 
     from tower_cli.cli.transfer.send import Sender
     sender = Sender(no_color)
-    sender.send(source, prevent, secret_management)
+    sender.send(source, prevent, exclude, secret_management)
 
 
 @click.command()
