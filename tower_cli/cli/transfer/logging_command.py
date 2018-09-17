@@ -45,7 +45,7 @@ class LoggingCommand:
         # Print OK count
         self.my_print(spaces_separating_messages, nl=False)
         ok = "ok={}".format(self.ok_messages)
-        color = 'black'
+        color = ''
         if self.ok_messages > 0:
             color = 'green'
         self.my_print(ok, fg=color, nl=False)
@@ -53,7 +53,7 @@ class LoggingCommand:
         # Print CHANGED count
         self.my_print(spaces_separating_messages, nl=False)
         changed = "changed={}".format(self.changed_messages)
-        color = 'black'
+        color = ''
         if self.changed_messages > 0:
             color = 'yellow'
         self.my_print(changed, fg=color, nl=False)
@@ -61,7 +61,7 @@ class LoggingCommand:
         # Print WARNING count
         self.my_print(spaces_separating_messages, nl=False)
         warnings = "warnings={}".format(self.warn_messages)
-        color = 'black'
+        color = ''
         if self.warn_messages > 0:
             color = 'magenta'
         self.my_print(warnings, fg=color, nl=False)
@@ -69,7 +69,7 @@ class LoggingCommand:
         # Print ERROR count
         self.my_print(spaces_separating_messages, nl=False)
         error = "failed={}".format(self.error_messages)
-        color = 'black'
+        color = ''
         if self.error_messages > 0:
             color = 'red'
         self.my_print(error, fg=color)
@@ -92,8 +92,8 @@ class LoggingCommand:
         self.my_print("{}".format(error_message), fg='red', bold=True)
         self.error_messages = self.error_messages + 1
 
-    def my_print(self, message=None, fg='black', bold=False, nl=True):
+    def my_print(self, message=None, fg='', bold=False, nl=True):
         if self.no_color:
-            secho(message, fg='black', bold=False, nl=nl)
+            secho(message, fg='', bold=False, nl=nl)
         else:
             secho(message, fg=fg, bold=bold, nl=nl)
