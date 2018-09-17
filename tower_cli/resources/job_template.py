@@ -60,6 +60,7 @@ class Resource(models.SurveyResource):
                               help_text='Extra variables used by Ansible in YAML or key=value '
                                         'format. Use @ to get YAML from a file.')
     job_tags = models.Field(required=False, display=False)
+    custom_virtualenv = models.Field(required=False, display=False)
     force_handlers = models.Field(type=bool, required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     start_at_task = models.Field(required=False, display=False)
