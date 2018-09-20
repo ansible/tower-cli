@@ -78,3 +78,6 @@ setup_v1.py
 tower_cli_v2/
 bin/tower-cli-v2
 setup_v2.py
+
+# ignore pytest_cache
+.pytest_cache/
