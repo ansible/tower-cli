@@ -151,6 +151,9 @@ class Resource(models.Resource):
             return json.loads(value)
         r = client.options(self.endpoint)
         to_type = r.json()['actions']['PUT'].get(key, {}).get('type')
+        if to_type is None:
+            raise exc.TowerCLIError('You are trying to modify the value of a '
+                                    'Read-Only Field, which is not allowed')
         if to_type == 'integer':
             if value != 'null':
                 return int(value)
