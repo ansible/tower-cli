@@ -150,6 +150,9 @@ class Resource(models.Resource):
         if key == 'LICENSE':
             return json.loads(value)
         r = client.options(self.endpoint)
+        if key not in r.json()['actions']['PUT']:
+            raise exc.TowerCLIError('You are trying to modify value of a '
+                                    'Read-Only field, which is not allowed')
         to_type = r.json()['actions']['PUT'].get(key, {}).get('type')
         if to_type == 'integer':
             if value != 'null':
