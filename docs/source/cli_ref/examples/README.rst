@@ -30,7 +30,7 @@ Create Fake Data
 ~~~~~~~~~~~~~~~~
 
 You may want to reference the `fake data
-creator <https://github.com/ansible/tower-cli/blob/master/docs/examples/fake_data_creator.sh>`__
+creator <https://github.com/ansible/tower-cli/blob/master/docs/source/cli_ref/examples/fake_data_creator.sh>`__
 for examples on how to create different types of resources.
 
 If you want to run the script, which auto-populates your Tower server
