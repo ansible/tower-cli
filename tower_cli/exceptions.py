@@ -23,6 +23,7 @@ __all__ = [
     'BadRequest',
     'AuthError',
     'Forbidden',
+    'NotFound',
     'MethodNotAllowed',
     'MultipleResults',
     'ServerError',
