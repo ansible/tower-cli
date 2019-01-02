@@ -94,3 +94,8 @@ Workflows
 Workflows can also have surveys and follow the same pattern. Example:
 
 ``tower-cli workflow survey --name="workflow with survey"``
+----------
+
+Configuring a survey with multiple choice single select :
+
+tower-cli job_template survey --name="Demo Job Template" --survey-spec='[{"question_name":"Test","question_description":"","required":true,"type":"multiselect","variable":"my_var","min":null,"max":null,"default":"choice1","choices":"choice1\nchoice2\nchoice3","new_question":true}]'
