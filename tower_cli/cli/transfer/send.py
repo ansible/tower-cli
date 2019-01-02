@@ -993,7 +993,9 @@ class Sender(LoggingCommand):
                 org = tower_cli.get_resource('organization').get(**{'name': label_org_name})
                 label_org_id = org['id']
             except TowerCLIError as e:
-                self.log_error("Failed to lookup organization {} for label : {}".format(label_org_name, label_name))
+                self.log_error("Failed to lookup organization {} for label {} : {}".format(
+                    label_org_name, label_name, e
+                ))
                 continue
 
             try:
@@ -1089,7 +1091,7 @@ class Sender(LoggingCommand):
                 try:
                     existing_role = tower_cli.get_resource('role').get(existing_name_to_id['role'][role['name']])
                 except TowerCLIError as e:
-                    self.log_error('Failed to find existing role by ID')
+                    self.log_error('Failed to find existing role by ID : {}'.format(e))
                     continue
 
                 # Items to remove is the difference between new_items and existing_items
@@ -1406,7 +1408,7 @@ class Sender(LoggingCommand):
                             tower_cli.get_resource('schedule').delete(**{'name': a_schedule['name']})
                             self.log_change("Removed schedule {}".format(a_schedule['name']))
                         except TowerCLIError as e:
-                            self.log_error("Unable to remove schedule {}".format(a_schedule['name']))
+                            self.log_error("Unable to remove schedule {} : {}".format(a_schedule['name'], e))
 
         for relation_name in existing_relations_dict:
             # We have to add in the inventory field in order to delete this
