@@ -290,7 +290,7 @@ class LoginTests(unittest.TestCase):
 
         # Ensure that we got a non-zero exit status
         self.assertNotEqual(result.exit_code, 0)
-        self.assertIn('Missing argument "username"', result.output)
+        self.assertIn('Missing argument "username"'.lower(), result.output.lower())
 
     def test_oauth_unsupported(self):
         """Establish that if `tower-cli login` is used on a Tower that
