@@ -23,7 +23,7 @@ import warnings
 
 try:
     from urlparse import urljoin, urlparse
-except Exception as e:
+except Exception:
     from urllib.parse import urljoin, urlparse
 
 from datetime import datetime as dt

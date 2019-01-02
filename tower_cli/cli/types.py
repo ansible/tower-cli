@@ -155,7 +155,7 @@ class Related(click.types.ParamType):
                       'looking it up.' % param.name, header='details')
             lookup_data = {resource.identity[-1]: value}
             rel = resource.get(**lookup_data)
-        except exc.MultipleResults as ex:
+        except exc.MultipleResults:
             raise exc.MultipleRelatedError(
                 'Cannot look up {0} exclusively by name, because multiple {0} '
                 'objects exist with that name.\n'
