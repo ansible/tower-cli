@@ -22,7 +22,7 @@ get the help text with
 
 Notification templates suppport all typical CRUD operations that control
 other resources through tower-cli: ``get``, ``list``, ``create``,
-``modify`` and ``delete``. On the other hand, uses can use new command
+``modify`` and ``delete``. On the other hand, users can use new command
 ``tower-cli job_template associate_notification`` and
 ``tower-cli job_tempate disassociate_notification`` to (dis)associate an
 existing notification to/from a job template.
