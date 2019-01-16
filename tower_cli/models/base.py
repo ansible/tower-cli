@@ -558,6 +558,7 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                 cursor = self.list(**dict(kwargs, page=cursor['next']))
                 response['results'] += cursor['results']
                 response['count'] += cursor['count']
+            response['next'] = None
 
         # Done; return the response
         return response

@@ -263,7 +263,8 @@ class ResSubcommand(click.MultiCommand):
             '\n'.join(data_rows),
             divider_row,
         ))
-        if page:
+        # Don't print page numbers for 1 page results
+        if page and total_pages != 1:
             response += '(Page %d of %d.)' % (page, total_pages)
         if payload.get('changed', False):
             response = 'Resource changed.\n' + response
