@@ -879,6 +879,8 @@ class Sender(LoggingCommand):
                 job_type = 'project'
             elif a_node['unified_job_type'] == 'inventory_update':
                 job_type = 'inventory'
+            elif a_node['unified_job_type'] == 'workflow_job':
+                job_type = 'workflow'
             else:
                 self.log_error('Node {} has an invalid unified job type {}'.format(
                     a_node['name'], a_node['unified_job_type']
