@@ -31,7 +31,8 @@ NODE_STANDARD_FIELDS = [
 JOB_TYPES = {
     'job': 'job_template',
     'project_update': 'project',
-    'inventory_update': 'inventory_source'
+    'inventory_update': 'inventory_source',
+    'workflow_job': 'workflow'
 }
 
 
