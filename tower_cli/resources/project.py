@@ -59,6 +59,7 @@ class Resource(models.Resource, models.MonitorableResource):
     scm_update_cache_timeout = models.Field(type=int, required=False, display=False)
     job_timeout = models.Field(type=int, required=False, display=False,
                                help_text='The timeout field (in seconds).')
+    custom_virtualenv = models.Field(required=False, display=False)
 
     @resources.command
     @click.option('--monitor', is_flag=True, default=False,
@@ -150,7 +151,7 @@ class Resource(models.Resource, models.MonitorableResource):
     @resources.command(use_fields_as_options=(
         'name', 'description', 'scm_type', 'scm_url', 'local_path',
         'scm_branch', 'scm_credential', 'scm_clean', 'scm_delete_on_update',
-        'scm_update_on_launch', 'job_timeout'
+        'scm_update_on_launch', 'job_timeout', 'custom_virtualenv'
     ))
     def modify(self, pk=None, create_on_missing=False, **kwargs):
         """Modify an already existing.
