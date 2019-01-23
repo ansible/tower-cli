@@ -1,11 +1,17 @@
 Release History
 ===============
 
-3.3.1 (TBD)
+3.3.1 (2019-01-23)
 -----------
 
  - Fixed associating labels to workflows
  - Associating labels to job template now takes option as --job-template
+ - Allow adding workflows inside of workflows
+ - Allow exporting schedules of workflows
+ - Send command now uses default terminal background color
+ - Fix some unicode errors in send/receive commands
+ - Hide display of page number for human-formatted single page results
+ - Allow setting the custom virtual environment on projects and organizations
 
 3.3.0 (2018-04-25)
 ------------------
