@@ -26,3 +26,4 @@ class Resource(models.Resource):
     users = models.ManyToManyField('user', method_name='')
     admins = models.ManyToManyField('user', method_name='admin')
     instance_groups = models.ManyToManyField('instance_group', method_name='ig')
+    custom_virtualenv = models.Field(required=False, display=False)
