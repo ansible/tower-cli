@@ -577,7 +577,7 @@ class ListStatusesTests(unittest.TestCase):
             self.assertEqual(result, {
                 'count': 5,
                 'previous': None,
-                'next': 2,
+                'next': None,
                 'results': [{
                     'elapsed': 0.0,
                     'failed': False,
