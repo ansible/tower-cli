@@ -30,6 +30,7 @@ from tower_cli.constants import CUR_API_VERSION
 
 from tests.compat import unittest, mock
 import click
+from fauxquests.adapter import FauxAdapter
 
 REQUESTS_ERRORS = [requests.exceptions.ConnectionError,
                    requests.exceptions.SSLError]
@@ -100,6 +101,15 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(headers['Content-Type'], 'application/json')
             self.assertEqual(r.request.body,
                              '{"payload": "this is my payload."}')
+
+    def test_connection_ssl(self):
+        with client.test_mode as t:
+            t.register_json('/ping/', {'status': 'ok'})
+            https_adapter = client.adapters['https://']
+            with mock.patch.object(FauxAdapter, 'send', wraps=https_adapter.send) as mock_send:
+                client.get('/ping/')
+                mock_send.assert_called_once()
+                self.assertTrue(mock_send.call_args[1]['verify'])
 
     def test_connection_ssl_error(self):
         """Establish that if we get a ConnectionError or an SSLError
