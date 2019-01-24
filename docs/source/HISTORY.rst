@@ -1,7 +1,7 @@
 Release History
 ===============
 
-3.3.1 (2019-01-23)
+3.3.1 (2019-01-24)
 -----------
 
  - Fixed associating labels to workflows
