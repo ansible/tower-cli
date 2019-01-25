@@ -232,6 +232,19 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
                                    read_params)
             return {}
 
+    def _convert_pagenum(self, kwargs):
+        """
+        Convert next and previous from URLs to integers
+        """
+        for key in ('next', 'previous'):
+            if not kwargs.get(key):
+                continue
+            match = re.search(r'page=(?P<num>[\d]+)', kwargs[key])
+            if match is None and key == 'previous':
+                kwargs[key] = 1
+                continue
+            kwargs[key] = int(match.groupdict()['num'])
+
     def read(self, pk=None, fail_on_no_results=False, fail_on_multiple_results=False, **kwargs):
         """
         =====API DOCS=====
@@ -540,22 +553,15 @@ class BaseResource(six.with_metaclass(ResourceMeta)):
         debug.log('Getting records.', header='details')
         response = self.read(**kwargs)
 
-        # Alter the "next" and "previous" to reflect simple integers, rather than URLs, since this endpoint
-        # just takes integers.
-        for key in ('next', 'previous'):
-            if not response.get(key):
-                continue
-            match = re.search(r'page=(?P<num>[\d]+)', response[key])
-            if match is None and key == 'previous':
-                response[key] = 1
-                continue
-            response[key] = int(match.groupdict()['num'])
+        # Convert next and previous to int
+        self._convert_pagenum(response)
 
         # If we were asked for all pages, keep retrieving pages until we have them all.
         if all_pages and response['next']:
             cursor = copy(response)
             while cursor['next']:
-                cursor = self.list(**dict(kwargs, page=cursor['next']))
+                cursor = self.read(**dict(kwargs, page=cursor['next']))
+                self._convert_pagenum(cursor)
                 response['results'] += cursor['results']
                 response['count'] += cursor['count']
             response['next'] = None
