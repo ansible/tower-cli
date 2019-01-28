@@ -1,29 +1,34 @@
 Release History
 ===============
 
+3.3.2 (2019-01-28)
+-----------
+
+- Fix bug where verify_ssl config parameter was not respected
+
 3.3.1 (2019-01-24)
 -----------
 
- - Fixed associating labels to workflows
- - Associating labels to job template now takes option as --job-template
- - Allow adding workflows inside of workflows
- - Allow exporting schedules of workflows
- - Send command now uses default terminal background color
- - Fix some unicode errors in send/receive commands
- - Hide display of page number for human-formatted single page results
- - Allow setting the custom virtual environment on projects and organizations
+- Fixed associating labels to workflows
+- Associating labels to job template now takes option as --job-template
+- Allow adding workflows inside of workflows
+- Allow exporting schedules of workflows
+- Send command now uses default terminal background color
+- Fix some unicode errors in send/receive commands
+- Hide display of page number for human-formatted single page results
+- Allow setting the custom virtual environment on projects and organizations
 
 3.3.0 (2018-04-25)
 ------------------
 
- - Added send and receive commands to export and import resources
- - Added support for import and export role memberships as well
- - Added login command for token-based auth (AWX feature)
- - Added options for workflow nodes and schedules (AWX feature)
- - Added support for server-side copying (AWX feature)
- - Added resource for activity stream
- - Added abstract resource for job events
- - Bug fixes for label creation, workflow monitor, global config, role list
+- Added send and receive commands to export and import resources
+- Added support for import and export role memberships as well
+- Added login command for token-based auth (AWX feature)
+- Added options for workflow nodes and schedules (AWX feature)
+- Added support for server-side copying (AWX feature)
+- Added resource for activity stream
+- Added abstract resource for job events
+- Bug fixes for label creation, workflow monitor, global config, role list
 
 3.2.1 (2017-12-19)
 ------------------
