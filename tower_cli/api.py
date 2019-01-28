@@ -141,7 +141,7 @@ class Client(Session):
         verify_ssl = True
         if (settings.verify_ssl is False) or hasattr(settings, 'insecure'):
             verify_ssl = False
-        elif settings.certificate is not None:
+        elif settings.certificate:
             verify_ssl = settings.certificate
 
         # Call the superclass method.
