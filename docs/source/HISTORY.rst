@@ -5,6 +5,7 @@ Release History
 -----------
 
 - Fix bug where verify_ssl config parameter was not respected
+- Fix bug where --all-pages was ignored listing team roles
 
 3.3.1 (2019-01-24)
 -----------
