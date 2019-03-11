@@ -74,9 +74,17 @@ class Resource(models.Resource):
     )
 
     def __new__(cls, *args, **kwargs):
-        for attr in ['create', 'modify', 'list']:
-            setattr(cls, attr,
-                    unified_job_template_options(getattr(cls, attr)))
+        for attr_name in ['create', 'modify', 'list']:
+
+            attr = getattr(cls, attr_name)
+            if getattr(attr, '__decorator__', None) == 'unified_job_template_options':
+                continue
+
+            wrapped_func = unified_job_template_options(attr)
+            wrapped_func.__decorator__ = 'unified_job_template_options'
+
+            setattr(cls, attr_name, wrapped_func)
+
         return super(Resource, cls).__new__(cls, *args, **kwargs)
 
     @staticmethod
