@@ -49,13 +49,13 @@ Node Association
 ~~~~~~~~~~~~~~~~
 
 From the list command, you can find the ids of nodes you want to link
-``assocate_success_node`` will cause the 2nd node to run on success of
+``associate_success_node`` will cause the 2nd node to run on success of
 the first node. The following command causes node 2 to run on the event
 of successful completion of node 1.
 
 ::
 
-    tower-cli node assocate_success_node 1 2
+    tower-cli node associate_success_node 1 2
 
 This operation is only possible when node 2 is a root node. See the
 Tower documentation for the limitations on the types of node connections
@@ -65,7 +65,7 @@ Auto-creation of the success node, only knowing the parent node id:
 
 ::
 
-    tower-cli node assocate_success_node 8 --job-template="Hello world"
+    tower-cli node associate_success_node 8 --job-template="Hello world"
 
 Corresponding disassociate commands are also available. Disassociating a
 node from another node will make it a root node.
