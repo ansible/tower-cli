@@ -32,7 +32,8 @@ RESOURCE_FIELDS = [
 ROLE_TYPES = [
     'admin', 'read', 'member', 'execute', 'adhoc', 'update',
     'use', 'auditor', 'project_admin', 'inventory_admin',
-    'credential_admin', 'workflow_admin', 'notification_admin'
+    'credential_admin', 'workflow_admin', 'notification_admin',
+    'job_template_admin'
 ]
 
 
