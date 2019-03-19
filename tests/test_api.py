@@ -108,7 +108,10 @@ class ClientTests(unittest.TestCase):
             https_adapter = client.adapters['https://']
             with mock.patch.object(FauxAdapter, 'send', wraps=https_adapter.send) as mock_send:
                 client.get('/ping/')
-                mock_send.assert_called_once()
+                mock_send.assert_called_once_with(
+                    mock.ANY, cert=None, proxies=mock.ANY, stream=mock.ANY,
+                    timeout=mock.ANY, verify=True
+                )
                 self.assertTrue(mock_send.call_args[1]['verify'])
 
     def test_connection_ssl_error(self):
