@@ -51,7 +51,7 @@ class ParserTests(unittest.TestCase):
         self.assertDictContainsSubset(
             yaml.load(yaml_w_comment, Loader=yaml.FullLoader),
             yaml.load(parser.process_extra_vars(
-                [yaml_w_comment, json_text], force_json=False), 
+                [yaml_w_comment, json_text], force_json=False),
                 Loader=yaml.FullLoader
             )
         )
