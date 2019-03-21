@@ -157,7 +157,7 @@ class LaunchTests(unittest.TestCase):
                 result = self.res.launch(1, no_input=False)
                 self.assertDictContainsSubset(
                     {"spam": "eggs"},
-                    yaml.load(edit.mock_calls[0][1][0])
+                    yaml.load(edit.mock_calls[0][1][0], Loader=yaml.FullLoader)
                 )
             self.assertDictContainsSubset(
                 {'foo': 'bar'},
@@ -178,7 +178,7 @@ class LaunchTests(unittest.TestCase):
                 self.assertIn('# comment', edit.mock_calls[0][1][0])
                 self.assertDictContainsSubset(
                     {"spam": "eggs"},
-                    yaml.load(edit.mock_calls[0][1][0])
+                    yaml.load(edit.mock_calls[0][1][0], Loader=yaml.FullLoader)
                 )
 
     def test_extra_vars_at_runtime_no_user_data(self):
@@ -208,8 +208,8 @@ class LaunchTests(unittest.TestCase):
             jt_vars_registration(t, 'spam: eggs')
             t.register_json('/config/', {'version': '2.4'}, method='GET')
             result = self.res.launch(1, extra_vars=['foo: bar'])
-            response_json = yaml.load(t.requests[2].body)
-            ev_json = yaml.load(response_json['extra_vars'])
+            response_json = yaml.load(t.requests[2].body, Loader=yaml.FullLoader)
+            ev_json = yaml.load(response_json['extra_vars'], Loader=yaml.FullLoader)
             self.assertTrue('foo' in ev_json)
             self.assertTrue('spam' not in ev_json)
             self.assertDictContainsSubset({'changed': True, 'id': 42}, result)

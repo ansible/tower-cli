@@ -37,7 +37,7 @@ class ParserTests(unittest.TestCase):
         bjson = yaml.dump(bdict, default_flow_style=True)
         cyml = "c: 5"
         result = parser.process_extra_vars([ayml, bjson, cyml])
-        rdict = yaml.load(result)
+        rdict = yaml.load(result, Loader=yaml.FullLoader)
         self.assertEqual(rdict['a'], 1)
         self.assertEqual(rdict['b'], 2)
 
@@ -49,17 +49,18 @@ class ParserTests(unittest.TestCase):
         yaml_w_comment = '{a: b,\n# comment\nc: d}'
         json_text = '{"z":"p"}'
         self.assertDictContainsSubset(
-            yaml.load(yaml_w_comment),
+            yaml.load(yaml_w_comment, Loader=yaml.FullLoader),
             yaml.load(parser.process_extra_vars(
-                [yaml_w_comment, json_text], force_json=False
-            ))
+                [yaml_w_comment, json_text], force_json=False), 
+                Loader=yaml.FullLoader
+            )
         )
         # Test that it correctly combines a diverse set of YAML
         yml1 = "a: 1\n# a comment on second line \nb: 2"
         yml2 = "c: 3"
         self.assertEqual(
             yaml.load(parser.process_extra_vars(
-                [yml1, yml2], force_json=False)),
+                [yml1, yml2], force_json=False), Loader=yaml.FullLoader),
             {'a': 1, 'b': 2, 'c': 3}
         )
         # make sure it combined them into valid yaml
@@ -73,7 +74,7 @@ class ParserTests(unittest.TestCase):
         a2dict = {"a": 2}
         a2yml = yaml.dump(a2dict)
         result = parser.process_extra_vars([ayml, a2yml])
-        rdict = yaml.load(result)
+        rdict = yaml.load(result, Loader=yaml.FullLoader)
         self.assertEqual(rdict['a'], 2)
 
     def test_read_from_file(self):
@@ -101,7 +102,7 @@ class ParserTests(unittest.TestCase):
 
         # but accept data if there are just two equals
         res = parser.process_extra_vars(['password==pa#exp&U=!9Rop'])
-        self.assertEqual(yaml.load(res)['password'], '=pa#exp&U=!9Rop')
+        self.assertEqual(yaml.load(res, Loader=yaml.FullLoader)['password'], '=pa#exp&U=!9Rop')
 
         with self.assertRaises(exc.TowerCLIError):
             parser.process_extra_vars(["left_param="])
@@ -248,7 +249,7 @@ class TestSplitter_Gen(unittest.TestCase):
         """Custom input-output scenario tests for 2 sources into one."""
         for data in self.COMBINATION_DATA:
             self.assertEqual(
-                yaml.load(parser.process_extra_vars(data[0])),
+                yaml.load(parser.process_extra_vars(data[0]), Loader=yaml.FullLoader),
                 data[1]
             )
 
@@ -256,7 +257,7 @@ class TestSplitter_Gen(unittest.TestCase):
         """Test that data is dumped without unicode character marking."""
         for data in self.COMBINATION_DATA:
             string_rep = parser.process_extra_vars(data[0])
-            self.assertEqual(yaml.load(string_rep), data[1])
+            self.assertEqual(yaml.load(string_rep, Loader=yaml.FullLoader), data[1])
             assert "python/unicode" not in string_rep
             assert "\\n" not in string_rep
 
