@@ -227,15 +227,15 @@ class Resource(models.SurveyResource):
                         ret_dict[ujt_key] = val
                     else:
                         ret_dict[fd] = val
-                for rel in ['success', 'failure', 'always']:
-                    sub_node_id_list = node_dict['{0}_nodes'.format(rel)]
-                    if len(sub_node_id_list) == 0:
-                        continue
-                    relationship_name = '{0}_nodes'.format(rel)
-                    ret_dict[relationship_name] = []
-                    for sub_node_id in sub_node_id_list:
-                        ret_dict[relationship_name].append(
-                            branch_schema(sub_node_id))
+            for rel in ['success', 'failure', 'always']:
+                sub_node_id_list = node_dict['{0}_nodes'.format(rel)]
+                if len(sub_node_id_list) == 0:
+                    continue
+                relationship_name = '{0}_nodes'.format(rel)
+                ret_dict[relationship_name] = []
+                for sub_node_id in sub_node_id_list:
+                    ret_dict[relationship_name].append(
+                        branch_schema(sub_node_id))
             return ret_dict
 
         schema_dict = []
