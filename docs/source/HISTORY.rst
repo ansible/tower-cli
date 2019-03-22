@@ -1,6 +1,12 @@
 Release History
 ===============
 
+3.3.3 (2019-03-22)
+-----------
+
+- Fix bug where workflow schema would hang if there were too many nodes
+- Add organization job_template_role to role management
+
 3.3.2 (2019-01-28)
 -----------
 
