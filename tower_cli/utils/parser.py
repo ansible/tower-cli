@@ -91,7 +91,7 @@ def string_to_dict(var_string, allow_kv=True, require_dict=True):
     # except (TypeError, AttributeError, ValueError, AssertionError):
     try:
         # Accept all JSON and YAML
-        return_dict = yaml.load(var_string)
+        return_dict = yaml.load(var_string, Loader=yaml.SafeLoader)
         if require_dict:
             assert type(return_dict) is dict
     except (AttributeError, yaml.YAMLError, AssertionError):
@@ -141,7 +141,7 @@ def process_extra_vars(extra_vars_list, force_json=True):
     if not force_json:
         try:
             # Conditions to verify it is safe to return rolling YAML string
-            try_dict = yaml.load(extra_vars_yaml)
+            try_dict = yaml.load(extra_vars_yaml, Loader=yaml.SafeLoader)
             assert type(try_dict) is dict
             debug.log('Using unprocessed YAML', header='decision', nl=2)
             return extra_vars_yaml.rstrip()
