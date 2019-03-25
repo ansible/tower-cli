@@ -177,7 +177,7 @@ class Resource(models.SurveyResource):
         help_text='On write commands, perform extra POST to the '
                   'survey_spec endpoint.')
 
-    labels = models.ManyToManyField('label', res_name='workflow')
+    labels = models.ManyToManyField('label', res_name='workflow_job_template')
 
     @staticmethod
     def _workflow_node_structure(node_results):
