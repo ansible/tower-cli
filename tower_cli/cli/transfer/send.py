@@ -964,7 +964,7 @@ class Sender(LoggingCommand):
 
         keyword_arg_template_id = "job_template"
         if asset_type == 'workflow':
-            keyword_arg_template_id = "workflow_job_template"
+            keyword_arg_template_id = "workflow"
 
         for existing_label in existing_labels:
             # Any label that is in existing_labels that is not in new_labels needs to be removed
