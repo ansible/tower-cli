@@ -1235,7 +1235,7 @@ class Sender(LoggingCommand):
             for host_name in (set(existing_hosts) | set(new_hosts)):
                 # Get the host object to get the ID
                 try:
-                    host = tower_cli.get_resource('host').get(**{'name': host_name})
+                    host = tower_cli.get_resource('host').get(**{'name': host_name, 'inventory': inventory['id']})
                 except TowerCLIError as e:
                     self.log_error("Unable to find host name {} to disassociate from the group {} : {}".format(
                         host_name, existing_group['name'], e
@@ -1297,7 +1297,7 @@ class Sender(LoggingCommand):
         for host_name in hosts:
             # Get the host by name
             try:
-                host = tower_cli.get_resource('host').get(**{'name': host_name})
+                host = tower_cli.get_resource('host').get(**{'name': host_name, 'inventory': inventory['id']})
             except TowerCLIError as e:
                 self.log_error("Unable to find host name {} to associate to the group {} : {}".format(
                     host_name, group['name'], e
