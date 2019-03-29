@@ -962,10 +962,6 @@ class Sender(LoggingCommand):
             self.log_ok("All labels are up to date")
             return
 
-        keyword_arg_template_id = "job_template"
-        if asset_type == 'workflow':
-            keyword_arg_template_id = "workflow"
-
         for existing_label in existing_labels:
             # Any label that is in existing_labels that is not in new_labels needs to be removed
             if existing_label not in new_labels:
@@ -974,7 +970,7 @@ class Sender(LoggingCommand):
                     label_org = existing_label['organization']
                     label_id = existing_name_to_object[label_org][label_name]['id']
                     tower_cli.get_resource(asset_type).disassociate_label(**{
-                        keyword_arg_template_id: existing_object['id'],
+                        asset_type: existing_object['id'],
                         'label': label_id,
                     })
                     self.log_change("Removed label {}".format(label_name))
@@ -1010,7 +1006,7 @@ class Sender(LoggingCommand):
 
             try:
                 tower_cli.get_resource(asset_type).associate_label(**{
-                    keyword_arg_template_id: existing_object['id'],
+                    asset_type: existing_object['id'],
                     'label': created_label['id'],
                 })
             except TowerCLIError as e:
