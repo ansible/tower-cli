@@ -1589,7 +1589,7 @@ class Sender(LoggingCommand):
 
         for field in credential_type_object['inputs']['fields']:
             # If the field is in the required list
-            if field['id'] in credential_type_object['inputs']['required']:
+            if credential_type_object['inputs'].get('required', []):
                 # If the field is a secret
                 if 'secret' in field and field['secret']:
                     credential['inputs'][field['id']] = self.get_secret(
