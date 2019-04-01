@@ -342,7 +342,7 @@ settings = Settings()
 
 def _apply_runtime_setting(ctx, param, value):
     if param.name == 'tower_password' and value == 'ASK' and '--help' not in argv:
-        value = click.prompt('Enter tower password', type=str, hide_input=True)
+        value = click.prompt('Enter tower password', type=str, hide_input=True, err=True)
     settings.set_or_reset_runtime_param(param.name, value)
 
 
