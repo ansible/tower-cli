@@ -179,6 +179,13 @@ class Resource(models.SurveyResource):
 
     labels = models.ManyToManyField('label', res_name='workflow')
 
+    ask_variables_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for extra_vars on launch.')
+    ask_inventory_on_launch = models.Field(
+        type=bool, required=False, display=False,
+        help_text='Prompt user for inventory on launch.')
+
     @staticmethod
     def _workflow_node_structure(node_results):
         '''
