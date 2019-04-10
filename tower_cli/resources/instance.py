@@ -15,13 +15,17 @@
 from tower_cli import models
 
 
-class Resource(models.ReadOnlyResource):
+class Resource(models.Resource):
     """A resource for instances."""
     cli_help = 'Check instances within Ansible Tower.'
     endpoint = '/instances/'
 
-    uuid = models.Field(required=False, display=False)
-    hostname = models.Field(required=False)
-    version = models.Field(required=False, display=False)
-    capacity = models.Field(type=int, required=False)
-    consumed_capacity = models.Field(type=int, required=False)
+    uuid = models.Field(required=False, display=False, read_only=True)
+    hostname = models.Field(required=False, read_only=True)
+    version = models.Field(required=False, display=False, read_only=True)
+    capacity = models.Field(type=int, required=False, read_only=True)
+    consumed_capacity = models.Field(type=int, required=False, read_only=True)
+
+    capacity_adjustment = models.Field(type=float, required=False)
+    enabled = models.Field(type=bool, required=False)
+    managed_by_policy = models.Field(type=bool, required=False)
