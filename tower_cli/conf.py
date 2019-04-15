@@ -52,6 +52,7 @@ CONFIG_PARAM_TYPE = {
 
 CONFIG_OPTIONS = frozenset(CONFIG_PARAM_TYPE.keys())
 
+
 class Parser(configparser.ConfigParser):
     """ConfigParser subclass that doesn't strictly require section
     headers.
@@ -231,17 +232,17 @@ class Settings(object):
             # We have a value; try to get its type and return it accordingly
             try:
                 if CONFIG_PARAM_TYPE[key] == (click.STRING or click.Choice):
-                  value = getattr(parser, 'get')('general', key)
-                  break
+                    value = getattr(parser, configparser.ConfigParser.get.__name__)('general', key)
+                    break
                 elif CONFIG_PARAM_TYPE[key] == click.BOOL:
-                  value = getattr(parser, 'getboolean')('general', key)
-                  break
+                    value = getattr(parser, configparser.ConfigParser.getboolean.__name__)('general', key)
+                    break
                 elif CONFIG_PARAM_TYPE[key] == click.FLOAT:
-                  value = getattr(parser, 'getfloat')('general', key)
-                  break
+                    value = getattr(parser, configparser.ConfigParser.getfloat.__name__)('general', key)
+                    break
                 elif CONFIG_PARAM_TYPE[key] == click.INT:
-                  value = getattr(parser, getint)('general', key)
-                  break
+                    value = getattr(parser, configparser.ConfigParser.getint.__name__)('general', key)
+                    break
             except ValueError:
                 click.secho('Value for %s is not in expected type' % key)
 
