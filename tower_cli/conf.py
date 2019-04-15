@@ -36,12 +36,21 @@ __all__ = ['settings', 'with_global_options', 'pop_option']
 tower_dir = '/etc/tower/'
 user_dir = os.path.expanduser('~')
 CONFIG_FILENAME = '.tower_cli.cfg'
-CONFIG_OPTIONS = frozenset((
-    'host', 'username', 'password', 'verify_ssl', 'format',
-    'color', 'verbose', 'description_on', 'certificate',
-    'use_token', 'oauth_token'
-))
+CONFIG_PARAM_TYPE = {
+    'host': click.STRING,
+    'username': click.STRING,
+    'password': click.STRING,
+    'verify_ssl': click.BOOL,
+    'format': click.Choice,
+    'color': click.STRING,
+    'verbose': click.BOOL,
+    'description_on': click.BOOL,
+    'certificate': click.STRING,
+    'use_token': click.BOOL,
+    'oauth_token': click.STRING
+}
 
+CONFIG_OPTIONS = frozenset(CONFIG_PARAM_TYPE.keys())
 
 class Parser(configparser.ConfigParser):
     """ConfigParser subclass that doesn't strictly require section
@@ -219,21 +228,27 @@ class Settings(object):
             except configparser.NoOptionError:
                 continue
 
-            # We have a value; it may or may not be a string, though, so
-            # try to return it as an int, float, or boolean (in that order)
-            # before falling back to the string value.
-            type_method = ('getint', 'getfloat', 'getboolean')
-            for tm in type_method:
-                try:
-                    value = getattr(parser, tm)('general', key)
-                    break
-                except ValueError:
-                    pass
+            # We have a value; try to get its type and return it accordingly
+            try:
+                if CONFIG_PARAM_TYPE[key] == (click.STRING or click.Choice):
+                  value = getattr(parser, 'get')('general', key)
+                  break
+                elif CONFIG_PARAM_TYPE[key] == click.BOOL:
+                  value = getattr(parser, 'getboolean')('general', key)
+                  break
+                elif CONFIG_PARAM_TYPE[key] == click.FLOAT:
+                  value = getattr(parser, 'getfloat')('general', key)
+                  break
+                elif CONFIG_PARAM_TYPE[key] == click.INT:
+                  value = getattr(parser, getint)('general', key)
+                  break
+            except ValueError:
+                click.secho('Value for %s is not in expected type' % key)
 
-            # Write the value to the cache, so we don't have to do this lookup
-            # logic on subsequent requests.
-            self._cache[key] = value
-            return self._cache[key]
+        # Write the value to the cache, so we don't have to do this lookup
+        # logic on subsequent requests.
+        self._cache[key] = value
+        return self._cache[key]
 
         # If we got here, that means that the attribute wasn't found, and
         # also that there is no default; raise an exception.
