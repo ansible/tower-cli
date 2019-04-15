@@ -133,8 +133,8 @@ class Resource(models.Resource):
                          'Use multiple flags to send to multiple rooms, ex '
                          '--rooms=A --rooms=B'.
                          format('hipchat'), multiple=True)
-    notify = models.Field(required=False, display=False, default=False,
-                          help_text='[{0}]The notify channel trigger.'.
+    notify = models.Field(required=False, display=False, type=click.BOOL,
+                          default=False, help_text='[{0}]The notify channel trigger.'.
                           format('hipchat'))
     url = models.Field(required=False, display=False,
                        help_text='[{0}]The target URL.'.format('webhook'))
