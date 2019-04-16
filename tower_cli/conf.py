@@ -42,7 +42,7 @@ CONFIG_PARAM_TYPE = {
     'password': click.STRING,
     'verify_ssl': click.BOOL,
     'format': click.Choice,
-    'color': click.STRING,
+    'color': click.BOOL,
     'verbose': click.BOOL,
     'description_on': click.BOOL,
     'certificate': click.STRING,
@@ -233,23 +233,19 @@ class Settings(object):
             try:
                 if CONFIG_PARAM_TYPE[key] == (click.STRING or click.Choice):
                     value = getattr(parser, configparser.ConfigParser.get.__name__)('general', key)
-                    break
                 elif CONFIG_PARAM_TYPE[key] == click.BOOL:
                     value = getattr(parser, configparser.ConfigParser.getboolean.__name__)('general', key)
-                    break
                 elif CONFIG_PARAM_TYPE[key] == click.FLOAT:
                     value = getattr(parser, configparser.ConfigParser.getfloat.__name__)('general', key)
-                    break
                 elif CONFIG_PARAM_TYPE[key] == click.INT:
                     value = getattr(parser, configparser.ConfigParser.getint.__name__)('general', key)
-                    break
             except ValueError:
                 click.secho('Value for %s is not in expected type' % key)
 
-        # Write the value to the cache, so we don't have to do this lookup
-        # logic on subsequent requests.
-        self._cache[key] = value
-        return self._cache[key]
+            # Write the value to the cache, so we don't have to do this lookup
+            # logic on subsequent requests.
+            self._cache[key] = value
+            return self._cache[key]
 
         # If we got here, that means that the attribute wasn't found, and
         # also that there is no default; raise an exception.
