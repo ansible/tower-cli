@@ -36,11 +36,21 @@ __all__ = ['settings', 'with_global_options', 'pop_option']
 tower_dir = '/etc/tower/'
 user_dir = os.path.expanduser('~')
 CONFIG_FILENAME = '.tower_cli.cfg'
-CONFIG_OPTIONS = frozenset((
-    'host', 'username', 'password', 'verify_ssl', 'format',
-    'color', 'verbose', 'description_on', 'certificate',
-    'use_token', 'oauth_token'
-))
+CONFIG_PARAM_TYPE = {
+    'host': click.STRING,
+    'username': click.STRING,
+    'password': click.STRING,
+    'verify_ssl': click.BOOL,
+    'format': click.Choice,
+    'color': click.BOOL,
+    'verbose': click.BOOL,
+    'description_on': click.BOOL,
+    'certificate': click.STRING,
+    'use_token': click.BOOL,
+    'oauth_token': click.STRING
+}
+
+CONFIG_OPTIONS = frozenset(CONFIG_PARAM_TYPE.keys())
 
 
 class Parser(configparser.ConfigParser):
@@ -219,16 +229,18 @@ class Settings(object):
             except configparser.NoOptionError:
                 continue
 
-            # We have a value; it may or may not be a string, though, so
-            # try to return it as an int, float, or boolean (in that order)
-            # before falling back to the string value.
-            type_method = ('getint', 'getfloat', 'getboolean')
-            for tm in type_method:
-                try:
-                    value = getattr(parser, tm)('general', key)
-                    break
-                except ValueError:
-                    pass
+            # We have a value; try to get its type and return it accordingly
+            try:
+                if CONFIG_PARAM_TYPE[key] == click.STRING or CONFIG_PARAM_TYPE[key] == click.Choice:
+                    value = parser.get('general', key)
+                elif CONFIG_PARAM_TYPE[key] == click.BOOL:
+                    value = parser.getboolean('general', key)
+                elif CONFIG_PARAM_TYPE[key] == click.FLOAT:
+                    value = parser.getfloat('general', key)
+                elif CONFIG_PARAM_TYPE[key] == click.INT:
+                    value = parser.getint('general', key)
+            except ValueError:
+                click.secho('Value for %s is not in expected type' % key)
 
             # Write the value to the cache, so we don't have to do this lookup
             # logic on subsequent requests.
