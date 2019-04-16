@@ -232,13 +232,13 @@ class Settings(object):
             # We have a value; try to get its type and return it accordingly
             try:
                 if CONFIG_PARAM_TYPE[key] == (click.STRING or click.Choice):
-                    value = getattr(parser, configparser.ConfigParser.get.__name__)('general', key)
+                    value = parser.get('general', key)
                 elif CONFIG_PARAM_TYPE[key] == click.BOOL:
-                    value = getattr(parser, configparser.ConfigParser.getboolean.__name__)('general', key)
+                    value = parser.getboolean('general', key)
                 elif CONFIG_PARAM_TYPE[key] == click.FLOAT:
-                    value = getattr(parser, configparser.ConfigParser.getfloat.__name__)('general', key)
+                    value = parser.getfloat('general', key)
                 elif CONFIG_PARAM_TYPE[key] == click.INT:
-                    value = getattr(parser, configparser.ConfigParser.getint.__name__)('general', key)
+                    value = parser.getint('general', key)
             except ValueError:
                 click.secho('Value for %s is not in expected type' % key)
 
