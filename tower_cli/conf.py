@@ -231,7 +231,7 @@ class Settings(object):
 
             # We have a value; try to get its type and return it accordingly
             try:
-                if CONFIG_PARAM_TYPE[key] == (click.STRING or click.Choice):
+                if CONFIG_PARAM_TYPE[key] == click.STRING or CONFIG_PARAM_TYPE[key] == click.Choice:
                     value = parser.get('general', key)
                 elif CONFIG_PARAM_TYPE[key] == click.BOOL:
                     value = parser.getboolean('general', key)
