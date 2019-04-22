@@ -1,6 +1,18 @@
 Release History
 ===============
 
+3.3.4 (2019-04-22)
+------------------
+
+- Fix receive command bugs related template labels
+- Fix receive command bug when importing to custom credential types
+- Fix receive command bug when host name was in multiple inventories
+- Fix bugs with special characters in config options
+- Fix bug using HipChat notification "notify" option
+- Password prompt written to stderr now
+- Support prompting for inventory and variables with workflows
+- Allow managing certain user-configurable instance properties
+
 3.3.3 (2019-03-22)
 -----------
 
