@@ -54,7 +54,7 @@ class Resource(models.Resource):
         type=types.Related('inventory'), required=False, display=False)
     credential = models.Field(
         type=types.Related('credential'), required=False, display=False)
-    credentials = models.ManyToManyField('credential')
+    credentials = models.ManyToManyField('credential', res_name='node')
     job_type = models.Field(required=False, display=False)
     job_tags = models.Field(required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
