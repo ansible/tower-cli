@@ -158,3 +158,59 @@ class Resource(models.Resource, models.MonitorableResource):
             'failed': job['failed'],
             'status': job['status'],
         }
+    
+    @resources.command(use_fields_as_options=False)
+    @click.option('--inventory_source', type=types.Related('inventory_source'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of inventory_sync to relate to.')
+    def associate_notification_template(self, inventory_source,
+                                        notification_template, status):
+        """Associate a notification template from this inventory source.
+
+        =====API DOCS=====
+        Associate a notification template from this inventory source.
+
+        :param inventory_source: The inventory source to associate to.
+        :type inventory_source: str
+        :param notification_template: The notification template to be associated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be associated to.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._assoc('notification_templates_%s' % status,
+                           inventory_source, notification_template)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--inventory_source', type=types.Related('inventory_source'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of inventory_sync to relate to.')
+    def disassociate_notification_template(self, inventory_source,
+                                           notification_template, status):
+        """Disassociate a notification template from this inventory source.
+
+        =====API DOCS=====
+        Disassociate a notification template from this inventory source.
+
+        :param inventory_source: The inventory source to disassociate from.
+        :type inventory_source: str
+        :param notification_template: The notification template to be disassociated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be disassociated from.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._disassoc('notification_templates_%s' % status,
+                              inventory_source, notification_template)
