@@ -158,7 +158,7 @@ class Resource(models.Resource, models.MonitorableResource):
             'failed': job['failed'],
             'status': job['status'],
         }
-    
+
     @resources.command(use_fields_as_options=False)
     @click.option('--inventory_source', type=types.Related('inventory_source'))
     @click.option('--notification-template',

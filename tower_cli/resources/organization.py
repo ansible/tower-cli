@@ -38,7 +38,7 @@ class Resource(models.Resource):
     @click.option('--status', type=click.Choice(['any', 'error', 'success']),
                   required=False, default='any', help='Specify job run status'
                   ' of inventory_sync to relate to.')
-    def associate_notification_template(self, inventory_source,
+    def associate_notification_template(self, organization,
                                         notification_template, status):
         """Associate a notification template from this organization.
 
@@ -66,7 +66,7 @@ class Resource(models.Resource):
     @click.option('--status', type=click.Choice(['any', 'error', 'success']),
                   required=False, default='any', help='Specify job run status'
                   ' of inventory_sync to relate to.')
-    def disassociate_notification_template(self, inventory_source,
+    def disassociate_notification_template(self, organization,
                                            notification_template, status):
         """Disassociate a notification template from this organization.
 
