@@ -91,6 +91,15 @@ class RoleUnitTests(unittest.TestCase):
         self.assertIn('members__in', data)
         self.assertEqual(endpoint, '/roles/')
 
+    def test_data_endpoint_inventory_admin(self):
+        """Translation of input args to lookup args, space in type"""
+        kwargs = {'user': 2, 'type': 'Inventory Admin', 'inventory': 5}
+        data, endpoint = Role.data_endpoint(kwargs, ignore=['res'])
+        self.assertIn('members__in', data)
+        self.assertEqual(endpoint, '/roles/')
+        self.assertIn('role_field', data)
+        self.assertEqual(data['role_field'], 'inventory_admin_role')
+
 
 class RoleMethodTests(unittest.TestCase):
     """Test role commands."""
