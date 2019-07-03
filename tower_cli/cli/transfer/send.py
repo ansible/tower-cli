@@ -256,6 +256,9 @@ class Sender(LoggingCommand):
 
                 # If there are relations, import them
                 if relations is not None:
+                    # Schedules have to be imported after the survey because adding extra data to a schedule
+                    # will cause the API to check the job template for input options.
+                    schedules_to_import = []
                     for a_relation in relations:
                         if a_relation == 'survey_spec':
                             survey = tower_cli.get_resource(asset_type).survey(existing_object['id'])
@@ -287,13 +290,17 @@ class Sender(LoggingCommand):
                         elif a_relation == 'extra_credentials':
                             self.import_extra_credentials(existing_object, relations[a_relation])
                         elif a_relation == 'schedules':
-                            self.import_schedules(existing_object, relations[a_relation], asset_type)
+                            schedules_to_import.append(relations[a_relation])
                         elif a_relation == 'roles':
                             self.import_roles(existing_object, relations[a_relation], asset_type)
                         elif a_relation == 'labels':
                             self.import_labels(existing_object, relations[a_relation], asset_type)
                         else:
                             self.log_error("Relation {} is not supported".format(a_relation))
+
+                    # Now that everything else was imported, we can import the schedule if there is one
+                    for schedule in schedules_to_import:
+                        self.import_schedules(existing_object, schedule, asset_type)
 
                 # Checking for post update actions on the different objects
                 if asset_changed:
