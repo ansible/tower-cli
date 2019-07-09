@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import contextlib
 import copy
 import functools
 import json
+import os
 import stat
 import warnings
 
@@ -139,7 +139,7 @@ class Client(Session):
     def _make_request(self, method, url, args, kwargs):
         # Decide whether to require SSL verification
         verify_ssl = True
-        if (settings.verify_ssl is False) or hasattr(settings, 'insecure'):
+        if (settings.verify_ssl is False) or (settings.insecure is True):
             verify_ssl = False
         elif settings.certificate:
             verify_ssl = settings.certificate

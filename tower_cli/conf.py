@@ -37,17 +37,18 @@ tower_dir = '/etc/tower/'
 user_dir = os.path.expanduser('~')
 CONFIG_FILENAME = '.tower_cli.cfg'
 CONFIG_PARAM_TYPE = {
-    'host': click.STRING,
-    'username': click.STRING,
-    'password': click.STRING,
-    'verify_ssl': click.BOOL,
-    'format': click.Choice,
-    'color': click.BOOL,
-    'verbose': click.BOOL,
-    'description_on': click.BOOL,
     'certificate': click.STRING,
+    'color': click.BOOL,
+    'description_on': click.BOOL,
+    'format': click.Choice,
+    'host': click.STRING,
+    'insecure': click.BOOL,
+    'oauth_token': click.STRING,
+    'password': click.STRING,
     'use_token': click.BOOL,
-    'oauth_token': click.STRING
+    'username': click.STRING,
+    'verbose': click.BOOL,
+    'verify_ssl': click.BOOL
 }
 
 CONFIG_OPTIONS = frozenset(CONFIG_PARAM_TYPE.keys())
@@ -136,12 +137,13 @@ class Settings(object):
             defaults[key] = ''
         defaults.update({
             'color': 'true',
+            'description_on': 'false',
             'format': 'human',
             'host': '127.0.0.1',
+            'insecure': 'false',
+            'use_token': 'false',
             'verify_ssl': 'true',
             'verbose': 'false',
-            'description_on': 'false',
-            'use_token': 'false',
         })
         self._defaults = self._new_parser(defaults=defaults)
 
