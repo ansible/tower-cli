@@ -301,3 +301,61 @@ class Resource(models.Resource, models.MonitorableResource):
             'failed': job['failed'],
             'status': job['status'],
         }
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--project', type=types.Related('project'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of all the job templates based on this project'
+                  ' to relate to.')
+    def associate_notification_template(self, project,
+                                        notification_template, status):
+        """Associate a notification template from this project.
+
+        =====API DOCS=====
+        Associate a notification template from this project.
+
+        :param project: The project to associate to.
+        :type project: str
+        :param notification_template: The notification template to be associated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be associated to.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the association succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._assoc('notification_templates_%s' % status,
+                           project, notification_template)
+
+    @resources.command(use_fields_as_options=False)
+    @click.option('--project', type=types.Related('project'))
+    @click.option('--notification-template',
+                  type=types.Related('notification_template'))
+    @click.option('--status', type=click.Choice(['any', 'error', 'success']),
+                  required=False, default='any', help='Specify job run status'
+                  ' of all the job templates based on this project'
+                  ' to relate to.')
+    def disassociate_notification_template(self, project,
+                                           notification_template, status):
+        """Disassociate a notification template from this project.
+
+        =====API DOCS=====
+        Disassociate a notification template from this project.
+
+        :param project: The job template to disassociate from.
+        :type project: str
+        :param notification_template: The notification template to be disassociated.
+        :type notification_template: str
+        :param status: type of notification this notification template should be disassociated from.
+        :type status: str
+        :returns: Dictionary of only one key "changed", which indicates whether the disassociation succeeded.
+        :rtype: dict
+
+        =====API DOCS=====
+        """
+        return self._disassoc('notification_templates_%s' % status,
+                              project, notification_template)
