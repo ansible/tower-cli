@@ -899,7 +899,7 @@ class Sender(LoggingCommand):
             unified_job_results = client.request(
                 'get',
                 "unified_job_templates",
-                {'name': job_name, 'type__contains': job_type}
+                {'name': job_name, 'type__startswith': job_type}
             )
 
             # If it failed, move on
