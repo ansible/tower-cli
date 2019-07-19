@@ -1,6 +1,15 @@
 Release History
 ===============
 
+3.3.5 (2019-07-19)
+------------------
+
+- Fix error with use of --insecure flag
+- Allow notifications to be used with projects
+- Fix send command error when job and workflow have the same name
+- Fix receive command when schedules have survey answers
+- Fix error associating credential with workflow node
+
 3.3.4 (2019-04-22)
 ------------------
 
