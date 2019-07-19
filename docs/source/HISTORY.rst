@@ -23,19 +23,19 @@ Release History
 - Allow managing certain user-configurable instance properties
 
 3.3.3 (2019-03-22)
------------
+------------------
 
 - Fix bug where workflow schema would hang if there were too many nodes
 - Add organization job_template_role to role management
 
 3.3.2 (2019-01-28)
------------
+------------------
 
 - Fix bug where verify_ssl config parameter was not respected
 - Fix bug where --all-pages was ignored listing team roles
 
 3.3.1 (2019-01-24)
------------
+------------------
 
 - Fixed associating labels to workflows
 - Associating labels to job template now takes option as --job-template
