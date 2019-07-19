@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.3.6 (2019-07-19)
+------------------
+
+- Fix formatting for upload to PyPI server
+
 3.3.5 (2019-07-19)
 ------------------
 
