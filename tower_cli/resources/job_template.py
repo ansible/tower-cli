@@ -61,6 +61,7 @@ class Resource(models.SurveyResource):
                                         'format. Use @ to get YAML from a file.')
     job_tags = models.Field(required=False, display=False)
     custom_virtualenv = models.Field(required=False, display=False)
+    job_slice_count = models.Field(type=int, required=False, display=False)
     force_handlers = models.Field(type=bool, required=False, display=False)
     skip_tags = models.Field(required=False, display=False)
     start_at_task = models.Field(required=False, display=False)
