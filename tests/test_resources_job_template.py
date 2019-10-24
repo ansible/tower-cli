@@ -41,7 +41,7 @@ class TemplateTests(unittest.TestCase):
             t.register_json(endpoint, {'changed': True, 'id': 42},
                             method='POST')
             self.res.create(name='bar', job_type='run', inventory=1,
-                            project=1, playbook='foobar.yml', credential=1)
+                            project=1, playbook='foobar.yml')
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
             self.assertEqual(len(t.requests), 2)
@@ -55,7 +55,7 @@ class TemplateTests(unittest.TestCase):
             t.register_json(endpoint, {'changed': True, 'id': 42},
                             method='POST')
             self.res.create(name='bar', inventory=1, project=1,
-                            playbook='foobar.yml', credential=1)
+                            playbook='foobar.yml')
             req_body = json.loads(t.requests[1].body)
             self.assertIn('job_type', req_body)
             self.assertEqual(req_body['job_type'], 'run')
@@ -74,13 +74,13 @@ class TemplateTests(unittest.TestCase):
                                 'playbook': 'foobar.yml', 'credential': 1},
                             method='POST')
             self.res.create(name='bar', job_type='run', inventory=1,
-                            project=1, playbook='foobar.yml', credential=1)
+                            project=1, playbook='foobar.yml')
 
             f = ResSubcommand(self.res)._echo_method(self.res.create)
             with mock.patch.object(click, 'secho'):
                 with settings.runtime_values(format='human'):
                     f(name='bar', job_type='run', inventory=1,
-                      project=1, playbook='foobar.yml', credential=1)
+                      project=1, playbook='foobar.yml')
 
     def test_create_w_extra_vars(self):
         """Establish that a job template can be created
@@ -94,7 +94,7 @@ class TemplateTests(unittest.TestCase):
             t.register_json(endpoint, {'changed': True, 'id': 42},
                             method='POST')
             self.res.create(name='bar', job_type='run', inventory=1,
-                            project=1, playbook='foobar.yml', credential=1,
+                            project=1, playbook='foobar.yml',
                             extra_vars=['foo: bar'])
             self.assertEqual(t.requests[0].method, 'GET')
             self.assertEqual(t.requests[1].method, 'POST')
@@ -137,9 +137,9 @@ class TemplateTests(unittest.TestCase):
         that we expect.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/42/extra_credentials/?id=84',
+            t.register_json('/job_templates/42/credentials/?id=84',
                             {'count': 0, 'results': []})
-            t.register_json('/job_templates/42/extra_credentials/', {}, method='POST')
+            t.register_json('/job_templates/42/credentials/', {}, method='POST')
             self.res.associate_credential(42, 84)
             self.assertEqual(t.requests[1].body,
                              json.dumps({'associate': True, 'id': 84}))
@@ -149,10 +149,10 @@ class TemplateTests(unittest.TestCase):
         that we expect.
         """
         with client.test_mode as t:
-            t.register_json('/job_templates/42/extra_credentials/?id=84',
+            t.register_json('/job_templates/42/credentials/?id=84',
                             {'count': 1, 'results': [{'id': 84}],
                              'next': None, 'previous': None})
-            t.register_json('/job_templates/42/extra_credentials/', {}, method='POST')
+            t.register_json('/job_templates/42/credentials/', {}, method='POST')
             self.res.disassociate_credential(42, 84)
             self.assertEqual(t.requests[1].body,
                              json.dumps({'disassociate': True, 'id': 84}))

@@ -10,6 +10,10 @@ It is also what the Ansible `tower_*` modules use under the hood. Such as:
 
 https://docs.ansible.com/ansible/latest/modules/tower_organization_module.html
 
+These modules are now vendored as part of the AWX collection at:
+
+https://galaxy.ansible.com/awx/awx
+
 Supporting correct operation of the modules is the maintenance aim of this
 package.
 

@@ -957,23 +957,23 @@ class Sender(LoggingCommand):
                 tower_cli.get_resource('job_template').disassociate_credential(
                     existing_object['id'], existing_name_to_id[cred]
                 )
-                self.log_change("Removed extra credential {}".format(cred))
+                self.log_change("Removed credential {}".format(cred))
             except TowerCLIError as e:
-                self.log_error("Unable to remove extra credential {} : {}".format(cred, e))
+                self.log_error("Unable to remove credential {} : {}".format(cred, e))
 
         # Creds to add is the difference between existing_creds and extra_creds
         for cred in list(set(new_creds).difference(existing_creds)):
             try:
                 new_credential = tower_cli.get_resource('credential').get(**{'name': cred})
             except TowerCLIError as e:
-                self.log_error("Unable to resolve extra credential {} : {}".format(cred, e))
+                self.log_error("Unable to resolve credential {} : {}".format(cred, e))
                 continue
 
             try:
                 tower_cli.get_resource('job_template').associate_credential(existing_object['id'], new_credential['id'])
-                self.log_change("Added extra credential {}".format(cred))
+                self.log_change("Added credential {}".format(cred))
             except TowerCLIError as e:
-                self.log_error("Unable to add extra credential {} : ".format(cred, e))
+                self.log_error("Unable to add credential {} : ".format(cred, e))
 
     def import_labels(self, existing_object, new_labels, asset_type):
         existing_labels_data = common.extract_labels(existing_object)
