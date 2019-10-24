@@ -18,9 +18,10 @@ from __future__ import absolute_import, unicode_literals
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import parser
+from tower_cli.utils import parser, debug
 from tower_cli.api import client
 from tower_cli.cli import types
+from tower_cli.exceptions import NotFound
 
 
 class Resource(models.SurveyResource):
@@ -28,7 +29,7 @@ class Resource(models.SurveyResource):
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
     dependencies = ['inventory', 'credential', 'project', 'vault_credential']
-    related = ['survey_spec', 'notification_templates', 'extra_credentials', 'schedules', 'labels']
+    related = ['survey_spec', 'notification_templates', 'schedules', 'labels', 'credentials']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -143,7 +144,13 @@ class Resource(models.SurveyResource):
 
         =====API DOCS=====
         """
-        return self._assoc('extra_credentials', job_template, credential)
+        try:
+            # Tower 3.3 behavior, allows all types of credentials
+            return self._assoc('credentials', job_template, credential)
+        except NotFound:
+            debug.log('Attempting to use extra_credential as fallback in '
+                      'case server is older version.', header='details')
+            return self._assoc('extra_credentials', job_template, credential)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
@@ -163,7 +170,12 @@ class Resource(models.SurveyResource):
 
         =====API DOCS=====
         """
-        return self._disassoc('extra_credentials', job_template, credential)
+        try:
+            return self._disassoc('credentials', job_template, credential)
+        except NotFound:
+            debug.log('Attempting to use extra_credential as fallback in '
+                      'case server is older version.', header='details')
+            return self._disassoc('extra_credentials', job_template, credential)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))

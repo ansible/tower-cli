@@ -97,9 +97,9 @@ class Receiver:
                             exported_asset[common.ASSET_RELATION_KEY][notification_type] = \
                                 common.extract_notifications(asset, notification_type)
 
-                    elif relation == 'extra_credentials':
+                    elif relation == 'credentials':
                         exported_asset[common.ASSET_RELATION_KEY][relation] =\
-                            common.extract_extra_credentials(asset)['items']
+                            common.extract_credentials(asset)['items']
 
                     elif relation == 'schedules':
                         exported_asset[common.ASSET_RELATION_KEY][relation] =\
