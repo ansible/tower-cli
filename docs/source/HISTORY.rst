@@ -1,6 +1,12 @@
 Release History
 ===============
 
+3.3.7 (2019-10-25)
+------------------
+
+- Job template associate_credential now uses "credentials" endpoint
+- Include related credentials to job templates in send and receive commands
+
 3.3.6 (2019-07-19)
 ------------------
 

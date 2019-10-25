@@ -18,9 +18,10 @@ from __future__ import absolute_import, unicode_literals
 import click
 
 from tower_cli import models, resources
-from tower_cli.utils import parser
+from tower_cli.utils import parser, debug
 from tower_cli.api import client
 from tower_cli.cli import types
+from tower_cli.exceptions import NotFound
 
 
 class Resource(models.SurveyResource):
@@ -28,7 +29,7 @@ class Resource(models.SurveyResource):
     cli_help = 'Manage job templates.'
     endpoint = '/job_templates/'
     dependencies = ['inventory', 'credential', 'project', 'vault_credential']
-    related = ['survey_spec', 'notification_templates', 'extra_credentials', 'schedules', 'labels']
+    related = ['survey_spec', 'notification_templates', 'schedules', 'labels', 'credentials']
 
     name = models.Field(unique=True)
     description = models.Field(required=False, display=False)
@@ -118,12 +119,22 @@ class Resource(models.SurveyResource):
     labels = models.ManyToManyField('label')
     instance_groups = models.ManyToManyField('instance_group', method_name='ig')
 
-    def write(self, *args, **kwargs):
+    def write(self, pk=None, *args, **kwargs):
         # Provide a default value for job_type, but only in creation of JT
         if (kwargs.get('create_on_missing', False) and
                 (not kwargs.get('job_type', None))):
             kwargs['job_type'] = 'run'
-        return super(Resource, self).write(*args, **kwargs)
+        mcred = kwargs.get('credential', None)
+        ret = super(Resource, self).write(pk=pk, **kwargs)
+        cred_ids = [c['id'] for c in ret.get('summary_fields', {}).get('credentials', [])]
+        if mcred and mcred not in cred_ids:
+            new_pk = ret['id']
+            debug.log('Processing deprecated credential field via another request.', header='details')
+            self._assoc('credentials', new_pk, mcred)
+            ret = self.read(new_pk)
+            ret['id'] = new_pk
+            ret['changed'] = True
+        return ret
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
@@ -143,7 +154,13 @@ class Resource(models.SurveyResource):
 
         =====API DOCS=====
         """
-        return self._assoc('extra_credentials', job_template, credential)
+        try:
+            # Tower 3.3 behavior, allows all types of credentials
+            return self._assoc('credentials', job_template, credential)
+        except NotFound:
+            debug.log('Attempting to use extra_credential as fallback in '
+                      'case server is older version.', header='details')
+            return self._assoc('extra_credentials', job_template, credential)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))
@@ -163,7 +180,12 @@ class Resource(models.SurveyResource):
 
         =====API DOCS=====
         """
-        return self._disassoc('extra_credentials', job_template, credential)
+        try:
+            return self._disassoc('credentials', job_template, credential)
+        except NotFound:
+            debug.log('Attempting to use extra_credential as fallback in '
+                      'case server is older version.', header='details')
+            return self._disassoc('extra_credentials', job_template, credential)
 
     @resources.command(use_fields_as_options=False)
     @click.option('--job-template', type=types.Related('job_template'))

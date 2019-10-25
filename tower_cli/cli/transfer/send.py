@@ -1,5 +1,7 @@
 import tower_cli
 import json
+import six
+import re
 from tower_cli.exceptions import TowerCLIError, CannotStartJob, JobFailure
 import tower_cli.cli.transfer.common as common
 from tower_cli.cli.transfer.logging_command import LoggingCommand
@@ -96,7 +98,7 @@ class Sender(LoggingCommand):
                                 # First use the API to get the user
                                 from tower_cli.api import Client
                                 api_client = Client()
-                                me_response = api_client.request('GET', 'me')
+                                me_response = api_client.request('GET', 'me/')
                                 response_json = me_response.json()
                                 if 'results' not in response_json or 'id' not in response_json['results'][0]:
                                     raise TowerCLIError("Unable to get user information from Tower")
@@ -287,8 +289,8 @@ class Sender(LoggingCommand):
                             self.import_inventory_groups(existing_object, relations[a_relation])
                         elif a_relation in common.NOTIFICATION_TYPES:
                             self.import_notification_relations(existing_object, relations[a_relation], a_relation)
-                        elif a_relation == 'extra_credentials':
-                            self.import_extra_credentials(existing_object, relations[a_relation])
+                        elif a_relation == 'credentials':
+                            self.import_credentials(existing_object, relations[a_relation])
                         elif a_relation == 'schedules':
                             schedules_to_import.append(relations[a_relation])
                         elif a_relation == 'roles':
@@ -396,20 +398,33 @@ class Sender(LoggingCommand):
                 # Choices is an array like [ [ value, label ], [value, label], ... ]
                 valid_options = []
                 for a_choice in post_options[option]["choices"]:
-                    value = a_choice[0]
-                    label = a_choice[1]
+                    if isinstance(a_choice, six.string_types):
+                        m = re.match(r"^\('(?P<value>.*)',\s'(?P<label>.*)'\)$", a_choice)
+                        if m:
+                            value = m.group('value')
+                            label = m.group('label')
+                        else:
+                            raise Exception('no!')
+                            value = a_choice
+                            label = None
+                    else:
+                        value = a_choice[0]
+                        label = a_choice[1]
                     valid_options.append(value)
-                    valid_options.append(label)
+                    if label is not None:
+                        valid_options.append(label)
 
-                    if an_asset[option] == label:
+                    if label is not None and an_asset[option] == label:
                         an_asset[option] = value
                         valid_choice = True
                     elif an_asset[option] == value:
                         valid_choice = True
 
+                # if 'git' in valid_options:
+                #     raise Exception('valid choices: {}'.format(valid_options))
                 if not valid_choice:
-                    self.log_error("Value {} is not a valid choice for option {} for {} {}".format(
-                        an_asset[option], option, asset_type, name
+                    self.log_error("Value {} is not a valid choice for option {} for {} {}. Options: {}".format(
+                        an_asset[option], option, asset_type, name, valid_options
                     ))
                     post_check_succeeded = False
 
@@ -490,14 +505,14 @@ class Sender(LoggingCommand):
                     # Someday we could go and try to resolve inventory projects or scripts
                     pass
 
-                elif relation == 'extra_credentials':
+                elif relation == 'credentials':
                     for credential in an_asset[common.ASSET_RELATION_KEY][relation]:
                         if 'credential' in self.sorted_assets and credential in self.sorted_assets['credential']:
                             continue
                         try:
                             tower_cli.get_resource('credential').get(**{'name': credential})
                         except TowerCLIError:
-                            self.log_error("Unable to resolve extra_credential {}".format(credential))
+                            self.log_error("Unable to resolve credential {}".format(credential))
                             post_check_succeeded = False
 
                 elif relation == 'schedules':
@@ -926,10 +941,10 @@ class Sender(LoggingCommand):
             del a_node['unified_job_type']
             del a_node['unified_job_name']
 
-    def import_extra_credentials(self, existing_object, new_creds):
+    def import_credentials(self, existing_object, new_creds):
         # Credentials are just an array of names
         # So importing these can be done very easily by comparing new_creds vs existing_creds
-        existing_creds_data = common.extract_extra_credentials(existing_object)
+        existing_creds_data = common.extract_credentials(existing_object)
         existing_creds = existing_creds_data['items']
         existing_name_to_id = existing_creds_data['existing_name_to_id_map']
         if existing_creds == new_creds:
@@ -942,23 +957,23 @@ class Sender(LoggingCommand):
                 tower_cli.get_resource('job_template').disassociate_credential(
                     existing_object['id'], existing_name_to_id[cred]
                 )
-                self.log_change("Removed extra credential {}".format(cred))
+                self.log_change("Removed credential {}".format(cred))
             except TowerCLIError as e:
-                self.log_error("Unable to remove extra credential {} : {}".format(cred, e))
+                self.log_error("Unable to remove credential {} : {}".format(cred, e))
 
         # Creds to add is the difference between existing_creds and extra_creds
         for cred in list(set(new_creds).difference(existing_creds)):
             try:
                 new_credential = tower_cli.get_resource('credential').get(**{'name': cred})
             except TowerCLIError as e:
-                self.log_error("Unable to resolve extra credential {} : {}".format(cred, e))
+                self.log_error("Unable to resolve credential {} : {}".format(cred, e))
                 continue
 
             try:
                 tower_cli.get_resource('job_template').associate_credential(existing_object['id'], new_credential['id'])
-                self.log_change("Added extra credential {}".format(cred))
+                self.log_change("Added credential {}".format(cred))
             except TowerCLIError as e:
-                self.log_error("Unable to add extra credential {} : ".format(cred, e))
+                self.log_error("Unable to add credential {} : ".format(cred, e))
 
     def import_labels(self, existing_object, new_labels, asset_type):
         existing_labels_data = common.extract_labels(existing_object)

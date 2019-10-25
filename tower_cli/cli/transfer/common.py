@@ -96,6 +96,9 @@ def map_node_to_post_options(post_options, source_node, target_node):
         if 'required' in post_options[option] and post_options[option]["required"]:
             target_node[option] = source_node[option]
         elif option in source_node and source_node[option] != default:
+            # work-around AWX bug in 8.0.0 where webhook_service OPTIONS not right
+            if option == 'webhook_service' and source_node[option] == '':
+                continue
             target_node[option] = source_node[option]
 
 
@@ -419,12 +422,12 @@ def get_assets_from_input(all=False, asset_input=None):
     return return_assets
 
 
-def extract_extra_credentials(asset):
+def extract_credentials(asset):
     return_credentials = []
     name_to_id_map = {}
 
-    extra_credentials = load_all_assets(asset['related']['extra_credentials'])
-    for a_credential in extra_credentials['results']:
+    credentials = load_all_assets(asset['related']['credentials'])
+    for a_credential in credentials['results']:
         name_to_id_map[a_credential['name']] = a_credential['id']
         return_credentials.append(a_credential['name'])
 
