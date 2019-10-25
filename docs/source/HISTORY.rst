@@ -6,6 +6,7 @@ Release History
 
 - Job template associate_credential now uses "credentials" endpoint
 - Include related credentials to job templates in send and receive commands
+- Add field for job_slice_count to job template resource
 
 3.3.6 (2019-07-19)
 ------------------
