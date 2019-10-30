@@ -19,7 +19,7 @@ from distutils.version import LooseVersion
 
 import click
 
-from tower_cli import models, get_resource, resources
+from tower_cli import models, get_resource, resources, exceptions as exc
 from tower_cli.api import client
 from tower_cli.cli import types
 from tower_cli.utils import debug, parser
@@ -74,8 +74,8 @@ class Resource(models.ExeResource):
     @click.option('--verbosity', type=int, required=False, help='Specify verbosity of the playbook run.')
     @click.option('--inventory', required=False, type=types.Related('inventory'),
                   help='Specify inventory for job template to run.')
-    @click.option('--credential', required=False, type=types.Related('credential'),
-                  help='Specify machine credential for job template to run.')
+    @click.option('--credential', required=False, multiple=True, type=types.Related('credential'),
+                  help='Specify any type of credential(s) for job template to run.')
     def launch(self, job_template=None, monitor=False, wait=False,
                timeout=None, no_input=True, extra_vars=None, **kwargs):
         """Launch a new job based on a job template.
@@ -125,16 +125,36 @@ class Resource(models.ExeResource):
         """
         # Get the job template from Ansible Tower.
         # This is used as the baseline for starting the job.
-
-        tags = kwargs.get('tags', None)
         jt_resource = get_resource('job_template')
         jt = jt_resource.get(job_template)
 
-        # Update the job data by adding an automatically-generated job name,
-        # and removing the ID.
+        # Update the job data for special treatment of certain fields
+        # Special case for job tags, historically just called --tags
+        tags = kwargs.get('tags', None)
         data = {}
         if tags:
             data['job_tags'] = tags
+        # Special case for cross-version compatibility with credentials
+        cred_arg = kwargs.pop('credential', ())
+        if isinstance(cred_arg, (list, tuple)):
+            credentials = cred_arg
+        else:
+            credentials = [cred_arg]
+        if credentials:
+            if 'credentials' in jt['related']:
+                # Has Tower 3.3 / multi-cred support
+                # combine user-provided credentials with JT credentials
+                jt_creds = set(
+                    c['id'] for c in jt['summary_fields']['credentials']
+                )
+                kwargs['credentials'] = list(set(credentials) | jt_creds)
+            else:
+                if len(credentials) > 1:
+                    raise exc.UsageError(
+                        'Providing multiple credentials on launch can only be '
+                        'done with Tower version 3.3 and higher or recent AWX.'
+                    )
+                kwargs['credential'] = credentials[0]
 
         # Initialize an extra_vars list that starts with the job template
         # preferences first, if they exist
