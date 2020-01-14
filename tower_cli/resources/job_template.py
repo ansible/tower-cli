@@ -24,6 +24,9 @@ from tower_cli.cli import types
 from tower_cli.exceptions import NotFound
 
 
+OLD_CRED_FIELDS = ['credential', 'vault_credential']
+
+
 class Resource(models.SurveyResource):
     """A resource for job templates."""
     cli_help = 'Manage job templates.'
@@ -124,15 +127,20 @@ class Resource(models.SurveyResource):
         if (kwargs.get('create_on_missing', False) and
                 (not kwargs.get('job_type', None))):
             kwargs['job_type'] = 'run'
-        mcred = kwargs.get('credential', None)
+        old_creds = {}
+        for cred_field in OLD_CRED_FIELDS:
+            if cred_field in kwargs:
+                old_creds[cred_field] = kwargs[cred_field]
         ret = super(Resource, self).write(pk=pk, **kwargs)
         cred_ids = [c['id'] for c in ret.get('summary_fields', {}).get('credentials', [])]
-        if mcred and mcred not in cred_ids:
-            new_pk = ret['id']
+        for cred_field, cred_id in old_creds.items():
+            if cred_id is None or cred_id in cred_ids:
+                continue
+            jt_pk = ret['id']
             debug.log('Processing deprecated credential field via another request.', header='details')
-            self._assoc('credentials', new_pk, mcred)
-            ret = self.read(new_pk)
-            ret['id'] = new_pk
+            self._assoc('credentials', jt_pk, cred_id)
+            ret = self.read(jt_pk)
+            ret['id'] = jt_pk
             ret['changed'] = True
         return ret
 

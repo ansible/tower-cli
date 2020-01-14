@@ -1,6 +1,11 @@
 Release History
 ===============
 
+3.3.8 (2020-01-14)
+------------------
+
+- Process deprecated vault_credential parameter with extra request
+
 3.3.7 (2019-10-25)
 ------------------
 
