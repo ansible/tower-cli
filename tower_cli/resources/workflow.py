@@ -45,16 +45,19 @@ class TreeNode(object):
             else:
                 node_attrs[fd] = data[fd]
         node_attrs['workflow_job_template'] = wfjt
+        ujt_ambiguity_msg = (
+            'You should provide exactly one of the attributes'
+            ' job_template, project, workflow, inventory_source, or unified_job_template.'
+        )
         for ujt_name in ujt_attrs:
             if ujt_name not in node_attrs:
                 continue
             if 'unified_job_template' not in node_attrs:
                 node_attrs['unified_job_template'] = node_attrs.pop(ujt_name)
             else:
-                raise BadRequest(
-                    'You should not provide more than one of the attributes'
-                    ' job_template, project and inventory_source.'
-                )
+                raise BadRequest(ujt_ambiguity_msg)
+        if 'unified_job_template' not in node_attrs:
+            raise BadRequest(ujt_ambiguity_msg)
         self.unified_job_template = node_attrs.get('unified_job_template', None)
         self.node_attrs = node_attrs
         for rel in ['success_nodes', 'failure_nodes', 'always_nodes']:

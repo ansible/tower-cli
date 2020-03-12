@@ -1,6 +1,12 @@
 Release History
 ===============
 
+3.3.9 (2020-03-12)
+------------------
+
+- Improve error handling for template specification in workflow schema command.
+- Pin the click library to avoid changing look and feel of output.
+
 3.3.8 (2020-01-14)
 ------------------
 
