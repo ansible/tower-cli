@@ -127,6 +127,16 @@ network with a tower-cli command after the constituent resources like
 the job templates and projects were created by preceding tower-cli
 commands.
 
+Workflows Inside Workflows
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to have a workflow embedded inside of the schema of another
+workflow. To do this, use the key "workflow".
+
+.. code:: yaml
+
+    - workflow: Another workflow
+
 Differences with Machine Formatted Schemas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
