@@ -1,6 +1,16 @@
 |Build Status| |Coverage Status| |Version| |Downloads| |License|
 |Supported Python Versions|
 
+**⚠️ THIS PROJECT IS NO LONGER MAINTAINED ⚠️**
+========================================
+
+This project is no longer maintained, and we're not taking new contributions or making new releases.
+
+The Ansible AWX project has an official open source CLI toolkit which you should use instead:
+
+https://github.com/ansible/awx/blob/devel/INSTALL.md#installing-the-awx-cli
+
+
 Welcome to tower-cli
 ====================
 
@@ -17,10 +27,6 @@ https://galaxy.ansible.com/awx/awx
 Supporting correct operation of the modules is the maintenance aim of this
 package.
 
-Anyone developing new tooling around AWX or Ansible Tower via a Unix command
-line is suggested to use the new CLI.
-
-https://github.com/ansible/awx/tree/devel/awxkit/awxkit/cli/docs
 
  .. |Build Status| image:: https://img.shields.io/travis/com/ansible/tower-cli.svg
     :target: https://travis-ci.com/ansible/tower-cli
